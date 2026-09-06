@@ -49,7 +49,22 @@ Represents a geographic location.
 
 ---
 
-## 2. WeatherCurrent
+## 2. LocationSearchResult
+
+Result of a location search lookup.
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `name` | string | Yes | Location name |
+| `region` | string | Yes | State/Region |
+| `country` | string | Yes | Country |
+| `lat` | float | Yes | Latitude |
+| `lon` | float | Yes | Longitude |
+| `url` | string | No | URL identifier |
+
+---
+
+## 3. WeatherCurrent
 
 Current weather conditions at a location.
 
@@ -69,7 +84,7 @@ Current weather conditions at a location.
 
 ---
 
-## 3. HourlyForecast
+## 4. HourlyForecast
 
 Weather forecast for a single hour within a forecast period.
 
@@ -86,7 +101,7 @@ Weather forecast for a single hour within a forecast period.
 
 ---
 
-## 4. DailyForecast
+## 5. DailyForecast
 
 Weather forecast for a single day.
 
@@ -105,7 +120,7 @@ Weather forecast for a single day.
 
 ---
 
-## 5. WeatherForecast
+## 6. WeatherForecast
 
 Complete forecast response containing both hourly and daily data.
 
@@ -118,7 +133,7 @@ Complete forecast response containing both hourly and daily data.
 
 ---
 
-## 6. ChatRequest
+## 7. ChatRequest
 
 A natural-language weather query from the user.
 
@@ -142,7 +157,7 @@ A natural-language weather query from the user.
 
 ---
 
-## 7. ChatResponse
+## 8. ChatResponse
 
 The AI-generated conversational response.
 
@@ -164,7 +179,7 @@ The AI-generated conversational response.
 
 ---
 
-## 8. Conversation
+## 9. Conversation
 
 Full conversation thread history.
 
@@ -183,7 +198,7 @@ Each **Message** has:
 
 ---
 
-## 9. Alert
+## 10. Alert
 
 An active weather alert issued by a meteorological authority.
 
@@ -201,7 +216,7 @@ An active weather alert issued by a meteorological authority.
 
 ---
 
-## 10. Advisory
+## 11. Advisory
 
 A weather-based advisory with a recommendation.
 
@@ -216,7 +231,7 @@ A weather-based advisory with a recommendation.
 
 ---
 
-## 11. ClimateTrend
+## 12. ClimateTrend
 
 Historical climate trend data for a single parameter.
 

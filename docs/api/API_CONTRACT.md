@@ -6,7 +6,8 @@
 
 This document is the single source of truth for the integration boundary between the Flutter frontend and the FastAPI backend. Both developers must agree before making any changes.
 
-> **Frontend integration status (Phase 2)**: The Flutter UI is complete but does **not** call these endpoints yet. All screens use local mock data. Phase 3+ will connect repositories/services to these endpoints as defined here.
+> **Frontend integration status (Phase 2)**: The Flutter UI is complete but does **not** call these endpoints yet. All screens use local mock data. Phase 4+ will connect repositories/services to these endpoints as defined here.
+> **Backend implementation status (Phase 3)**: Weather endpoints (`/current`, `/forecast`, `/hourly`, `/search`, `/alerts`) are fully implemented and backed by real WeatherAPI.com data.
 
 ---
 
@@ -15,11 +16,13 @@ This document is the single source of truth for the integration boundary between
 1. [GET /health](#1-get-health)
 2. [GET /weather/current](#2-get-weathercurrent)
 3. [GET /weather/forecast](#3-get-weatherforecast)
-4. [POST /chat](#4-post-chat)
-5. [GET /alerts](#5-get-alerts)
-6. [GET /advisory](#6-get-advisory)
-7. [GET /climate/trends](#7-get-climatetrends)
-8. [Error Responses](#8-error-responses)
+4. [GET /weather/hourly](#4-get-weatherhourly)
+5. [GET /weather/search](#5-get-weathersearch)
+6. [POST /chat](#6-post-chat)
+7. [GET /alerts](#7-get-alerts)
+8. [GET /advisory](#8-get-advisory)
+9. [GET /climate/trends](#9-get-climatetrends)
+10. [Error Responses](#10-error-responses)
 
 ---
 
@@ -188,9 +191,69 @@ None.
 curl "http://localhost:8000/api/v1/weather/forecast?lat=28.6139&lon=77.2090&days=7"
 ```
 
+## 4. GET /weather/hourly
+
+### Purpose
+Returns an hourly weather forecast for a geographic coordinate.
+
+### HTTP Method
+`GET`
+
+### Query Parameters
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `lat` | float | Yes | — | Latitude (-90 to 90) |
+| `lon` | float | Yes | — | Longitude (-180 to 180) |
+| `limit` | int | No | `24` | Number of hours to return |
+
+### Response JSON
+```json
+[
+  {
+    "timestamp": 1756137600,
+    "temperature": 32.4,
+    "feels_like": 36.1,
+    "humidity": 60,
+    "wind_speed": 4.2,
+    "description": "Partly cloudy",
+    "icon": "02d",
+    "precipitation_probability": 0.1
+  }
+]
+```
+
 ---
 
-## 4. POST /chat
+## 5. GET /weather/search
+
+### Purpose
+Searches for locations by name, returning coordinates.
+
+### HTTP Method
+`GET`
+
+### Query Parameters
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `q` | string | Yes | — | Search query |
+
+### Response JSON
+```json
+[
+  {
+    "name": "Madurai",
+    "region": "Tamil Nadu",
+    "country": "India",
+    "lat": 9.93,
+    "lon": 78.12,
+    "url": "madurai-tamil-nadu-india"
+  }
+]
+```
+
+---
+
+## 6. POST /chat
 
 ### Purpose
 Accepts a natural-language weather query from the user, routes it through intent understanding, weather data retrieval, and an LLM to produce a conversational response.
@@ -257,7 +320,7 @@ curl -X POST http://localhost:8000/api/v1/chat \
 
 ---
 
-## 5. GET /alerts
+## 7. GET /alerts
 
 ### Purpose
 Returns active weather alerts (severe weather warnings, watches, advisories) for a location issued by meteorological authorities.
@@ -307,7 +370,7 @@ curl "http://localhost:8000/api/v1/alerts?lat=19.0760&lon=72.8777"
 
 ---
 
-## 6. GET /advisory
+## 8. GET /advisory
 
 ### Purpose
 Returns weather-based advisories with recommendations for travel, agriculture, health, or outdoor activities.
@@ -355,7 +418,7 @@ curl "http://localhost:8000/api/v1/advisory?lat=28.6139&lon=77.2090&category=tra
 
 ---
 
-## 7. GET /climate/trends
+## 9. GET /climate/trends
 
 ### Purpose
 Returns historical climate trend data for a location over a specified period. Used to display long-term climate analytics charts in the Flutter app.
@@ -409,7 +472,7 @@ curl "http://localhost:8000/api/v1/climate/trends?lat=28.6139&lon=77.2090&start_
 
 ---
 
-## 8. Error Responses
+## 10. Error Responses
 
 All errors follow a consistent JSON structure:
 

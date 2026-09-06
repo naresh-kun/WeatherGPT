@@ -23,7 +23,8 @@ class Settings(BaseSettings):
 
     # ---- Weather provider ------------------------------------
     weather_api_key: str = ""
-    weather_base_url: str = ""
+    weather_base_url: str = "https://api.weatherapi.com/v1"
+    weather_api_timeout: int = 15
 
     # ---- LLM provider ----------------------------------------
     llm_api_key: str = ""

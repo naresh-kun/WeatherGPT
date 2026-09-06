@@ -63,3 +63,13 @@ class WeatherForecast(BaseModel):
     hourly: List[HourlyForecast] = []
     daily: List[DailyForecast] = []
     units: str = Field("metric", description="Unit system used")
+
+
+class LocationSearchResult(BaseModel):
+    """Result of a location search."""
+    name: str = Field(..., description="Location name")
+    region: str = Field(..., description="Region or state")
+    country: str = Field(..., description="Country")
+    lat: float = Field(..., description="Latitude")
+    lon: float = Field(..., description="Longitude")
+    url: Optional[str] = Field(None, description="Location URL identifier")

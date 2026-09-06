@@ -115,15 +115,20 @@ Widget layers:
 
 ## 3. Data Flows
 
-### 3.1 Weather Flow
+### 3.1 Flow 1: Current Weather & Forecast
 
-```
-Flutter → GET /api/v1/weather/current?lat=&lon=
-       → FastAPI Weather Service
-       → External Weather Provider (e.g., OpenWeatherMap)
-       → FastAPI normalises response
-       → Flutter renders current conditions
-```
+**User action**: Opens the app / refreshes home screen.
+
+1. **Flutter**: `HomeScreen` requests data from `WeatherRepository`.
+2. **Flutter**: `WeatherRepository` calls `ApiService.getForecast()`.
+3. **Backend**: `GET /api/v1/weather/forecast` receives the request.
+4. **Backend**: `WeatherService` formats the query and calls `WeatherAPIClient`.
+5. **External**: `WeatherAPIClient` requests `forecast.json` from **WeatherAPI.com**.
+6. **Backend**: `WeatherService` parses the raw WeatherAPI JSON into `WeatherForecast` Pydantic models.
+7. **Flutter**: `WeatherRepository` parses the backend JSON into Dart `WeatherForecast` models.
+8. **Flutter**: `WeatherProvider` notifies the UI to rebuild.
+
+*(Phase 2 Note: The Flutter app currently returns mock data directly from `WeatherRepository` and skips steps 2-7. This will be connected in Phase 4).*
 
 ### 3.2 Chat Flow
 
@@ -139,13 +144,18 @@ Flutter → POST /api/v1/chat { message, language, location }
 
 ### 3.3 Alerts Flow
 
-```
-Weather Data (fetched from provider)
-       → FastAPI Alert Engine (rule-based evaluation)
-       → Matching rules trigger Alert objects
-       → GET /api/v1/alerts returns active alerts
-       → Flutter displays alert banners / notifications
-```
+**User action**: Navigates to the Alerts tab.
+
+1. **Flutter**: `AlertsScreen` requests data from `AlertsRepository`.
+2. **Flutter**: `AlertsRepository` calls `ApiService.getAlerts()`.
+3. **Backend**: `GET /api/v1/alerts` receives the request.
+4. **Backend**: `WeatherService` formats the query and calls `WeatherAPIClient`.
+5. **External**: `WeatherAPIClient` requests `forecast.json` (with `alerts=yes`) from **WeatherAPI.com**.
+6. **Backend**: `WeatherService` parses raw alerts into `Alert` Pydantic models.
+7. **Flutter**: `AlertsRepository` parses JSON into Dart models.
+8. **Flutter**: UI renders severity-colored alert cards.
+
+*(Phase 2 Note: The Flutter app currently returns mock data directly from `AlertsRepository` and skips steps 2-7. This will be connected in Phase 4).*
 
 ### 3.4 Advisory Flow
 

@@ -40,6 +40,31 @@ The API will be available at:
 
 ---
 
+## Configuration
+
+The backend requires the following environment variables (defined in `.env`):
+
+- `WEATHER_API_KEY`: Your WeatherAPI.com API key.
+- `WEATHER_BASE_URL`: Base URL for WeatherAPI (defaults to `https://api.weatherapi.com/v1`).
+- `WEATHER_API_TIMEOUT`: HTTP request timeout in seconds (default `15`).
+
+**Never commit your `.env` file or API keys.**
+
+---
+
+## Testing
+
+Run tests using pytest (mocks the WeatherAPI client):
+
+```bash
+cd backend/weathergpt_api
+.venv\Scripts\activate
+pip install -r requirements.txt
+pytest
+```
+
+---
+
 ## Project Structure
 
 ```
