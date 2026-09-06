@@ -1,3 +1,6 @@
 /// WeatherGPT — Alert Widgets
-/// Reusable widgets for displaying weather alerts. Not yet implemented.
+/// Reusable widgets for weather alerts.
+
 library;
+
+export 'alert_card.dart';

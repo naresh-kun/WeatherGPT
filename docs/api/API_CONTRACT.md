@@ -6,6 +6,8 @@
 
 This document is the single source of truth for the integration boundary between the Flutter frontend and the FastAPI backend. Both developers must agree before making any changes.
 
+> **Frontend integration status (Phase 2)**: The Flutter UI is complete but does **not** call these endpoints yet. All screens use local mock data. Phase 3+ will connect repositories/services to these endpoints as defined here.
+
 ---
 
 ## Table of Contents

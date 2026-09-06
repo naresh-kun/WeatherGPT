@@ -1,9 +1,27 @@
 # WeatherGPT — Conceptual Data Models
 
-**Version**: 0.1.0
+**Version**: 0.2.0
 
 This document defines the canonical conceptual data models shared between the Flutter frontend and the FastAPI backend.  
 Both sides implement their own representation of these models but must produce and consume JSON that matches this specification exactly.
+
+### Flutter Implementation (Phase 2)
+
+The Flutter app implements Dart model classes in `frontend/weathergpt_app/lib/models/`:
+
+| Conceptual Model | Dart Class | File |
+|---|---|---|
+| Location | `Location` | `location.dart` |
+| WeatherCurrent | `WeatherCurrent` | `weather.dart` |
+| HourlyForecast | `HourlyForecast` | `weather.dart` |
+| DailyForecast | `DailyForecast` | `weather.dart` |
+| WeatherForecast | `WeatherForecast` | `weather.dart` |
+| ChatRequest / ChatResponse / Conversation | `ChatMessage`, `Conversation` | `chat.dart` |
+| Alert | `WeatherAlert` (+ `AlertSeverity` enum) | `alert.dart` |
+| Advisory | `WeatherAdvisory` (+ `AdvisoryCategory` enum) | `advisory.dart` |
+| ClimateTrend | `ClimateTrend`, `ClimateDataPoint`, `ClimateDataset` | `climate.dart` |
+
+**Phase 2 behaviour**: Models are populated from mock data in `lib/data/mock_data.dart`, not from API JSON. UI-specific display fields (e.g. `displayTime`, `displayDay`, `displayDate`) are optional extensions on forecast/alert models for presentation convenience. These fields are not part of the API contract and will be derived from timestamps when real API data is integrated.
 
 ---
 

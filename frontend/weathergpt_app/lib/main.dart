@@ -1,12 +1,8 @@
 /// WeatherGPT — Application Entry Point
-///
-/// Minimal bootstrap that starts the app and loads the SplashScreen.
-/// Feature implementation begins after the initial scaffold is complete.
 
 import 'package:flutter/material.dart';
 import 'package:weathergpt_app/core/theme/app_theme.dart';
-import 'package:weathergpt_app/screens/splash/splash_screen.dart';
-
+import 'package:weathergpt_app/navigation/app_routes.dart';
 void main() {
   runApp(const WeatherGptApp());
 }
@@ -22,8 +18,9 @@ class WeatherGptApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
-      home: const SplashScreen(),
+      themeMode: ThemeMode.light,
+      initialRoute: AppRoutes.splash,
+      routes: AppRoutes.routes,
     );
   }
 }

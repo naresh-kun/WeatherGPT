@@ -1,8 +1,9 @@
 # WeatherGPT — System Architecture
 
-**Version**: 0.1.0  
+**Version**: 0.2.0  
 **Project Type**: SIH (Smart India Hackathon) Prototype  
-**Developers**: 2 (Frontend, Backend)
+**Developers**: 2 (Frontend, Backend)  
+**Current Phase**: Phase 2 — Flutter UI (mock data)
 
 ---
 
@@ -43,6 +44,40 @@
 ```
 
 **Critical Rule**: The Flutter frontend must **never** call the External Weather Provider or LLM Provider directly. All external API calls go through the FastAPI backend.
+
+**Phase 2 Note**: The Flutter UI is implemented and currently consumes **local mock data** from `frontend/weathergpt_app/lib/data/mock_data.dart`. No HTTP requests are made to the FastAPI backend yet. The backend remains at the Phase 1 scaffold state.
+
+---
+
+## 1.1 Phase 2 Frontend Architecture (Current)
+
+```
+SplashScreen
+     ↓ (2s transition)
+MainShell (Bottom Navigation — IndexedStack)
+     ├── HomeScreen          → MockData (weather, forecast preview, alerts preview)
+     ├── ChatScreen          → MockData.simulateChatResponse() (local keyword matching)
+     ├── AlertsScreen        → MockData.alerts
+     ├── AdvisoryScreen      → MockData.advisories
+     └── ClimateScreen       → MockData.climateDatasets (5/10/20 year mock datasets)
+
+Secondary routes (Navigator.push):
+     ├── ForecastScreen      → MockData.forecast
+     └── SettingsScreen      → Local state only (toggles, language UI)
+
+Widget layers:
+     Screens → Reusable Widgets (widgets/) → MockData / Models (models/)
+```
+
+| Component | Phase 2 Status |
+|---|---|
+| Screens & navigation | **Implemented** |
+| Reusable widgets | **Implemented** |
+| Dart data models | **Implemented** (aligned with API contract) |
+| Mock data layer | **Implemented** (`lib/data/mock_data.dart`) |
+| API service / repositories | **Placeholder** (Phase 1 scaffold, not wired) |
+| Backend HTTP calls | **Not implemented** |
+| Real weather / AI / alerts / climate | **Not implemented** |
 
 ---
 
@@ -202,7 +237,7 @@ The API contract in `docs/api/API_CONTRACT.md` is the **only** integration bound
 
 ## 8. Non-Goals (Current Phase)
 
-The following are **not** implemented in this initial scaffold:
+The following are **not** implemented:
 
 - Authentication / JWT / OAuth
 - Database infrastructure (PostgreSQL, Redis, etc.)
@@ -211,4 +246,6 @@ The following are **not** implemented in this initial scaffold:
 - Kubernetes / container orchestration
 - NWP / WRF / GFS numerical weather prediction
 - Satellite data processing
-- Complete UI screens
+- **Backend API integration from Flutter** (Phase 3+)
+- **Real weather, AI, alerts, advisory, or climate data** (Phase 3+)
+- **Tamil localization and STT/TTS** (later phases)
