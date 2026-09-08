@@ -4,8 +4,10 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:weathergpt_app/main.dart';
 import 'package:weathergpt_app/navigation/main_shell.dart';
 import 'package:weathergpt_app/screens/forecast/forecast_screen.dart';
+import 'package:weathergpt_app/screens/location/location_search_screen.dart';
 import 'package:weathergpt_app/screens/settings/settings_screen.dart';
 import 'package:weathergpt_app/screens/splash/splash_screen.dart';
 
@@ -21,6 +23,7 @@ class AppRoutes {
   static const String advisory = '/advisory';
   static const String climate = '/climate';
   static const String settings = '/settings';
+  static const String locationSearch = '/location-search';
 
   static Map<String, WidgetBuilder> get routes => {
         splash: (_) => const SplashScreen(),
@@ -31,5 +34,7 @@ class AppRoutes {
         advisory: (_) => const MainShell(initialIndex: 3),
         climate: (_) => const MainShell(initialIndex: 4),
         settings: (_) => const SettingsScreen(),
+        locationSearch: (_) =>
+            LocationSearchScreen(locationProvider: locationProvider),
       };
 }

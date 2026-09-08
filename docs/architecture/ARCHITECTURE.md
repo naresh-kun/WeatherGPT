@@ -1,9 +1,9 @@
 # WeatherGPT — System Architecture
 
-**Version**: 0.2.0  
+**Version**: 0.4.0  
 **Project Type**: SIH (Smart India Hackathon) Prototype  
 **Developers**: 2 (Frontend, Backend)  
-**Current Phase**: Phase 2 — Flutter UI (mock data)
+**Current Phase**: Phase 4 — Flutter ↔ Backend Integration
 
 ---
 
@@ -45,39 +45,39 @@
 
 **Critical Rule**: The Flutter frontend must **never** call the External Weather Provider or LLM Provider directly. All external API calls go through the FastAPI backend.
 
-**Phase 2 Note**: The Flutter UI is implemented and currently consumes **local mock data** from `frontend/weathergpt_app/lib/data/mock_data.dart`. No HTTP requests are made to the FastAPI backend yet. The backend remains at the Phase 1 scaffold state.
+**Phase 4 Note**: The Flutter UI is fully implemented. The core weather features (Home, Forecast, Alerts, Search) now consume **real backend data** via the FastAPI service. Advanced AI features (Chat, Climate, Advisory) remain on local mock data pending their backend implementation in later phases.
 
 ---
 
-## 1.1 Phase 2 Frontend Architecture (Current)
+## 1.1 Phase 4 Frontend Architecture (Current)
 
 ```
 SplashScreen
      ↓ (2s transition)
 MainShell (Bottom Navigation — IndexedStack)
-     ├── HomeScreen          → MockData (weather, forecast preview, alerts preview)
-     ├── ChatScreen          → MockData.simulateChatResponse() (local keyword matching)
-     ├── AlertsScreen        → MockData.alerts
-     ├── AdvisoryScreen      → MockData.advisories
-     └── ClimateScreen       → MockData.climateDatasets (5/10/20 year mock datasets)
+     ├── HomeScreen          → WeatherProvider & LocationProvider (Real API Data)
+     ├── ChatScreen          → MockData.simulateChatResponse() (Phase 5 planned)
+     ├── AlertsScreen        → WeatherProvider.alerts (Real API Data)
+     ├── AdvisoryScreen      → MockData.advisories (Phase 7 planned)
+     └── ClimateScreen       → MockData.climateDatasets (Phase 7 planned)
 
 Secondary routes (Navigator.push):
-     ├── ForecastScreen      → MockData.forecast
+     ├── ForecastScreen      → WeatherProvider.forecast (Real API Data)
+     ├── LocationSearchScreen→ LocationProvider (Real API Data)
      └── SettingsScreen      → Local state only (toggles, language UI)
 
 Widget layers:
-     Screens → Reusable Widgets (widgets/) → MockData / Models (models/)
+     Screens → Reusable Widgets (widgets/) → Providers (providers/) → API Service
 ```
 
-| Component | Phase 2 Status |
+| Component | Phase 4 Status |
 |---|---|
 | Screens & navigation | **Implemented** |
 | Reusable widgets | **Implemented** |
 | Dart data models | **Implemented** (aligned with API contract) |
-| Mock data layer | **Implemented** (`lib/data/mock_data.dart`) |
-| API service / repositories | **Placeholder** (Phase 1 scaffold, not wired) |
-| Backend HTTP calls | **Not implemented** |
-| Real weather / AI / alerts / climate | **Not implemented** |
+| API service / providers | **Implemented** (wired to backend) |
+| Backend HTTP calls | **Implemented** (for Weather/Alerts/Location) |
+| Real AI / advisory / climate | **Not implemented** (uses mock data) |
 
 ---
 
@@ -119,18 +119,16 @@ Widget layers:
 
 **User action**: Opens the app / refreshes home screen.
 
-1. **Flutter**: `HomeScreen` requests data from `WeatherRepository`.
-2. **Flutter**: `WeatherRepository` calls `ApiService.getForecast()`.
+1. **Flutter**: `HomeScreen` reads from `WeatherProvider`.
+2. **Flutter**: `WeatherProvider` calls `ApiService.getForecast()`.
 3. **Backend**: `GET /api/v1/weather/forecast` receives the request.
 4. **Backend**: `WeatherService` formats the query and calls `WeatherAPIClient`.
 5. **External**: `WeatherAPIClient` requests `forecast.json` from **WeatherAPI.com**.
 6. **Backend**: `WeatherService` parses the raw WeatherAPI JSON into `WeatherForecast` Pydantic models.
-7. **Flutter**: `WeatherRepository` parses the backend JSON into Dart `WeatherForecast` models.
-8. **Flutter**: `WeatherProvider` notifies the UI to rebuild.
+7. **Flutter**: `ApiService` parses the backend JSON into Dart `WeatherForecast` models.
+8. **Flutter**: `WeatherProvider` updates state and notifies UI to rebuild.
 
-*(Phase 2 Note: The Flutter app currently returns mock data directly from `WeatherRepository` and skips steps 2-7. This will be connected in Phase 4).*
-
-### 3.2 Chat Flow
+### 3.2 Chat Flow (Planned - Phase 5)
 
 ```
 Flutter → POST /api/v1/chat { message, language, location }
@@ -146,16 +144,15 @@ Flutter → POST /api/v1/chat { message, language, location }
 
 **User action**: Navigates to the Alerts tab.
 
-1. **Flutter**: `AlertsScreen` requests data from `AlertsRepository`.
-2. **Flutter**: `AlertsRepository` calls `ApiService.getAlerts()`.
+1. **Flutter**: `AlertsScreen` reads from `WeatherProvider`.
+2. **Flutter**: `WeatherProvider` calls `ApiService.getAlerts()`.
 3. **Backend**: `GET /api/v1/alerts` receives the request.
 4. **Backend**: `WeatherService` formats the query and calls `WeatherAPIClient`.
 5. **External**: `WeatherAPIClient` requests `forecast.json` (with `alerts=yes`) from **WeatherAPI.com**.
 6. **Backend**: `WeatherService` parses raw alerts into `Alert` Pydantic models.
-7. **Flutter**: `AlertsRepository` parses JSON into Dart models.
+7. **Flutter**: `ApiService` parses JSON into Dart models.
 8. **Flutter**: UI renders severity-colored alert cards.
 
-*(Phase 2 Note: The Flutter app currently returns mock data directly from `AlertsRepository` and skips steps 2-7. This will be connected in Phase 4).*
 
 ### 3.4 Advisory Flow
 

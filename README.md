@@ -9,29 +9,27 @@ A conversational weather intelligence prototype providing real-time weather data
 | Phase | Status | Description |
 |---|---|---|
 | Phase 1 | **Complete** | Project scaffold, API contract, backend structure |
-| Phase 2 | **Complete** | Flutter UI with mock data (no backend integration) |
-| Phase 3+ | Planned | Backend API integration, real weather data, AI |
+| Phase 2 | **Complete** | Flutter UI with mock data |
+| Phase 3 | **Complete** | FastAPI backend with real Weather API integration |
+| Phase 4 | **Complete** | Flutter frontend connected to real backend data |
+| Phase 5+ | Planned | AI Chat, Alerts Engine, Advisory, Climate |
 
-### Phase 2 — Frontend Status
+### Phase 4 — Frontend ↔ Backend Integration Status
 
-The Flutter application (`frontend/weathergpt_app/`) now includes a **polished UI prototype** with:
+The Flutter application (`frontend/weathergpt_app/`) is now integrated with the FastAPI backend:
 
-- **Screens implemented**: Splash, Home, WeatherGPT Chat, Forecast, Alerts, Advisory, Climate, Settings
-- **Navigation**: Bottom navigation bar (Home, WeatherGPT, Alerts, Advisory, Climate) + Settings from Home
-- **Data source**: Centralized **mock/dummy data** in `lib/data/mock_data.dart`
-- **Charts**: Temperature and rainfall trends using `fl_chart`
+- **Real Data**: Home, Forecast, and Alerts screens now display live data via the FastAPI backend.
+- **Location Services**: Real GPS integration and backend-powered location search are active.
+- **Navigation**: Location search is accessible directly from the home screen header.
 
-**Not yet implemented** (deferred to later phases):
+**Not yet implemented / Still Mocked** (deferred to later phases):
 
-- Weather API integration
-- FastAPI backend calls
-- LLM / AI chat backend
-- Real alerts engine
-- Real advisory calculations
-- Real climate backend processing
-- Tamil localization
-- Speech-to-text / text-to-speech
-- Real GPS / location services
+- LLM / AI chat backend (Phase 5)
+- Real smart alerts engine (Phase 6)
+- Real advisory calculations (Phase 7)
+- Real climate backend processing (Phase 7)
+- Tamil localization (Phase 8)
+- Speech-to-text / text-to-speech (Phase 9)
 
 ---
 
@@ -39,24 +37,24 @@ The Flutter application (`frontend/weathergpt_app/`) now includes a **polished U
 
 ```
 Flutter App (frontend/weathergpt_app/)
-        ↓  REST / JSON  [Phase 3+ — not connected yet]
+        ↓  REST / JSON
 FastAPI Backend (backend/weathergpt_api/)
         ├── Weather Service
-        ├── AI Service
-        ├── Alert Engine
-        ├── Advisory Service
-        ├── Climate Service
-        └── Localization Service
+        ├── AI Service            [Planned]
+        ├── Alert Engine          [Planned]
+        ├── Advisory Service      [Planned]
+        ├── Climate Service       [Planned]
+        └── Localization Service  [Planned]
               ↓
         External Weather Provider
-        LLM Provider
-        Historical Dataset
+        LLM Provider              [Planned]
+        Historical Dataset        [Planned]
 ```
 
-The Flutter frontend communicates **only** with the FastAPI backend (once integrated).  
+The Flutter frontend communicates **only** with the FastAPI backend.  
 The frontend must **never** call the weather provider or LLM provider directly.
 
-**Current Phase 2 behaviour**: The Flutter UI renders mock data locally. No HTTP calls are made to the backend.
+**Current Phase 4 behaviour**: The Flutter UI fetches real weather data from the backend. Chat, Advisory, and Climate features still render local mock data.
 
 ---
 
@@ -91,9 +89,9 @@ README.md
 ```
 WeatherGPT/
 ├── frontend/
-│   └── weathergpt_app/        # Flutter application (Phase 2 UI complete)
+│   └── weathergpt_app/        # Flutter application (Phase 4 integrated)
 ├── backend/
-│   └── weathergpt_api/        # FastAPI application (Phase 1 scaffold)
+│   └── weathergpt_api/        # FastAPI application (Phase 3 complete)
 ├── docs/
 │   ├── architecture/
 │   │   └── ARCHITECTURE.md    # System design & data flows
@@ -131,7 +129,7 @@ flutter pub get
 flutter run
 ```
 
-The Flutter app launches with mock data. No backend connection is required for Phase 2.
+The Flutter app requires the backend to be running to fetch live weather data.
 
 ---
 
@@ -156,21 +154,21 @@ See [`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md) for
 
 ---
 
-## Implementation Status (Post-Phase 3)
+## Implementation Status (Post-Phase 4)
 
 | Component | Status |
 |---|---|
 | FastAPI Backend Core | ✅ Implemented |
 | WeatherAPI.com Integration | ✅ Implemented (Current, Forecast, Hourly, Search, Alerts) |
-| Flutter UI | ✅ Mocked (Uses local data for UI testing) |
-| Flutter ↔ Backend Integration | 🚧 Planned for Phase 4 |
+| Flutter UI | ✅ Implemented |
+| Flutter ↔ Backend Integration | ✅ Implemented (Phase 4 Complete) |
 | WeatherGPT LLM AI | 🚧 Planned for Phase 5 |
 | Smart Alert Rule Engine | 🚧 Planned for Phase 6 |
 | Climate Analytics | 🚧 Planned for Phase 7 |
 | Localization (Tamil) | 🚧 Planned for Phase 8 |
 | Voice Interaction | 🚧 Planned for Phase 9 |
 
-**Important Note**: The Flutter app currently runs on mock data (Phase 2 state). The backend provides real weather data (Phase 3 state) but they are not connected yet.
+**Important Note**: The core weather features (Home, Forecast, Alerts, Search) are fully integrated with the real backend. Advanced features (Chat, Advisory, Climate) are currently mocked pending future phases.
 
 ---
 

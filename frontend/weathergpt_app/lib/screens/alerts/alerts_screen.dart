@@ -1,15 +1,48 @@
 /// WeatherGPT — Alerts Screen
-/// Active weather alerts dashboard with mock data.
+/// Phase 4: real weather alerts from FastAPI backend.
 
 import 'package:flutter/material.dart';
 import 'package:weathergpt_app/core/theme/app_theme.dart';
-import 'package:weathergpt_app/data/mock_data.dart';
+import 'package:weathergpt_app/main.dart';
 import 'package:weathergpt_app/models/alert.dart';
+import 'package:weathergpt_app/providers/weather_provider.dart';
 import 'package:weathergpt_app/widgets/alerts/alert_widgets.dart';
 import 'package:weathergpt_app/widgets/common/common_widgets.dart';
 
-class AlertsScreen extends StatelessWidget {
+class AlertsScreen extends StatefulWidget {
   const AlertsScreen({super.key});
+
+  @override
+  State<AlertsScreen> createState() => _AlertsScreenState();
+}
+
+class _AlertsScreenState extends State<AlertsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    weatherProvider.addListener(_onWeatherChanged);
+    locationProvider.addListener(_onLocationChanged);
+  }
+
+  @override
+  void dispose() {
+    weatherProvider.removeListener(_onWeatherChanged);
+    locationProvider.removeListener(_onLocationChanged);
+    super.dispose();
+  }
+
+  void _onWeatherChanged() {
+    if (mounted) setState(() {});
+  }
+
+  void _onLocationChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _refresh() async {
+    final loc = locationProvider.selectedLocation;
+    await weatherProvider.loadWeather(loc.lat, loc.lon);
+  }
 
   void _showAlertDetail(BuildContext context, WeatherAlert alert) {
     showModalBottomSheet(
@@ -47,46 +80,96 @@ class AlertsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final alerts = MockData.alerts;
+    final state = weatherProvider.state;
+    final loc = locationProvider.selectedLocation;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Weather Alerts'),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(AppDimensions.paddingMedium),
-        children: [
-          Text(
-            '${alerts.length} active alerts for ${MockData.currentLocation.displayName}',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: AppDimensions.paddingMedium),
-          ...alerts.map(
-            (alert) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: AlertCard(
-                alert: alert,
-                onTap: () => _showAlertDetail(context, alert),
-              ),
-            ),
-          ),
-          const SizedBox(height: AppDimensions.paddingLarge),
-          const SectionHeader(title: 'State Components'),
-          const CommonCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Reusable state widgets (for future API integration)',
-                  style: TextStyle(fontWeight: FontWeight.w500),
-                ),
-                SizedBox(height: 12),
-                SizedBox(height: 80, child: LoadingWidget(message: 'Fetching alerts...')),
-              ],
-            ),
-          ),
-        ],
+      body: RefreshIndicator(
+        onRefresh: _refresh,
+        child: _buildBody(context, state, loc.displayName),
       ),
     );
+  }
+
+  Widget _buildBody(
+      BuildContext context, WeatherState state, String locationName) {
+    switch (state) {
+      case WeatherState.initial:
+      case WeatherState.loading:
+        return const LoadingWidget(message: 'Fetching alerts...');
+
+      case WeatherState.error:
+        return ErrorDisplayWidget(
+          message: weatherProvider.errorMessage ??
+              'Unable to fetch alerts right now.\nPlease check your connection and try again.',
+          onRetry: _refresh,
+        );
+
+      case WeatherState.success:
+        final alerts = weatherProvider.alerts;
+        if (alerts.isEmpty) {
+          return ListView(
+            // Wrapping in ListView allows pull-to-refresh
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+                child: Text(
+                  'Alerts for $locationName',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
+              const SizedBox(height: AppDimensions.paddingLarge),
+              Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.check_circle_outline,
+                      size: 64,
+                      color: Colors.green,
+                    ),
+                    const SizedBox(height: AppDimensions.paddingMedium),
+                    Text(
+                      'No active weather alerts',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'All clear for $locationName',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        }
+
+        return ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+          children: [
+            Text(
+              '${alerts.length} active ${alerts.length == 1 ? 'alert' : 'alerts'} for $locationName',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: AppDimensions.paddingMedium),
+            ...alerts.map(
+              (alert) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: AlertCard(
+                  alert: alert,
+                  onTap: () => _showAlertDetail(context, alert),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppDimensions.paddingLarge),
+          ],
+        );
+    }
   }
 }
