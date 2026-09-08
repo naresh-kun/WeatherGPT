@@ -1,16 +1,17 @@
 /// WeatherGPT — Storage Service
-/// Local persistence (SharedPreferences, cache).
-/// Not yet implemented — placeholder only.
+/// Local persistence using SharedPreferences.
 library;
 
-class StorageService {
-  // TODO: Implement using shared_preferences package.
+import 'package:shared_preferences/shared_preferences.dart';
 
+class StorageService {
   Future<void> saveString(String key, String value) async {
-    throw UnimplementedError('StorageService not yet implemented.');
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(key, value);
   }
 
   Future<String?> getString(String key) async {
-    throw UnimplementedError('StorageService not yet implemented.');
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(key);
   }
 }

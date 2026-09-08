@@ -1,4 +1,6 @@
 /// WeatherGPT — State Providers
 /// Reactive state management layer.
-/// Not yet implemented — placeholder only.
 library;
+
+export 'weather_provider.dart';
+export 'location_provider.dart';
