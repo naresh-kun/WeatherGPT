@@ -65,6 +65,15 @@ pytest
 
 ---
 
+## CORS Configuration
+
+The API is configured to allow Cross-Origin Resource Sharing (CORS) for development environments.
+It uses an `allow_origin_regex` to safely allow requests from:
+- `localhost` and `127.0.0.1` on any port (for Flutter Web development).
+- `10.0.2.2` on any port (for Android Emulator access).
+
+---
+
 ## Project Structure
 
 ```

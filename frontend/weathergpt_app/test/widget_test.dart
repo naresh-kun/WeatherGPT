@@ -17,5 +17,8 @@ void main() {
 
     expect(find.text('WeatherGPT'), findsOneWidget);
     expect(find.text('Your Intelligent Weather Assistant'), findsOneWidget);
+
+    // Exhaust the splash screen timer before the test ends
+    await tester.pump(const Duration(seconds: 3));
   });
 }
