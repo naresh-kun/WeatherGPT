@@ -80,6 +80,49 @@ class ApiService {
     }
   }
 
+  // --- generic POST ---
+
+  Future<dynamic> _post(String endpoint, Map<String, dynamic> body) async {
+    final uri = Uri.parse('$baseUrl$endpoint');
+
+    try {
+      final response = await _client
+          .post(
+            uri,
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(body),
+          )
+          .timeout(AppConfig.apiTimeout);
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return json.decode(response.body);
+      } else if (response.statusCode == 400) {
+        final detail = _extractDetail(response.body);
+        throw ApiException(detail ?? 'Invalid request.');
+      } else if (response.statusCode >= 500) {
+        throw const ServiceUnavailableException();
+      } else {
+        throw ApiException(
+            'Unexpected error (${response.statusCode}). Please try again.');
+      }
+    } on TimeoutException {
+      throw const ApiTimeoutException();
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw const ApiConnectionException();
+    }
+  }
+
+  String? _extractDetail(String responseBody) {
+    try {
+      final decoded = json.decode(responseBody) as Map<String, dynamic>;
+      return decoded['detail'] as String?;
+    } catch (_) {
+      return null;
+    }
+  }
+
   // --- Weather endpoints ---
 
   Future<WeatherCurrent> getCurrentWeather(double lat, double lon) async {
@@ -125,5 +168,29 @@ class ApiService {
       'lon': lon.toString(),
     });
     return WeatherAlertsResponse.fromJson(data as Map<String, dynamic>);
+  }
+
+  // --- Chat endpoint (Phase 5) ---
+
+  /// Send a natural-language message to the WeatherGPT AI chat backend.
+  ///
+  /// The [lat]/[lon] are the user's currently selected location and are
+  /// included in every request so the backend can ground the answer in
+  /// real weather data. The Gemini API key is **never** sent from Flutter.
+  Future<ChatApiResponse> sendChatMessage({
+    required String message,
+    required double lat,
+    required double lon,
+    String? conversationId,
+  }) async {
+    final body = ChatApiRequest(
+      message: message,
+      lat: lat,
+      lon: lon,
+      conversationId: conversationId,
+    ).toJson();
+
+    final data = await _post('/chat', body);
+    return ChatApiResponse.fromJson(data as Map<String, dynamic>);
   }
 }

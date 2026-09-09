@@ -6,8 +6,8 @@
 
 This document is the single source of truth for the integration boundary between the Flutter frontend and the FastAPI backend. Both developers must agree before making any changes.
 
-> **Frontend integration status (Phase 2)**: The Flutter UI is complete but does **not** call these endpoints yet. All screens use local mock data. Phase 4+ will connect repositories/services to these endpoints as defined here.
-> **Backend implementation status (Phase 3)**: Weather endpoints (`/current`, `/forecast`, `/hourly`, `/search`, `/alerts`) are fully implemented and backed by real WeatherAPI.com data.
+> **Frontend integration status (Phase 4+5)**: Weather endpoints fully integrated. Chat endpoint integrated as of Phase 5.
+> **Backend implementation status (Phase 3+5)**: Weather endpoints (`/current`, `/forecast`, `/hourly`, `/search`, `/alerts`) are fully implemented. **`POST /chat` is real as of Phase 5** — powered by Google Gemini 3.7 Flash with real weather grounding.
 
 ---
 
@@ -255,8 +255,10 @@ Searches for locations by name, returning coordinates.
 
 ## 6. POST /chat
 
+> **Implementation status**: **[REAL — Phase 5]** — powered by Google Gemini 3.7 Flash grounded in real-time WeatherAPI data. The Gemini API key is backend-only and never exposed to the client.
+
 ### Purpose
-Accepts a natural-language weather query from the user, routes it through intent understanding, weather data retrieval, and an LLM to produce a conversational response.
+Accepts a natural-language weather query from the user, fetches real-time weather for the provided location via WeatherService, and generates a conversational AI response via Google Gemini.
 
 ### HTTP Method
 `POST`
@@ -307,9 +309,9 @@ None (body-only).
 ### Possible Errors
 | Status | Description |
 |---|---|
-| `400 Bad Request` | Empty or invalid message |
-| `422 Unprocessable Entity` | Schema validation failure |
-| `503 Service Unavailable` | LLM provider unreachable |
+| `400 Bad Request` | Empty or invalid message / out-of-range coordinates |
+| `422 Unprocessable Entity` | Schema validation failure (missing `message` field) |
+| `503 Service Unavailable` | Gemini provider unreachable or API key not configured |
 
 ### Example Request
 ```bash

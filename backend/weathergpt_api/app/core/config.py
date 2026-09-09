@@ -26,8 +26,10 @@ class Settings(BaseSettings):
     weather_base_url: str = "https://api.weatherapi.com/v1"
     weather_api_timeout: int = 15
 
-    # ---- LLM provider ----------------------------------------
-    llm_api_key: str = ""
+    # ---- LLM / Gemini provider (Phase 5) --------------------
+    gemini_api_key: str = ""    # Mapped from GEMINI_API_KEY env var
+    gemini_model: str = "gemini-3.7-flash"  # Google Gemini 3.7 Flash (current)
+    llm_api_key: str = ""       # Legacy alias — kept for backward compatibility
 
     # ---- Server ----------------------------------------------
     host: str = "0.0.0.0"

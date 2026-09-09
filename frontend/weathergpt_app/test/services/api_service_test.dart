@@ -295,4 +295,101 @@ void main() {
       expect(response, isNotNull);
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // Phase 5: ApiService.sendChatMessage
+  // ---------------------------------------------------------------------------
+
+  const chatResponseJson = {
+    'message': 'It is 31°C and partly cloudy.',
+    'conversation_id': 'conv-123',
+    'language': 'en',
+    'suggestions': <String>[],
+  };
+
+  group('ApiService.sendChatMessage', () {
+    test('parses a valid chat response', () async {
+      final service = ApiService(
+        baseUrl: baseUrl,
+        client: _mockClient(chatResponseJson),
+      );
+
+      final response = await service.sendChatMessage(
+        message: 'What is the weather?',
+        lat: 9.93,
+        lon: 78.12,
+      );
+
+      expect(response.message, 'It is 31°C and partly cloudy.');
+      expect(response.conversationId, 'conv-123');
+      expect(response.language, 'en');
+      expect(response.suggestions, isEmpty);
+    });
+
+    test('sends location in the request body', () async {
+      Map<String, dynamic>? capturedBody;
+
+      final client = MockClient((request) async {
+        capturedBody = json.decode(request.body) as Map<String, dynamic>;
+        return http.Response(
+          json.encode(chatResponseJson),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+
+      final service = ApiService(baseUrl: baseUrl, client: client);
+      await service.sendChatMessage(
+          message: 'Will it rain?', lat: 9.93, lon: 78.12);
+
+      expect(capturedBody, isNotNull);
+      expect(capturedBody!['location']['lat'], 9.93);
+      expect(capturedBody!['location']['lon'], 78.12);
+    });
+
+    test('request body does NOT contain any API key', () async {
+      Map<String, dynamic>? capturedBody;
+
+      final client = MockClient((request) async {
+        capturedBody = json.decode(request.body) as Map<String, dynamic>;
+        return http.Response(
+          json.encode(chatResponseJson),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+
+      final service = ApiService(baseUrl: baseUrl, client: client);
+      await service.sendChatMessage(
+          message: 'Test', lat: 9.93, lon: 78.12);
+
+      // Gemini key must NEVER appear in the Flutter → backend request
+      final bodyStr = json.encode(capturedBody);
+      expect(bodyStr.contains('gemini'), isFalse);
+      expect(bodyStr.contains('api_key'), isFalse);
+      expect(bodyStr.contains('GEMINI'), isFalse);
+    });
+
+    test('throws ServiceUnavailableException on 503', () async {
+      final service = ApiService(
+        baseUrl: baseUrl,
+        client: _errorClient(503),
+      );
+
+      expect(
+        () => service.sendChatMessage(message: 'Test', lat: 9.93, lon: 78.12),
+        throwsA(isA<ServiceUnavailableException>()),
+      );
+    });
+
+    test('throws ApiConnectionException on network failure', () async {
+      final client = MockClient((_) async => throw Exception('network error'));
+      final service = ApiService(baseUrl: baseUrl, client: client);
+
+      expect(
+        () => service.sendChatMessage(message: 'Test', lat: 9.93, lon: 78.12),
+        throwsA(isA<ApiConnectionException>()),
+      );
+    });
+  });
 }

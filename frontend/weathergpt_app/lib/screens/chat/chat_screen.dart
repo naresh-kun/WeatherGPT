@@ -1,10 +1,11 @@
 /// WeatherGPT — Chat Screen
-/// Conversational weather query interface with local mock responses.
+/// Conversational weather query interface powered by the real Gemini AI backend.
+/// Phase 5: Replaces mock responses with real API calls via ChatProvider.
 
 import 'package:flutter/material.dart';
 import 'package:weathergpt_app/core/theme/app_theme.dart';
 import 'package:weathergpt_app/data/mock_data.dart';
-import 'package:weathergpt_app/models/chat.dart';
+import 'package:weathergpt_app/main.dart' show chatProvider, locationProvider;
 import 'package:weathergpt_app/widgets/chat/chat_widgets.dart';
 import 'package:weathergpt_app/widgets/common/common_widgets.dart';
 
@@ -25,12 +26,20 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final List<ChatMessage> _messages = List.from(MockData.initialChatMessages);
-  bool _isTyping = false;
 
   @override
   void initState() {
     super.initState();
+
+    // Set initial messages for warm UX start (Phase 2 mock messages)
+    if (chatProvider.messages.isEmpty) {
+      chatProvider.setInitialMessages(MockData.initialChatMessages);
+    }
+
+    // Listen to provider changes
+    chatProvider.addListener(_onChatUpdate);
+    locationProvider.addListener(_onChatUpdate);
+
     if (widget.initialMessage != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _controller.text = widget.initialMessage!;
@@ -41,9 +50,18 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
+    chatProvider.removeListener(_onChatUpdate);
+    locationProvider.removeListener(_onChatUpdate);
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onChatUpdate() {
+    if (mounted) {
+      setState(() {});
+      _scrollToBottom();
+    }
   }
 
   void _scrollToBottom() {
@@ -60,32 +78,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _sendMessage([String? text]) async {
     final message = (text ?? _controller.text).trim();
-    if (message.isEmpty) return;
+    if (message.isEmpty) return; // spec: do not send empty messages
 
-    setState(() {
-      _messages.add(ChatMessage(
-        role: ChatRole.user,
-        content: message,
-        timestamp: DateTime.now().millisecondsSinceEpoch,
-      ));
-      _controller.clear();
-      _isTyping = true;
-    });
-    _scrollToBottom();
-
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    if (!mounted) return;
-
-    setState(() {
-      _isTyping = false;
-      _messages.add(ChatMessage(
-        role: ChatRole.assistant,
-        content: MockData.simulateChatResponse(message),
-        timestamp: DateTime.now().millisecondsSinceEpoch,
-      ));
-    });
-    _scrollToBottom();
+    _controller.clear();
+    await chatProvider.sendMessage(message, locationProvider.selectedLocation);
   }
 
   void _onVoiceTap() {
@@ -99,6 +95,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final messages = chatProvider.messages;
+    final isLoading = chatProvider.isLoading;
+    final error = chatProvider.errorMessage;
+
     return Scaffold(
       appBar: AppBar(
         title: Column(
@@ -117,13 +117,23 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       body: Column(
         children: [
+          // Error banner with retry
+          if (error != null)
+            _ErrorBanner(
+              message: error,
+              onRetry: () => chatProvider.retry(),
+              onDismiss: () => chatProvider.dismissError(),
+            ),
+
+          // Message list
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
               padding: const EdgeInsets.all(AppDimensions.paddingMedium),
-              itemCount: _messages.length + (_isTyping ? 1 : 0),
+              itemCount: messages.length + (isLoading ? 1 : 0),
               itemBuilder: (context, index) {
-                if (_isTyping && index == _messages.length) {
+                // Typing indicator
+                if (isLoading && index == messages.length) {
                   return const Padding(
                     padding: EdgeInsets.only(left: 8, bottom: 8),
                     child: Row(
@@ -134,15 +144,17 @@ class _ChatScreenState extends State<ChatScreen> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ),
                         SizedBox(width: 8),
-                        Text('WeatherGPT is typing...'),
+                        Text('WeatherGPT is thinking...'),
                       ],
                     ),
                   );
                 }
-                return ChatBubble(message: _messages[index]);
+                return ChatBubble(message: messages[index]);
               },
             ),
           ),
+
+          // Suggestion chips
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMedium),
             child: SingleChildScrollView(
@@ -153,13 +165,15 @@ class _ChatScreenState extends State<ChatScreen> {
                     padding: const EdgeInsets.only(right: 8, bottom: 8),
                     child: SuggestionChip(
                       label: suggestion,
-                      onTap: () => _sendMessage(suggestion),
+                      onTap: isLoading ? null : () => _sendMessage(suggestion),
                     ),
                   );
                 }).toList(),
               ),
             ),
           ),
+
+          // Input bar
           Container(
             padding: const EdgeInsets.fromLTRB(
               AppDimensions.paddingMedium,
@@ -184,7 +198,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         contentPadding: EdgeInsets.symmetric(horizontal: 16),
                       ),
                       textInputAction: TextInputAction.send,
-                      onSubmitted: (_) => _sendMessage(),
+                      onSubmitted: isLoading ? null : (_) => _sendMessage(),
                     ),
                   ),
                   IconButton(
@@ -193,19 +207,67 @@ class _ChatScreenState extends State<ChatScreen> {
                     tooltip: 'Voice input',
                   ),
                   Container(
-                    decoration: const BoxDecoration(
-                      color: AppColors.primary,
+                    decoration: BoxDecoration(
+                      color: isLoading ? AppColors.divider : AppColors.primary,
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(
                       icon: const Icon(Icons.send, color: Colors.white),
-                      onPressed: () => _sendMessage(),
+                      onPressed: isLoading ? null : () => _sendMessage(),
                       tooltip: 'Send',
                     ),
                   ),
                 ],
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Error Banner Widget
+// ---------------------------------------------------------------------------
+
+class _ErrorBanner extends StatelessWidget {
+  const _ErrorBanner({
+    required this.message,
+    required this.onRetry,
+    required this.onDismiss,
+  });
+
+  final String message;
+  final VoidCallback onRetry;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: Colors.red.shade50,
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline, color: Colors.red, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: Colors.red, fontSize: 13),
+            ),
+          ),
+          TextButton(
+            onPressed: onRetry,
+            child: const Text('Retry', style: TextStyle(color: Colors.red)),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, size: 18, color: Colors.red),
+            onPressed: onDismiss,
+            tooltip: 'Dismiss',
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
           ),
         ],
       ),

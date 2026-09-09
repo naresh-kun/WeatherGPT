@@ -1,9 +1,9 @@
 # WeatherGPT — System Architecture
 
-**Version**: 0.4.0  
+**Version**: 0.5.0  
 **Project Type**: SIH (Smart India Hackathon) Prototype  
 **Developers**: 2 (Frontend, Backend)  
-**Current Phase**: Phase 4 — Flutter ↔ Backend Integration
+**Current Phase**: Phase 5 — AI Chat Integration (Gemini 3.7 Flash)
 
 ---
 
@@ -16,7 +16,7 @@
 │                                          │
 │  Screens → Providers → Repositories     │
 │       → Services → API Client           │
-└──────────────────┬──────────────────────┘
+└──────────────────┼──────────────────────┘
                    │
               REST / JSON
            (HTTP over HTTPS)
@@ -26,37 +26,39 @@
 │         (backend/weathergpt_api/)        │
 │                                          │
 │  Routes → Services → Repositories       │
-│  ├── Weather Service                     │
-│  ├── AI Service                          │
-│  ├── Alert Engine                        │
-│  ├── Advisory Service                    │
-│  ├── Climate Service                     │
-│  └── Localization Service               │
+│  ├── Weather Service   [REAL — Phase 3]  │
+│  ├── AI Service         [REAL — Phase 5]  │
+│  ├── Alert Engine       [PLANNED — Ph.6] │
+│  ├── Advisory Service   [PLANNED — Ph.7] │
+│  ├── Climate Service    [PLANNED — Ph.7] │
+│  └── Localization        [PLANNED — Ph.8] │
 └─────────────────────────────────────────┘
           │              │
           ▼              ▼
-  External Weather    LLM Provider
-     Provider         (e.g., Gemini)
+  External Weather   Gemini 3.7 Flash
+     Provider        (google-genai SDK)
+  [REAL — Phase 3]  [REAL — Phase 5]
           │
           ▼
     Historical
       Dataset
+    [PLANNED]
 ```
 
 **Critical Rule**: The Flutter frontend must **never** call the External Weather Provider or LLM Provider directly. All external API calls go through the FastAPI backend.
 
-**Phase 4 Note**: The Flutter UI is fully implemented. The core weather features (Home, Forecast, Alerts, Search) now consume **real backend data** via the FastAPI service. Advanced AI features (Chat, Climate, Advisory) remain on local mock data pending their backend implementation in later phases.
+**Phase 5 Note**: The ChatScreen now uses real `ChatProvider` → `ApiService.sendChatMessage` → `POST /api/v1/chat` → `WeatherService` → `GeminiChatService`. The Gemini API key is exclusively stored in the backend `.env` and never sent to Flutter.
 
 ---
 
-## 1.1 Phase 4 Frontend Architecture (Current)
+## 1.1 Phase 5 Frontend Architecture (Current)
 
 ```
 SplashScreen
      ↓ (2s transition)
 MainShell (Bottom Navigation — IndexedStack)
      ├── HomeScreen          → WeatherProvider & LocationProvider (Real API Data)
-     ├── ChatScreen          → MockData.simulateChatResponse() (Phase 5 planned)
+     ├── ChatScreen          → ChatProvider → POST /api/v1/chat (Gemini AI) [REAL — Phase 5]
      ├── AlertsScreen        → WeatherProvider.alerts (Real API Data)
      ├── AdvisoryScreen      → MockData.advisories (Phase 7 planned)
      └── ClimateScreen       → MockData.climateDatasets (Phase 7 planned)
@@ -70,14 +72,15 @@ Widget layers:
      Screens → Reusable Widgets (widgets/) → Providers (providers/) → API Service
 ```
 
-| Component | Phase 4 Status |
+| Component | Phase 5 Status |
 |---|---|
 | Screens & navigation | **Implemented** |
 | Reusable widgets | **Implemented** |
 | Dart data models | **Implemented** (aligned with API contract) |
-| API service / providers | **Implemented** (wired to backend) |
-| Backend HTTP calls | **Implemented** (for Weather/Alerts/Location) |
-| Real AI / advisory / climate | **Not implemented** (uses mock data) |
+| API service / providers | **Implemented** (wired to backend; ChatProvider added Phase 5) |
+| Backend HTTP calls | **Implemented** (Weather/Alerts/Location/Chat) |
+| Real AI chat (Gemini) | **Implemented [Phase 5]** |
+| Real advisory / climate | **Not implemented** (uses mock data) |
 
 ---
 
