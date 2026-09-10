@@ -1,4 +1,5 @@
 /// Alert model aligned with docs/api/DATA_MODELS.md.
+library;
 
 enum AlertSeverity { minor, moderate, severe, extreme }
 
@@ -13,6 +14,8 @@ class WeatherAlert {
     required this.startTime,
     this.endTime,
     this.source,
+    this.relevantValue,
+    this.threshold,
     this.displayDate,
   });
 
@@ -25,9 +28,27 @@ class WeatherAlert {
   final int startTime;
   final int? endTime;
   final String? source;
+  final double? relevantValue;
+  final double? threshold;
 
   /// UI-friendly date/time label.
   final String? displayDate;
+
+  /// Formatted representation of the triggering weather value.
+  String? get formattedRelevantValue {
+    if (relevantValue == null) return null;
+    final type = alertType.toLowerCase();
+    if (type == 'heat' || type == 'heatwave') {
+      return '${relevantValue!.toStringAsFixed(1)}°C';
+    } else if (type == 'rain' || type == 'flood') {
+      return '${relevantValue!.toStringAsFixed(0)}%';
+    } else if (type == 'wind' || type == 'cyclone') {
+      return '${relevantValue!.toStringAsFixed(0)} km/h';
+    } else if (type == 'uv') {
+      return 'UV ${relevantValue!.toStringAsFixed(0)}';
+    }
+    return relevantValue!.toString();
+  }
 
   factory WeatherAlert.fromJson(Map<String, dynamic> json) {
     final sevStr = (json['severity'] as String?)?.toLowerCase() ?? 'minor';
@@ -53,6 +74,8 @@ class WeatherAlert {
       startTime: (json['start_time'] as num?)?.toInt() ?? 0,
       endTime: (json['end_time'] as num?)?.toInt(),
       source: json['source'] as String?,
+      relevantValue: (json['relevant_value'] as num?)?.toDouble(),
+      threshold: (json['threshold'] as num?)?.toDouble(),
     );
   }
 }

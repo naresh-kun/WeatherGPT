@@ -71,7 +71,27 @@ MOCK_FORECAST_RESPONSE = {
     }
 }
 
-MOCK_ALERTS_RESPONSE = {
+# Phase 6: The smart engine calls get_current + get_forecast + get_alerts concurrently.
+# We supply a full forecast response that embeds the native alert for test_get_alerts.
+MOCK_ALERTS_FORECAST_RESPONSE = {
+    "location": MOCK_CURRENT_RESPONSE["location"],
+    "forecast": {
+        "forecastday": [
+            {
+                "date": "2023-08-25",
+                "day": {
+                    "maxtemp_c": 32.0, "mintemp_c": 24.0,
+                    "maxwind_kph": 15.0, "avghumidity": 50,
+                    "daily_chance_of_rain": 20,
+                    "condition": {"text": "Sunny", "icon": ""},
+                    "uv": 5.0,
+                },
+                "astro": {"sunrise_epoch": 1690000000, "sunset_epoch": 1690040000},
+                "hour": [],
+            }
+        ]
+    },
+    # Native WeatherAPI alert embedded in the forecast (for test_get_alerts)
     "alerts": {
         "alert": [
             {
@@ -82,10 +102,10 @@ MOCK_ALERTS_RESPONSE = {
                 "effective": "2023-08-25T10:00:00+05:30",
                 "expires": "2023-08-26T18:00:00+05:30",
                 "desc": "Severe heat wave conditions expected.",
-                "instruction": "Avoid outdoor activities during afternoon."
+                "instruction": "Avoid outdoor activities during afternoon.",
             }
         ]
-    }
+    },
 }
 
 MOCK_SEARCH_RESPONSE = [
@@ -151,17 +171,81 @@ def test_search_locations(mock_request):
     assert data[0]["country"] == "India"
 
 def test_get_alerts(mock_request):
-    mock_request.return_value = MOCK_ALERTS_RESPONSE
+    """
+    Phase 6 upgrade: the /alerts route now calls get_alerts_smart() which:
+      1. Fetches current weather
+      2. Fetches 1-day forecast (with alerts=yes for passthrough)
+      3. Runs deterministic engine
+      4. Merges with native WeatherAPI alerts
+    
+    This test supplies MOCK_ALERTS_FORECAST_RESPONSE (which has a native Heat Wave
+    alert embedded) and verifies the endpoint surfaces it through the merge logic.
+    The data has temp=32°C (below heat threshold=38), so no engine heat alert fires,
+    and the native alert from WeatherAPI is passed through.
+    """
+    def side_effect(endpoint, params):
+        if "forecast" in endpoint:
+            return MOCK_ALERTS_FORECAST_RESPONSE
+        return MOCK_CURRENT_RESPONSE
+
+    mock_request.side_effect = side_effect
     response = client.get("/api/v1/alerts?lat=9.93&lon=78.12")
     assert response.status_code == 200
     data = response.json()
-    assert data["total"] == 1
-    assert data["alerts"][0]["title"] == "Heat Wave Warning"
-    assert data["alerts"][0]["severity"] == "severe"
-    assert data["alerts"][0]["alert_type"] == "heatwave"
+    # The native "Heat Wave Warning" from WeatherAPI should be present
+    titles = [a["title"] for a in data["alerts"]]
+    assert "Heat Wave Warning" in titles
+    heat_wave = next(a for a in data["alerts"] if a["title"] == "Heat Wave Warning")
+    assert heat_wave["severity"] == "severe"
+    assert heat_wave["alert_type"] == "heatwave"
+
 
 def test_get_alerts_empty(mock_request):
-    mock_request.return_value = {}
+    """
+    Phase 6 upgrade: with mild weather (no thresholds exceeded) and no native
+    WeatherAPI alerts, the endpoint should return an empty alert list.
+    """
+    mild_forecast = {
+        "location": MOCK_CURRENT_RESPONSE["location"],
+        "forecast": {
+            "forecastday": [
+                {
+                    "date": "2023-08-25",
+                    "day": {
+                        "maxtemp_c": 25.0, "mintemp_c": 18.0,
+                        "maxwind_kph": 15.0, "avghumidity": 50,
+                        "daily_chance_of_rain": 20,
+                        "condition": {"text": "Sunny", "icon": ""},
+                        "uv": 4.0,
+                    },
+                    "astro": {"sunrise_epoch": 0, "sunset_epoch": 0},
+                    "hour": [],
+                }
+            ]
+        },
+        "alerts": {"alert": []},
+    }
+    mild_current = {
+        "location": MOCK_CURRENT_RESPONSE["location"],
+        "current": {
+            "last_updated_epoch": 1690000000,
+            "temp_c": 24.0,
+            "condition": {"text": "Sunny", "icon": ""},
+            "wind_kph": 15.0,
+            "wind_degree": 90,
+            "humidity": 45,
+            "feelslike_c": 24.0,
+            "vis_km": 10.0,
+            "uv": 3.0,
+        },
+    }
+
+    def side_effect(endpoint, params):
+        if "forecast" in endpoint:
+            return mild_forecast
+        return mild_current
+
+    mock_request.side_effect = side_effect
     response = client.get("/api/v1/alerts?lat=9.93&lon=78.12")
     assert response.status_code == 200
     data = response.json()

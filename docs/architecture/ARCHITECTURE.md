@@ -51,7 +51,7 @@
 
 ---
 
-## 1.1 Phase 5 Frontend Architecture (Current)
+## 1.1 Phase 6 Architecture (Current)
 
 ```
 SplashScreen
@@ -59,8 +59,8 @@ SplashScreen
 MainShell (Bottom Navigation — IndexedStack)
      ├── HomeScreen          → WeatherProvider & LocationProvider (Real API Data)
      ├── ChatScreen          → ChatProvider → POST /api/v1/chat (Gemini AI) [REAL — Phase 5]
-     ├── AlertsScreen        → WeatherProvider.alerts (Real API Data)
-     ├── AdvisoryScreen      → MockData.advisories (Phase 7 planned)
+     ├── AlertsScreen        → WeatherProvider.alerts (Real Smart Alerts) [REAL — Phase 6]
+     ├── AdvisoryScreen      → WeatherProvider.advisories (Real Advisory Data) [REAL — Phase 6]
      └── ClimateScreen       → MockData.climateDatasets (Phase 7 planned)
 
 Secondary routes (Navigator.push):
@@ -72,15 +72,17 @@ Widget layers:
      Screens → Reusable Widgets (widgets/) → Providers (providers/) → API Service
 ```
 
-| Component | Phase 5 Status |
+| Component | Status |
 |---|---|
 | Screens & navigation | **Implemented** |
 | Reusable widgets | **Implemented** |
 | Dart data models | **Implemented** (aligned with API contract) |
-| API service / providers | **Implemented** (wired to backend; ChatProvider added Phase 5) |
-| Backend HTTP calls | **Implemented** (Weather/Alerts/Location/Chat) |
+| API service / providers | **Implemented** (wired to backend; ChatProvider, WeatherProvider alerts & advisories) |
+| Backend HTTP calls | **Implemented** (Weather/Alerts/Advisory/Location/Chat) |
 | Real AI chat (Gemini) | **Implemented [Phase 5]** |
-| Real advisory / climate | **Not implemented** (uses mock data) |
+| Real Smart Alert Engine | **Implemented [Phase 6]** (Deterministic, rule-based) |
+| Real Advisory Service | **Implemented [Phase 6]** (Rule-based templates, category filters) |
+| Real climate | **Not implemented** (uses mock data) [PLANNED] |
 
 ---
 
@@ -105,11 +107,11 @@ Widget layers:
 |---|---|
 | **Routes** | HTTP endpoints — validates input, returns responses |
 | **Services / Weather** | Fetches and normalises data from weather provider |
-| **Services / AI** | Interfaces with the LLM provider |
-| **Services / Alerts** | Rule engine that generates weather alerts |
-| **Services / Advisory** | Generates context-aware advisories |
-| **Services / Climate** | Calculates trends from historical datasets |
-| **Services / Localization** | Translates / localises AI responses |
+| **Services / AI** | Interfaces with the LLM provider (Gemini 3.7 Flash) |
+| **Services / Alerts** | Deterministic Smart Alert Engine with configurable thresholds |
+| **Services / Advisory** | Generates rule-based contextual advisories |
+| **Services / Climate** | Calculates trends from historical datasets [PLANNED] |
+| **Services / Localization** | Translates / localises AI responses [PLANNED] |
 | **Repositories** | Data access abstraction |
 | **Schemas** | Pydantic models for request/response validation |
 | **Core / Config** | Environment-variable-based configuration |
@@ -131,41 +133,41 @@ Widget layers:
 7. **Flutter**: `ApiService` parses the backend JSON into Dart `WeatherForecast` models.
 8. **Flutter**: `WeatherProvider` updates state and notifies UI to rebuild.
 
-### 3.2 Chat Flow (Planned - Phase 5)
+### 3.2 Chat Flow (Phase 5)
 
 ```
 Flutter → POST /api/v1/chat { message, language, location }
        → FastAPI AI Service
-       → Intent Understanding (classify query)
-       → Weather Tool / Data Retrieval (fetch relevant weather data)
-       → LLM Provider (e.g., Gemini) generates response
+       → Weather Tool / Data Retrieval (fetch current weather context)
+       → LLM Provider (Google Gemini 3.7 Flash) generates response
        → FastAPI returns ChatResponse
        → Flutter renders AI message in chat UI
 ```
 
-### 3.3 Alerts Flow
+### 3.3 Alerts Flow (Phase 6)
 
 **User action**: Navigates to the Alerts tab.
 
 1. **Flutter**: `AlertsScreen` reads from `WeatherProvider`.
-2. **Flutter**: `WeatherProvider` calls `ApiService.getAlerts()`.
+2. **Flutter**: `WeatherProvider.loadWeather()` calls `ApiService.getAlerts()`.
 3. **Backend**: `GET /api/v1/alerts` receives the request.
-4. **Backend**: `WeatherService` formats the query and calls `WeatherAPIClient`.
-5. **External**: `WeatherAPIClient` requests `forecast.json` (with `alerts=yes`) from **WeatherAPI.com**.
-6. **Backend**: `WeatherService` parses raw alerts into `Alert` Pydantic models.
-7. **Flutter**: `ApiService` parses JSON into Dart models.
-8. **Flutter**: UI renders severity-colored alert cards.
+4. **Backend**: `WeatherService.get_alerts_smart()` concurrently fetches current weather, forecast, and native WeatherAPI alerts.
+5. **Backend**: Deterministic `AlertEngine` evaluates current & forecast data against configurable thresholds (heat, rain, wind, UV, thunderstorm).
+6. **Backend**: Smart alerts are merged with native WeatherAPI alerts, deduplicated by alert type.
+7. **Flutter**: `ApiService` parses JSON into Dart `WeatherAlert` models with `relevantValue` and `threshold`.
+8. **Flutter**: UI renders severity-colored `AlertCard` widgets with observed sensor values and thresholds.
 
+### 3.4 Advisory Flow (Phase 6)
 
-### 3.4 Advisory Flow
+**User action**: Navigates to the Advisory tab.
 
-```
-Weather Data
-       → FastAPI Advisory Service (rule/parameter-based evaluation)
-       → Generates Advisory objects per category
-       → GET /api/v1/advisory returns advisories
-       → Flutter displays advisory cards
-```
+1. **Flutter**: `AdvisoryScreen` reads from `WeatherProvider`.
+2. **Flutter**: `WeatherProvider.loadWeather()` calls `ApiService.getAdvisories()`.
+3. **Backend**: `GET /api/v1/advisory` receives the request.
+4. **Backend**: Evaluates live weather data against deterministic rule templates (no LLM).
+5. **Backend**: Generates `Advisory` objects categorized by general, health, outdoor, travel, or agriculture.
+6. **Flutter**: `ApiService` parses JSON into Dart `WeatherAdvisory` models.
+7. **Flutter**: UI renders interactive category filter chips and `AdvisoryCard` widgets with recommendations.
 
 ### 3.5 Climate Flow
 

@@ -25,29 +25,35 @@ class WeatherProvider extends ChangeNotifier {
   List<WeatherAlert> _alerts = [];
   List<WeatherAlert> get alerts => _alerts;
 
+  List<WeatherAdvisory> _advisories = [];
+  List<WeatherAdvisory> get advisories => _advisories;
+
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
   /// Load all weather data for the given coordinates.
-  /// Fetches current weather, forecast (hourly + daily), and alerts
-  /// reusing the forecast response for hourly to minimize API calls.
+  /// Fetches current weather, forecast (hourly + daily), alerts, and advisories
+  /// concurrently to minimize latency.
   Future<void> loadWeather(double lat, double lon) async {
     _state = WeatherState.loading;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      // Fetch current, forecast, and alerts concurrently.
+      // Fetch current, forecast, alerts, and advisories concurrently.
       final results = await Future.wait([
         _api.getCurrentWeather(lat, lon),
         _api.getForecast(lat, lon),
         _api.getAlerts(lat, lon),
+        _api.getAdvisories(lat, lon),
       ]);
 
       _currentWeather = results[0] as WeatherCurrent;
       _forecast = results[1] as WeatherForecast;
       final alertsResponse = results[2] as WeatherAlertsResponse;
       _alerts = alertsResponse.alerts;
+      final advisoriesResponse = results[3] as WeatherAdvisoriesResponse;
+      _advisories = advisoriesResponse.advisories;
       _state = WeatherState.success;
     } on ApiException catch (e) {
       _errorMessage = e.message;
@@ -57,6 +63,11 @@ class WeatherProvider extends ChangeNotifier {
       _state = WeatherState.error;
     }
     notifyListeners();
+  }
+
+  /// Get advisories filtered by a specific category.
+  List<WeatherAdvisory> advisoriesForCategory(AdvisoryCategory category) {
+    return _advisories.where((a) => a.category == category).toList();
   }
 
   /// Refresh weather data for the same location.

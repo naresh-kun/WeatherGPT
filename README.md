@@ -13,29 +13,35 @@ A conversational weather intelligence prototype providing real-time weather data
 | Phase 3 | **Complete** | FastAPI backend with real Weather API integration |
 | Phase 4 | **Complete** | Flutter frontend connected to real backend data |
 | Phase 5 | **Complete** | AI Chat Integration (Gemini 3.7 Flash + real weather grounding) |
-| Phase 6+ | Planned | Smart Alerts Engine, Advisory, Climate, Multilingual, Voice |
+| Phase 6 | **Complete** | Smart Alerts & Advisories Engine (Deterministic, rule-based) |
+| Phase 7+ | Planned | Climate Intelligence, Multilingual, Voice |
 
-### Phase 4 — Frontend ↔ Backend Integration Status
+### Phase 6 — Smart Alerts & Advisories Status
 
-The Flutter application (`frontend/weathergpt_app/`) is now integrated with the FastAPI backend:
+The Flutter application (`frontend/weathergpt_app/`) and FastAPI backend (`backend/weathergpt_api/`) now feature a deterministic Smart Alert Engine and rule-based advisory system:
 
-- **Real Data**: Home, Forecast, and Alerts screens now display live data via the FastAPI backend.
-- **Location Services**: Real GPS integration and backend-powered location search are active.
-- **Navigation**: Location search is accessible directly from the home screen header.
+- **Smart Alert Engine [REAL — Phase 6]**:
+  - Deterministic evaluation of current and forecast weather against configurable thresholds.
+  - No LLM dependency for alert or advisory decisions.
+  - Rules: Extreme Heat, Heavy Rain, Strong Wind, High UV, Thunderstorm (using structured WeatherAPI condition codes).
+  - Merged with native WeatherAPI authority alerts without duplication.
+- **Rule-Based Advisories [REAL — Phase 6]**:
+  - Practical, contextual recommendations categorized by `general`, `health`, `outdoor`, `travel`, and `agriculture`.
+  - Filter chips and detailed bottom sheet recommendations in Flutter UI.
+- **Alerts & Advisory UI [REAL — Phase 6]**:
+  - Flutter AlertsScreen and AdvisoryScreen display live backend data.
+  - Observed weather metrics, thresholds, category badges, loading, empty, and retry states.
 
-**Implemented (Phase 5)**:
+**Implementation Status Matrix**:
 
-- **AI Chat**: WeatherGPT chat powered by Google Gemini 3.7 Flash with real weather grounding.
-- **POST /api/v1/chat**: Real endpoint — not a stub.
-- **Backend-only AI key**: `GEMINI_API_KEY` never sent to Flutter.
-
-**Not yet implemented / Still Mocked** (deferred to later phases):
-
-- Real smart alerts engine (Phase 6)
-- Real advisory calculations (Phase 7)
-- Real climate backend processing (Phase 7)
-- Tamil localization (Phase 8)
-- Speech-to-text / text-to-speech (Phase 9)
+- **Real-time Weather & Forecast**: **[REAL — Phase 3 & 4]**
+- **Location Search & GPS**: **[REAL — Phase 4]**
+- **AI Conversational Chat**: **[REAL — Phase 5]** (Google Gemini 3.7 Flash)
+- **Smart Alert Engine**: **[REAL — Phase 6]** (Deterministic rules & thresholds)
+- **Weather Advisory System**: **[REAL — Phase 6]** (Rule-based templates & filters)
+- **Climate Historical Trends**: **[MOCK — Phase 7 PLANNED]**
+- **Tamil Localization**: **[PLANNED — Phase 8]**
+- **Speech-to-Text / Voice**: **[PLANNED — Phase 9]**
 
 ---
 
@@ -47,8 +53,8 @@ Flutter App (frontend/weathergpt_app/)
 FastAPI Backend (backend/weathergpt_api/)
         ├── Weather Service      [REAL — Phase 3+]
         ├── AI Service (Gemini)  [REAL — Phase 5]
-        ├── Alert Engine         [PLANNED — Phase 6]
-        ├── Advisory Service     [PLANNED — Phase 7]
+        ├── Alert Engine         [REAL — Phase 6]
+        ├── Advisory Service     [REAL — Phase 6]
         ├── Climate Service      [PLANNED — Phase 7]
         └── Localization Service  [PLANNED — Phase 8]
               ↓
@@ -59,8 +65,6 @@ FastAPI Backend (backend/weathergpt_api/)
 
 The Flutter frontend communicates **only** with the FastAPI backend.  
 The frontend must **never** call the weather provider or LLM provider directly.
-
-**Current Phase 5 behaviour**: The Flutter app's WeatherGPT Chat now sends real messages to the FastAPI backend, which retrieves live weather data and generates a grounded AI response via Google Gemini 3.7 Flash. The Gemini API key is backend-only.
 
 ---
 

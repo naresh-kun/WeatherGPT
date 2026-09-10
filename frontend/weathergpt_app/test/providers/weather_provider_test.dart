@@ -1,10 +1,12 @@
 /// WeatherGPT — Weather Provider Tests
 /// Tests loading/success/error state transitions in WeatherProvider.
+library;
 
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:weathergpt_app/models/models.dart';
 import 'package:weathergpt_app/providers/weather_provider.dart';
 import 'package:weathergpt_app/services/api/api_service.dart';
 
@@ -86,6 +88,28 @@ const _oneAlertJson = {
   'total': 1,
 };
 
+const _advisoriesJson = {
+  'advisories': [
+    {
+      'advisory_id': 'adv-001',
+      'category': 'health',
+      'title': 'Heat Safety Advisory',
+      'message': 'High temperature detected.',
+      'recommendation': 'Drink 2-3 litres of water.',
+      'valid_until': 1756224000,
+    },
+    {
+      'advisory_id': 'adv-002',
+      'category': 'outdoor',
+      'title': 'UV Advisory',
+      'message': 'High solar radiation.',
+      'recommendation': 'Wear sunscreen.',
+      'valid_until': 1756224000,
+    },
+  ],
+  'total': 2,
+};
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -95,6 +119,7 @@ MockClient _routedClient({
   required Map<String, dynamic> currentResponse,
   required Map<String, dynamic> forecastResponse,
   required Map<String, dynamic> alertsResponse,
+  Map<String, dynamic>? advisoryResponse,
   int statusCode = 200,
 }) {
   return MockClient((request) async {
@@ -106,6 +131,8 @@ MockClient _routedClient({
       body = forecastResponse;
     } else if (path.contains('/alerts')) {
       body = alertsResponse;
+    } else if (path.contains('/advisory')) {
+      body = advisoryResponse ?? {'advisories': [], 'total': 0};
     } else {
       body = {};
     }
@@ -252,6 +279,70 @@ void main() {
 
       expect(provider.alerts.length, 1);
       expect(provider.alerts.first.title, 'Thunderstorm Warning');
+    });
+
+    test('advisories list is empty when backend returns no advisories', () async {
+      final provider = WeatherProvider(
+        api: ApiService(
+          baseUrl: 'http://test.local/api/v1',
+          client: _routedClient(
+            currentResponse: _currentWeatherJson,
+            forecastResponse: _forecastJson,
+            alertsResponse: _emptyAlertsJson,
+            advisoryResponse: {'advisories': [], 'total': 0},
+          ),
+        ),
+      );
+
+      await provider.loadWeather(9.93, 78.12);
+
+      expect(provider.advisories, isEmpty);
+    });
+
+    test('advisories list is populated when backend returns advisories', () async {
+      final provider = WeatherProvider(
+        api: ApiService(
+          baseUrl: 'http://test.local/api/v1',
+          client: _routedClient(
+            currentResponse: _currentWeatherJson,
+            forecastResponse: _forecastJson,
+            alertsResponse: _emptyAlertsJson,
+            advisoryResponse: _advisoriesJson,
+          ),
+        ),
+      );
+
+      await provider.loadWeather(9.93, 78.12);
+
+      expect(provider.advisories.length, 2);
+      expect(provider.advisories.first.title, 'Heat Safety Advisory');
+      expect(provider.advisories.first.category, AdvisoryCategory.health);
+    });
+
+    test('advisoriesForCategory filters correctly', () async {
+      final provider = WeatherProvider(
+        api: ApiService(
+          baseUrl: 'http://test.local/api/v1',
+          client: _routedClient(
+            currentResponse: _currentWeatherJson,
+            forecastResponse: _forecastJson,
+            alertsResponse: _emptyAlertsJson,
+            advisoryResponse: _advisoriesJson,
+          ),
+        ),
+      );
+
+      await provider.loadWeather(9.93, 78.12);
+
+      final health = provider.advisoriesForCategory(AdvisoryCategory.health);
+      final outdoor = provider.advisoriesForCategory(AdvisoryCategory.outdoor);
+      final travel = provider.advisoriesForCategory(AdvisoryCategory.travel);
+
+      expect(health.length, 1);
+      expect(health.first.title, 'Heat Safety Advisory');
+      expect(outdoor.length, 1);
+      expect(outdoor.first.title, 'UV Advisory');
+      expect(travel, isEmpty);
     });
 
     test('transitions to error state on 503 backend error', () async {

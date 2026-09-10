@@ -1,6 +1,7 @@
 /// WeatherGPT — API Service Tests
 /// Tests parsing of backend JSON responses using a mocked HTTP client.
 /// No live FastAPI server, WeatherAPI key, or real GPS required.
+library;
 
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
@@ -272,6 +273,36 @@ void main() {
       expect(response.alerts.first.alertType, 'thunderstorm');
     });
 
+    test('parses smart alerts response with relevant_value and threshold', () async {
+      final service = ApiService(
+        baseUrl: baseUrl,
+        client: _mockClient({
+          'alerts': [
+            {
+              'alert_id': 'sae-001',
+              'alert_type': 'heat',
+              'severity': 'severe',
+              'title': 'Extreme Heat Alert',
+              'description': 'High temperature of 43.0°C detected.',
+              'area': 'Madurai',
+              'start_time': 1756137600,
+              'relevant_value': 43.0,
+              'threshold': 42.0,
+            },
+          ],
+          'total': 1,
+        }),
+      );
+
+      final response = await service.getAlerts(9.93, 78.12);
+
+      expect(response.total, 1);
+      expect(response.alerts.first.alertType, 'heat');
+      expect(response.alerts.first.relevantValue, 43.0);
+      expect(response.alerts.first.threshold, 42.0);
+      expect(response.alerts.first.formattedRelevantValue, '43.0°C');
+    });
+
     test('parses empty alerts response gracefully', () async {
       final service = ApiService(
         baseUrl: baseUrl,
@@ -293,6 +324,90 @@ void main() {
       // Should complete without throwing
       final response = await service.getAlerts(9.93, 78.12);
       expect(response, isNotNull);
+    });
+  });
+
+  group('ApiService.getAdvisories', () {
+    const advisoriesJson = {
+      'advisories': [
+        {
+          'advisory_id': 'adv-001',
+          'category': 'health',
+          'title': 'Heat Safety Advisory',
+          'message': 'High temperature detected.',
+          'recommendation': 'Drink water and avoid sun.',
+          'valid_until': 1756224000,
+        },
+        {
+          'advisory_id': 'adv-002',
+          'category': 'outdoor',
+          'title': 'UV Advisory',
+          'message': 'High solar radiation.',
+          'recommendation': 'Wear sunscreen.',
+          'valid_until': 1756224000,
+        },
+      ],
+      'total': 2,
+    };
+
+    test('parses a valid advisory response with multiple advisories', () async {
+      final service = ApiService(
+        baseUrl: baseUrl,
+        client: _mockClient(advisoriesJson),
+      );
+
+      final response = await service.getAdvisories(9.93, 78.12);
+
+      expect(response.total, 2);
+      expect(response.advisories.length, 2);
+      expect(response.advisories[0].title, 'Heat Safety Advisory');
+      expect(response.advisories[0].recommendation, contains('Drink water'));
+      expect(response.advisories[1].title, 'UV Advisory');
+    });
+
+    test('passes category query parameter in request', () async {
+      String? requestedCategory;
+      final mockClient = MockClient((request) async {
+        requestedCategory = request.url.queryParameters['category'];
+        return http.Response(
+          json.encode(advisoriesJson),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+
+      final service = ApiService(baseUrl: baseUrl, client: mockClient);
+      await service.getAdvisories(9.93, 78.12, category: 'health');
+
+      expect(requestedCategory, 'health');
+    });
+
+    test('parses empty advisory response gracefully', () async {
+      final service = ApiService(
+        baseUrl: baseUrl,
+        client: _mockClient({'advisories': [], 'total': 0}),
+      );
+
+      final response = await service.getAdvisories(9.93, 78.12);
+      expect(response.total, 0);
+      expect(response.advisories, isEmpty);
+    });
+
+    test('throws ServiceUnavailableException on 503', () async {
+      final service = ApiService(baseUrl: baseUrl, client: _errorClient(503));
+      expect(
+        () => service.getAdvisories(9.93, 78.12),
+        throwsA(isA<ServiceUnavailableException>()),
+      );
+    });
+
+    test('throws ApiConnectionException on network failure', () async {
+      final mockClient = MockClient((_) async => throw Exception('network fail'));
+      final service = ApiService(baseUrl: baseUrl, client: mockClient);
+      expect(
+        () => service.getAdvisories(9.93, 78.12),
+        throwsA(isA<ApiConnectionException>()),
+      );
     });
   });
 

@@ -1,5 +1,5 @@
 """
-WeatherGPT — Advisory Schemas
+WeatherGPT — Advisory Schemas  [Phase 6: upgraded]
 Pydantic models for weather-based advisory request/response validation.
 """
 

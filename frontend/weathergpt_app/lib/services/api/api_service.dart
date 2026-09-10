@@ -170,6 +170,19 @@ class ApiService {
     return WeatherAlertsResponse.fromJson(data as Map<String, dynamic>);
   }
 
+  Future<WeatherAdvisoriesResponse> getAdvisories(
+    double lat,
+    double lon, {
+    String category = 'general',
+  }) async {
+    final data = await _get('/advisory', {
+      'lat': lat.toString(),
+      'lon': lon.toString(),
+      'category': category,
+    });
+    return WeatherAdvisoriesResponse.fromJson(data as Map<String, dynamic>);
+  }
+
   // --- Chat endpoint (Phase 5) ---
 
   /// Send a natural-language message to the WeatherGPT AI chat backend.

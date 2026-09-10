@@ -324,8 +324,10 @@ curl -X POST http://localhost:8000/api/v1/chat \
 
 ## 7. GET /alerts
 
+> **Implementation status**: **[REAL — Phase 6]** — powered by deterministic `AlertEngine` evaluating live WeatherAPI.com current and forecast observations against configurable thresholds, merged with native WeatherAPI authority alerts. No LLM involved.
+
 ### Purpose
-Returns active weather alerts (severe weather warnings, watches, advisories) for a location issued by meteorological authorities.
+Returns active weather alerts (severe weather warnings, watches, advisories) for a location. Alerts are produced deterministically by the Smart Alert Engine and merged with any native alerts issued by meteorological authorities.
 
 ### HTTP Method
 `GET`
@@ -333,8 +335,8 @@ Returns active weather alerts (severe weather warnings, watches, advisories) for
 ### Query Parameters
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `lat` | float | Yes | — | Latitude |
-| `lon` | float | Yes | — | Longitude |
+| `lat` | float | Yes | — | Latitude (-90 to 90) |
+| `lon` | float | Yes | — | Longitude (-180 to 180) |
 
 ### Request Body
 None.
@@ -344,18 +346,33 @@ None.
 {
   "alerts": [
     {
+      "alert_id": "sae-b0aa1d70",
+      "alert_type": "heat",
+      "severity": "moderate",
+      "title": "Heat Advisory",
+      "description": "High temperature of 39.1°C expected. Stay hydrated and limit prolonged exposure during afternoon hours.",
+      "area": "Al Wurud",
+      "start_time": 1789036196,
+      "end_time": 1789122596,
+      "source": "WeatherGPT Smart Alert Engine",
+      "relevant_value": 39.1,
+      "threshold": 38.0
+    },
+    {
       "alert_id": "alert-001",
       "alert_type": "thunderstorm",
-      "severity": "moderate",
+      "severity": "severe",
       "title": "Thunderstorm Warning",
-      "description": "Heavy thunderstorms expected over the next 6 hours with lightning and gusty winds up to 60 km/h.",
+      "description": "Heavy thunderstorms expected with lightning and gusty winds.",
       "area": "Mumbai Metropolitan Region",
       "start_time": 1756137600,
       "end_time": 1756159200,
-      "source": "India Meteorological Department"
+      "source": "India Meteorological Department",
+      "relevant_value": null,
+      "threshold": null
     }
   ],
-  "total": 1
+  "total": 2
 }
 ```
 
@@ -363,7 +380,7 @@ None.
 | Status | Description |
 |---|---|
 | `400 Bad Request` | Invalid coordinates |
-| `503 Service Unavailable` | Alert data unavailable |
+| `503 Service Unavailable` | Weather provider or alert engine unreachable |
 
 ### Example Request
 ```bash
@@ -374,8 +391,10 @@ curl "http://localhost:8000/api/v1/alerts?lat=19.0760&lon=72.8777"
 
 ## 8. GET /advisory
 
+> **Implementation status**: **[REAL — Phase 6]** — deterministic, rule-based weather advisories generated from live weather observations and the Smart Alert Engine. No LLM is used.
+
 ### Purpose
-Returns weather-based advisories with recommendations for travel, agriculture, health, or outdoor activities.
+Returns practical, actionable weather advisories with recommendations tailored for general guidance, travel, agriculture, health, or outdoor activities.
 
 ### HTTP Method
 `GET`
@@ -383,9 +402,9 @@ Returns weather-based advisories with recommendations for travel, agriculture, h
 ### Query Parameters
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `lat` | float | Yes | — | Latitude |
-| `lon` | float | Yes | — | Longitude |
-| `category` | string | No | `general` | `general` \| `travel` \| `agriculture` \| `health` \| `outdoor` |
+| `lat` | float | Yes | — | Latitude (-90 to 90) |
+| `lon` | float | Yes | — | Longitude (-180 to 180) |
+| `category` | string | No | `general` | Category filter: `general` \| `travel` \| `agriculture` \| `health` \| `outdoor` |
 
 ### Request Body
 None.
@@ -395,12 +414,12 @@ None.
 {
   "advisories": [
     {
-      "advisory_id": "adv-001",
-      "category": "travel",
-      "title": "Reduced Visibility Advisory",
-      "message": "Dense fog is expected on NH-48 between 4 AM and 9 AM. Visibility below 50 m.",
-      "recommendation": "Avoid highway travel before 9 AM or use fog lights and drive slowly.",
-      "valid_until": 1756173600
+      "advisory_id": "adv-ce17eaae",
+      "category": "health",
+      "title": "Heat Safety Advisory",
+      "message": "High temperature of 39.1°C detected. Stay hydrated and avoid prolonged exposure during peak afternoon hours.",
+      "recommendation": "Drink at least 2–3 litres of water per day. Wear loose, light-coloured clothing. Avoid strenuous outdoor activity between 11am and 4pm.",
+      "valid_until": 1789122614
     }
   ],
   "total": 1
@@ -411,11 +430,11 @@ None.
 | Status | Description |
 |---|---|
 | `400 Bad Request` | Invalid coordinates or category |
-| `503 Service Unavailable` | Advisory service unavailable |
+| `503 Service Unavailable` | Advisory service unreachable |
 
 ### Example Request
 ```bash
-curl "http://localhost:8000/api/v1/advisory?lat=28.6139&lon=77.2090&category=travel"
+curl "http://localhost:8000/api/v1/advisory?lat=28.6139&lon=77.2090&category=health"
 ```
 
 ---

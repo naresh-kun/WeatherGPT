@@ -50,6 +50,15 @@ The backend requires the following environment variables (defined in `.env`):
 - `GEMINI_API_KEY`: Your Google Gemini API key (obtain at https://aistudio.google.com/). **[Phase 5]**
 - `GEMINI_MODEL`: Gemini model name (defaults to `gemini-3.7-flash`).
 
+### Smart Alert Engine Thresholds (Phase 6 — Configurable via environment)
+- `ALERT_HEAT_WARNING_C`: Temperature threshold for Heat Advisory (default: `38.0` °C)
+- `ALERT_HEAT_DANGER_C`: Temperature threshold for Extreme Heat Alert (default: `42.0` °C)
+- `ALERT_RAIN_WARNING_PCT`: Precipitation probability threshold for Heavy Rain Advisory (default: `70.0` %)
+- `ALERT_WIND_WARNING_KPH`: Wind speed threshold for Strong Wind Advisory (default: `50.0` km/h)
+- `ALERT_WIND_DANGER_KPH`: Wind speed threshold for Dangerous Wind Alert (default: `80.0` km/h)
+- `ALERT_UV_WARNING_INDEX`: UV index threshold for High UV Advisory (default: `8.0`)
+- `ALERT_UV_DANGER_INDEX`: UV index threshold for Extreme UV Alert (default: `11.0`)
+
 **Never commit your `.env` file or API keys.**
 
 The `GEMINI_API_KEY` is exclusively used by the backend — it is never sent to or accessible from the Flutter frontend.
@@ -69,7 +78,9 @@ pytest
 
 Tests cover:
 - All weather endpoints (current, forecast, hourly, search, alerts)
-- Chat endpoint (valid requests, weather context, Gemini success/failure, validation)
+- Smart Alert Engine rules, thresholds, deduplication, edge cases (`tests/test_alerts.py`)
+- Advisory endpoint and category filtering (`tests/test_alerts.py`)
+- Chat endpoint (valid requests, weather context, Gemini success/failure, validation) (`tests/test_chat.py`)
 
 ---
 
@@ -94,11 +105,11 @@ backend/weathergpt_api/
 │   │       ├── health.py     # GET /api/v1/health
 │   │       ├── weather.py    # GET /api/v1/weather/current|forecast|...
 │   │       ├── chat.py       # POST /api/v1/chat  [REAL — Phase 5]
-│   │       ├── alerts.py     # GET /api/v1/alerts
-│   │       ├── advisory.py   # GET /api/v1/advisory
+│   │       ├── alerts.py     # GET /api/v1/alerts [REAL — Phase 6]
+│   │       ├── advisory.py   # GET /api/v1/advisory [REAL — Phase 6]
 │   │       └── climate.py    # GET /api/v1/climate/trends
 │   ├── core/
-│   │   ├── config.py         # Environment-based settings (Pydantic)
+│   │   ├── config.py         # Environment-based settings & alert thresholds (Pydantic)
 │   │   ├── logging.py        # Structured logging setup
 │   │   └── security.py       # Security utilities
 │   ├── models/               # ORM models (future)
@@ -111,7 +122,7 @@ backend/weathergpt_api/
 │   ├── services/
 │   │   ├── weather/          # WeatherService + WeatherAPIClient  [REAL]
 │   │   ├── ai/               # GeminiChatService (google-genai SDK) [REAL — Phase 5]
-│   │   ├── alerts/           # [PLANNED — Phase 6]
+│   │   ├── alerts/           # AlertEngine deterministic rules [REAL — Phase 6]
 │   │   ├── advisory/         # [PLANNED — Phase 7]
 │   │   ├── climate/          # [PLANNED — Phase 7]
 │   │   └── localization/     # [PLANNED — Phase 8]
