@@ -6,12 +6,14 @@ import 'package:weathergpt_app/navigation/app_routes.dart';
 import 'package:weathergpt_app/providers/weather_provider.dart';
 import 'package:weathergpt_app/providers/location_provider.dart';
 import 'package:weathergpt_app/providers/chat_provider.dart';
+import 'package:weathergpt_app/providers/climate_provider.dart';
 
 /// Global providers — lightweight approach without a DI framework.
 /// Shared across all screens via InheritedWidget-style accessor.
 final weatherProvider = WeatherProvider();
 final locationProvider = LocationProvider();
 final chatProvider = ChatProvider(); // Phase 5: real Gemini-backed chat
+final climateProvider = ClimateProvider(); // Phase 7: deterministic climate intelligence
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

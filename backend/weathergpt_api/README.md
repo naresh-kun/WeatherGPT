@@ -81,6 +81,7 @@ Tests cover:
 - Smart Alert Engine rules, thresholds, deduplication, edge cases (`tests/test_alerts.py`)
 - Advisory endpoint and category filtering (`tests/test_alerts.py`)
 - Chat endpoint (valid requests, weather context, Gemini success/failure, validation) (`tests/test_chat.py`)
+- Climate service, temperature & rainfall trends, baselines, anomalies, and insights (`tests/test_climate.py`)
 
 ---
 
@@ -107,7 +108,7 @@ backend/weathergpt_api/
 │   │       ├── chat.py       # POST /api/v1/chat  [REAL — Phase 5]
 │   │       ├── alerts.py     # GET /api/v1/alerts [REAL — Phase 6]
 │   │       ├── advisory.py   # GET /api/v1/advisory [REAL — Phase 6]
-│   │       └── climate.py    # GET /api/v1/climate/trends
+│   │       └── climate.py    # GET /api/v1/climate [REAL — Phase 7]
 │   ├── core/
 │   │   ├── config.py         # Environment-based settings & alert thresholds (Pydantic)
 │   │   ├── logging.py        # Structured logging setup
@@ -118,19 +119,24 @@ backend/weathergpt_api/
 │   │   ├── chat.py
 │   │   ├── alerts.py
 │   │   ├── advisory.py
-│   │   └── climate.py
+│   │   └── climate.py        # Phase 7 Climate schemas
 │   ├── services/
 │   │   ├── weather/          # WeatherService + WeatherAPIClient  [REAL]
 │   │   ├── ai/               # GeminiChatService (google-genai SDK) [REAL — Phase 5]
 │   │   ├── alerts/           # AlertEngine deterministic rules [REAL — Phase 6]
-│   │   ├── advisory/         # [PLANNED — Phase 7]
-│   │   ├── climate/          # [PLANNED — Phase 7]
+│   │   ├── advisory/         # AdvisoryService deterministic templates [REAL — Phase 6]
+│   │   ├── climate/          # ClimateService deterministic analysis [REAL — Phase 7]
 │   │   └── localization/     # [PLANNED — Phase 8]
 │   ├── chat_service.py       # Chat orchestrator (Weather → Gemini) [REAL — Phase 5]
 │   └── repositories/         # Data access layer (future)
+├── data/
+│   └── climate/
+│       └── historical_weather.csv  # Curated prototype/reference dataset (2000–2023)
 ├── tests/
 │   ├── test_weather.py       # Weather endpoint tests
-│   └── test_chat.py          # Chat endpoint tests [Phase 5]
+│   ├── test_chat.py          # Chat endpoint tests [Phase 5]
+│   ├── test_alerts.py        # Alert & advisory tests [Phase 6]
+│   └── test_climate.py       # Climate analysis & endpoint tests [Phase 7]
 ├── .env.example              # Required environment variables (no real secrets)
 ├── requirements.txt
 └── README.md
@@ -140,15 +146,18 @@ backend/weathergpt_api/
 
 ## API Endpoints
 
-| Method | Path | Description |
-|---|---|---|
-| GET | `/api/v1/health` | Liveness probe |
-| GET | `/api/v1/weather/current` | Current weather |
-| GET | `/api/v1/weather/forecast` | Multi-day forecast |
-| POST | `/api/v1/chat` | Conversational weather query |
-| GET | `/api/v1/alerts` | Active weather alerts |
-| GET | `/api/v1/advisory` | Weather-based advisories |
-| GET | `/api/v1/climate/trends` | Historical climate trends |
+| Method | Path | Description | Status |
+|---|---|---|---|
+| GET | `/api/v1/health` | Liveness probe | REAL |
+| GET | `/api/v1/weather/current` | Current weather | REAL |
+| GET | `/api/v1/weather/forecast` | Multi-day forecast | REAL |
+| POST | `/api/v1/chat` | Conversational weather query | REAL |
+| GET | `/api/v1/alerts` | Active weather alerts | REAL |
+| GET | `/api/v1/advisory` | Weather-based advisories | REAL |
+| GET | `/api/v1/climate` | Historical climate intelligence & analysis | REAL (Reference Data) |
+| GET | `/api/v1/climate/trends` | Historical climate trends (convenience) | REAL (Reference Data) |
+
+> **Dataset Notice**: The historical weather dataset (`data/climate/historical_weather.csv`) is explicitly a prototype/reference dataset derived from representative climatological summaries for Tamil Nadu cities (`Madurai`, `Chennai`, `Coimbatore`, `Tirunelveli`). It is not an official live meteorological feed.
 
 See [`../../docs/api/API_CONTRACT.md`](../../docs/api/API_CONTRACT.md) for the full API specification.
 

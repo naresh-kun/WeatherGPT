@@ -14,23 +14,29 @@ A conversational weather intelligence prototype providing real-time weather data
 | Phase 4 | **Complete** | Flutter frontend connected to real backend data |
 | Phase 5 | **Complete** | AI Chat Integration (Gemini 3.7 Flash + real weather grounding) |
 | Phase 6 | **Complete** | Smart Alerts & Advisories Engine (Deterministic, rule-based) |
-| Phase 7+ | Planned | Climate Intelligence, Multilingual, Voice |
+| Phase 7 | **Complete** | Climate Intelligence (Deterministic trends, baselines, anomalies, reference data) |
+| Phase 8+ | Planned | Multilingual (Tamil), Voice (STT/TTS) |
 
-### Phase 6 — Smart Alerts & Advisories Status
+### Phase 7 — Climate Intelligence Status
 
-The Flutter application (`frontend/weathergpt_app/`) and FastAPI backend (`backend/weathergpt_api/`) now feature a deterministic Smart Alert Engine and rule-based advisory system:
+The Flutter application (`frontend/weathergpt_app/`) and FastAPI backend (`backend/weathergpt_api/`) now feature deterministic Climate Intelligence powered by a curated reference dataset:
 
-- **Smart Alert Engine [REAL — Phase 6]**:
-  - Deterministic evaluation of current and forecast weather against configurable thresholds.
-  - No LLM dependency for alert or advisory decisions.
-  - Rules: Extreme Heat, Heavy Rain, Strong Wind, High UV, Thunderstorm (using structured WeatherAPI condition codes).
-  - Merged with native WeatherAPI authority alerts without duplication.
-- **Rule-Based Advisories [REAL — Phase 6]**:
-  - Practical, contextual recommendations categorized by `general`, `health`, `outdoor`, `travel`, and `agriculture`.
-  - Filter chips and detailed bottom sheet recommendations in Flutter UI.
-- **Alerts & Advisory UI [REAL — Phase 6]**:
-  - Flutter AlertsScreen and AdvisoryScreen display live backend data.
-  - Observed weather metrics, thresholds, category badges, loading, empty, and retry states.
+- **Deterministic Climate Service [REAL — Phase 7]**:
+  - Purely data-driven calculations for annual/monthly temperature and rainfall trends.
+  - Zero LLM involvement for climate trend calculations or baseline comparisons.
+  - Historical comparison metrics: difference, percentage difference, and categorical interpretations (`above_average`, `near_average`, `below_average`).
+  - Anomaly calculation relative to full-period baseline (2000–2023).
+  - Seasonal context mapping (Winter, Summer, Southwest Monsoon, Northeast Monsoon).
+  - Rule-based textual insights derived directly from calculated values.
+- **Reference Dataset [REAL — Prototype Reference]**:
+  - Curated monthly dataset for Tamil Nadu cities (`Madurai`, `Chennai`, `Coimbatore`, `Tirunelveli`) spanning 2000–2023.
+  - Located at `backend/weathergpt_api/data/climate/historical_weather.csv`.
+  - Clearly documented as a prototype/reference dataset, not official meteorological observations.
+- **Climate Screen UI [REAL — Phase 7]**:
+  - Interactive location selector and period range preset chips (2000–2023, 2010–2023, etc.).
+  - `fl_chart` LineChart for temperature trends and BarChart for annual rainfall.
+  - Comparison cards with colored badges and season-aware insight cards.
+  - Comprehensive loading, error, retry, and pull-to-refresh states.
 
 **Implementation Status Matrix**:
 
@@ -39,7 +45,7 @@ The Flutter application (`frontend/weathergpt_app/`) and FastAPI backend (`backe
 - **AI Conversational Chat**: **[REAL — Phase 5]** (Google Gemini 3.7 Flash)
 - **Smart Alert Engine**: **[REAL — Phase 6]** (Deterministic rules & thresholds)
 - **Weather Advisory System**: **[REAL — Phase 6]** (Rule-based templates & filters)
-- **Climate Historical Trends**: **[MOCK — Phase 7 PLANNED]**
+- **Climate Historical Trends**: **[REAL — Phase 7]** (Deterministic calculations & reference dataset)
 - **Tamil Localization**: **[PLANNED — Phase 8]**
 - **Speech-to-Text / Voice**: **[PLANNED — Phase 9]**
 
@@ -55,12 +61,12 @@ FastAPI Backend (backend/weathergpt_api/)
         ├── AI Service (Gemini)  [REAL — Phase 5]
         ├── Alert Engine         [REAL — Phase 6]
         ├── Advisory Service     [REAL — Phase 6]
-        ├── Climate Service      [PLANNED — Phase 7]
-        └── Localization Service  [PLANNED — Phase 8]
+        ├── Climate Service      [REAL — Phase 7]
+        └── Localization Service [PLANNED — Phase 8]
               ↓
         External Weather Provider  [REAL]
         Gemini 3.7 Flash           [REAL — Phase 5]
-        Historical Dataset         [PLANNED]
+        Historical Dataset (CSV)   [REAL — Reference]
 ```
 
 The Flutter frontend communicates **only** with the FastAPI backend.  
@@ -164,7 +170,7 @@ See [`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md) for
 
 ---
 
-## Implementation Status (Post-Phase 4)
+## Implementation Status (Post-Phase 7)
 
 | Component | Status |
 |---|---|
@@ -173,12 +179,13 @@ See [`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md) for
 | Flutter UI | ✅ Implemented |
 | Flutter ↔ Backend Integration | ✅ Implemented (Phase 4 Complete) |
 | WeatherGPT AI Chat (Gemini) | ✅ **REAL** — Phase 5 Complete |
-| Smart Alert Rule Engine | 🚧 Planned — Phase 6 |
-| Climate Analytics | 🚧 Planned — Phase 7 |
+| Smart Alert Rule Engine | ✅ **REAL** — Phase 6 Complete |
+| Weather Advisories Engine | ✅ **REAL** — Phase 6 Complete |
+| Climate Intelligence & Reference Data | ✅ **REAL** — Phase 7 Complete |
 | Localization (Tamil) | 🚧 Planned — Phase 8 |
 | Voice Interaction | 🚧 Planned — Phase 9 |
 
-**Important Note**: The core weather features (Home, Forecast, Alerts, Search) are fully integrated with the real backend. Advanced features (Chat, Advisory, Climate) are currently mocked pending future phases.
+**Important Note**: Weather, Forecast, Alerts, Advisories, AI Chat, and Climate Intelligence are fully integrated with live backend and reference data. Future phases will introduce Tamil localization (Phase 8) and voice interaction (Phase 9).
 
 ---
 

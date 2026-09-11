@@ -62,7 +62,7 @@ class ApiService {
       final response = await _client.get(uri).timeout(AppConfig.apiTimeout);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        return json.decode(response.body);
+        return json.decode(utf8.decode(response.bodyBytes));
       } else if (response.statusCode == 404) {
         throw const LocationNotFoundException();
       } else if (response.statusCode >= 500) {
@@ -95,9 +95,9 @@ class ApiService {
           .timeout(timeout ?? AppConfig.apiTimeout);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        return json.decode(response.body);
+        return json.decode(utf8.decode(response.bodyBytes));
       } else if (response.statusCode == 400) {
-        final detail = _extractDetail(response.body);
+        final detail = _extractDetail(utf8.decode(response.bodyBytes));
         throw ApiException(detail ?? 'Invalid request.');
       } else if (response.statusCode >= 500) {
         throw const ServiceUnavailableException();
@@ -206,4 +206,30 @@ class ApiService {
     final data = await _post('/chat', body, timeout: const Duration(seconds: 60));
     return ChatApiResponse.fromJson(data as Map<String, dynamic>);
   }
+
+  // --- Climate (Phase 7) ---
+
+  /// Fetch deterministic historical climate analysis for [location].
+  ///
+  /// Supports optional [yearFrom], [yearTo], and [month] (1–12) filters.
+  /// Results are computed deterministically from curated reference data.
+  Future<ClimateResponse> getClimate({
+    String location = 'Madurai',
+    int yearFrom = 2000,
+    int yearTo = 2023,
+    int? month,
+  }) async {
+    final queryParams = <String, String>{
+      'location': location,
+      'year_from': yearFrom.toString(),
+      'year_to': yearTo.toString(),
+    };
+    if (month != null) {
+      queryParams['month'] = month.toString();
+    }
+
+    final data = await _get('/climate', queryParams);
+    return ClimateResponse.fromJson(data as Map<String, dynamic>);
+  }
 }
+

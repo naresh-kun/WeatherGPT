@@ -439,10 +439,14 @@ curl "http://localhost:8000/api/v1/advisory?lat=28.6139&lon=77.2090&category=hea
 
 ---
 
-## 9. GET /climate/trends
+---
+
+## 9. GET /climate
 
 ### Purpose
-Returns historical climate trend data for a location over a specified period. Used to display long-term climate analytics charts in the Flutter app.
+Returns deterministic historical climate analysis for a requested location over a specified period. Computes temperature and rainfall trends, historical baseline comparisons, anomalies, Tamil Nadu seasonal context, and rule-based insights without LLM involvement. Powered by a curated reference dataset.
+
+> **Dataset Notice**: The underlying dataset (`backend/weathergpt_api/data/climate/historical_weather.csv`) is a prototype/reference historical dataset containing representative monthly records for Tamil Nadu cities (`Madurai`, `Chennai`, `Coimbatore`, `Tirunelveli`) spanning 2000–2023. It is not an official government meteorological feed.
 
 ### HTTP Method
 `GET`
@@ -450,11 +454,11 @@ Returns historical climate trend data for a location over a specified period. Us
 ### Query Parameters
 | Parameter | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `lat` | float | Yes | — | Latitude |
-| `lon` | float | Yes | — | Longitude |
-| `start_year` | int | No | `2000` | Start of the trend period |
-| `end_year` | int | No | `2025` | End of the trend period |
-| `parameter` | string | No | `temperature` | `temperature` \| `precipitation` \| `humidity` |
+| `location` | string | No | `Madurai` | City name (`Madurai`, `Chennai`, `Coimbatore`, `Tirunelveli`) |
+| `year_from` | int | No | `2000` | Start year of analysis (1990–2030) |
+| `year_to` | int | No | `2023` | End year of analysis (1990–2030) |
+| `month` | int | No | `null` | Optional calendar month (1–12); omit for whole-year analysis |
+| `metric` | string | No | `null` | Optional metric focus: `temperature` \| `rainfall` |
 
 ### Request Body
 None.
@@ -462,19 +466,55 @@ None.
 ### Response JSON
 ```json
 {
-  "location_name": "New Delhi",
-  "lat": 28.6139,
-  "lon": 77.2090,
-  "trends": [
-    {
-      "parameter": "temperature",
-      "unit": "°C",
-      "baseline_period": "1981-2010",
-      "data_points": [
-        { "year": 2000, "value": 25.1, "anomaly": 0.3 },
-        { "year": 2001, "value": 25.4, "anomaly": 0.6 }
-      ]
-    }
+  "location": "Madurai",
+  "year_from": 2000,
+  "year_to": 2023,
+  "temperature_trend": {
+    "location": "Madurai",
+    "metric": "temperature",
+    "unit": "°C",
+    "period": "2000–2023",
+    "values": [
+      { "year": 2000, "value": 29.5 },
+      { "year": 2023, "value": 29.8 }
+    ]
+  },
+  "rainfall_trend": {
+    "location": "Madurai",
+    "metric": "rainfall",
+    "unit": "mm",
+    "period": "2000–2023",
+    "values": [
+      { "year": 2000, "value": 717.4 },
+      { "year": 2023, "value": 820.0 }
+    ]
+  },
+  "temperature_comparison": {
+    "metric": "temperature",
+    "current_value": 29.8,
+    "historical_average": 29.3,
+    "difference": 0.5,
+    "difference_percent": 1.7,
+    "interpretation": "above_average"
+  },
+  "rainfall_comparison": {
+    "metric": "rainfall",
+    "current_value": 820.0,
+    "historical_average": 860.0,
+    "difference": -40.0,
+    "difference_percent": -4.7,
+    "interpretation": "near_average"
+  },
+  "temperature_anomaly": 0.5,
+  "rainfall_anomaly": -40.0,
+  "season": "Southwest Monsoon",
+  "insight": "Recent temperatures are relatively stable compared with the historical baseline.",
+  "data_source": "Prototype/reference dataset — derived from publicly available climatological summaries for Tamil Nadu cities. Not official meteorological observations.",
+  "available_locations": [
+    "Chennai",
+    "Coimbatore",
+    "Madurai",
+    "Tirunelveli"
   ]
 }
 ```
@@ -482,13 +522,36 @@ None.
 ### Possible Errors
 | Status | Description |
 |---|---|
-| `400 Bad Request` | Invalid coordinates or year range |
-| `404 Not Found` | No historical data for the location |
-| `503 Service Unavailable` | Climate service unavailable |
+| `400 Bad Request` | `year_from` > `year_to` or out-of-range parameters |
+| `404 Not Found` | Location not in reference dataset |
+| `500 Internal Server Error` | Unexpected analysis error |
 
 ### Example Request
 ```bash
-curl "http://localhost:8000/api/v1/climate/trends?lat=28.6139&lon=77.2090&start_year=2000&end_year=2025&parameter=temperature"
+curl "http://localhost:8000/api/v1/climate?location=Madurai&year_from=2000&year_to=2023"
+```
+
+---
+
+## 9.1 GET /climate/trends (Legacy / Convenience)
+
+### Purpose
+Convenience endpoint for single-parameter historical trends.
+
+### HTTP Method
+`GET`
+
+### Query Parameters
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `location` | string | No | `Madurai` | City name |
+| `parameter` | string | No | `temperature` | `temperature` \| `rainfall` |
+| `start_year` | int | No | `2000` | Start year |
+| `end_year` | int | No | `2023` | End year |
+
+### Example Request
+```bash
+curl "http://localhost:8000/api/v1/climate/trends?location=Madurai&parameter=temperature&start_year=2000&end_year=2023"
 ```
 
 ---

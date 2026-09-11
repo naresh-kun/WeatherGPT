@@ -260,11 +260,11 @@ class TestClimateAPI:
     def test_get_climate_with_year_filter(self):
         """GET /api/v1/climate with custom year_from and year_to."""
         response = client.get(
-            "/api/v1/climate?location=Chennai&year_from=2010&year_to=2015"
+            "/api/v1/climate?location=Madurai&year_from=2010&year_to=2015"
         )
         assert response.status_code == 200
         data = response.json()
-        assert data["location"] == "Chennai"
+        assert data["location"] == "Madurai"
         assert data["year_from"] == 2010
         assert data["year_to"] == 2015
         assert len(data["temperature_trend"]["values"]) == 6

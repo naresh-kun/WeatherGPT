@@ -27,11 +27,11 @@
 │                                          │
 │  Routes → Services → Repositories       │
 │  ├── Weather Service   [REAL — Phase 3]  │
-│  ├── AI Service         [REAL — Phase 5]  │
-│  ├── Alert Engine       [PLANNED — Ph.6] │
-│  ├── Advisory Service   [PLANNED — Ph.7] │
-│  ├── Climate Service    [PLANNED — Ph.7] │
-│  └── Localization        [PLANNED — Ph.8] │
+│  ├── AI Service        [REAL — Phase 5]  │
+│  ├── Alert Engine      [REAL — Phase 6]  │
+│  ├── Advisory Service  [REAL — Phase 6]  │
+│  ├── Climate Service   [REAL — Phase 7]  │
+│  └── Localization      [PLANNED — Ph.8]  │
 └─────────────────────────────────────────┘
           │              │
           ▼              ▼
@@ -42,16 +42,16 @@
           ▼
     Historical
       Dataset
-    [PLANNED]
+  [REAL — Reference CSV]
 ```
 
 **Critical Rule**: The Flutter frontend must **never** call the External Weather Provider or LLM Provider directly. All external API calls go through the FastAPI backend.
 
-**Phase 5 Note**: The ChatScreen now uses real `ChatProvider` → `ApiService.sendChatMessage` → `POST /api/v1/chat` → `WeatherService` → `GeminiChatService`. The Gemini API key is exclusively stored in the backend `.env` and never sent to Flutter.
+**Phase 7 Note**: The ClimateScreen now uses `ClimateProvider` → `ApiService.getClimate` → `GET /api/v1/climate` → `ClimateService` → `historical_weather.csv` (2000–2023 monthly reference dataset). Calculations (trends, baseline comparisons, anomalies, seasonal analysis, insights) are 100% deterministic without LLM involvement.
 
 ---
 
-## 1.1 Phase 6 Architecture (Current)
+## 1.1 Phase 7 Architecture (Current)
 
 ```
 SplashScreen
@@ -61,7 +61,7 @@ MainShell (Bottom Navigation — IndexedStack)
      ├── ChatScreen          → ChatProvider → POST /api/v1/chat (Gemini AI) [REAL — Phase 5]
      ├── AlertsScreen        → WeatherProvider.alerts (Real Smart Alerts) [REAL — Phase 6]
      ├── AdvisoryScreen      → WeatherProvider.advisories (Real Advisory Data) [REAL — Phase 6]
-     └── ClimateScreen       → MockData.climateDatasets (Phase 7 planned)
+     └── ClimateScreen       → ClimateProvider → GET /api/v1/climate (Real Reference Data) [REAL — Phase 7]
 
 Secondary routes (Navigator.push):
      ├── ForecastScreen      → WeatherProvider.forecast (Real API Data)
@@ -77,12 +77,12 @@ Widget layers:
 | Screens & navigation | **Implemented** |
 | Reusable widgets | **Implemented** |
 | Dart data models | **Implemented** (aligned with API contract) |
-| API service / providers | **Implemented** (wired to backend; ChatProvider, WeatherProvider alerts & advisories) |
-| Backend HTTP calls | **Implemented** (Weather/Alerts/Advisory/Location/Chat) |
+| API service / providers | **Implemented** (wired to backend; ChatProvider, WeatherProvider, ClimateProvider) |
+| Backend HTTP calls | **Implemented** (Weather/Alerts/Advisory/Location/Chat/Climate) |
 | Real AI chat (Gemini) | **Implemented [Phase 5]** |
 | Real Smart Alert Engine | **Implemented [Phase 6]** (Deterministic, rule-based) |
 | Real Advisory Service | **Implemented [Phase 6]** (Rule-based templates, category filters) |
-| Real climate | **Not implemented** (uses mock data) [PLANNED] |
+| Real Climate Intelligence | **Implemented [Phase 7]** (Deterministic calculations, reference CSV) |
 
 ---
 
