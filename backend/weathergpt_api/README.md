@@ -98,6 +98,7 @@ Tests cover:
 - Advisory endpoint and category filtering (`tests/test_alerts.py`)
 - Chat endpoint (valid requests, weather context, Gemini success/failure, validation) (`tests/test_chat.py`)
 - Climate service, temperature & rainfall trends, baselines, anomalies, and insights (`tests/test_climate.py`)
+- Multilingual support for Chat, Smart Alerts, Advisories, and Climate (`tests/test_multilingual.py`)
 - Reliability, 503 retry, 429 rate limiting, log sanitization, and deduplication cache (`tests/test_reliability.py`)
 
 ---

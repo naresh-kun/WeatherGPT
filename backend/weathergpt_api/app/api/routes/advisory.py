@@ -34,6 +34,7 @@ def _build_advisories(
     current: WeatherCurrent,
     forecast: Optional[WeatherForecast],
     category: str,
+    language: str = "en",
 ) -> AdvisoryResponse:
     """
     Build practical advisories from current weather + alert engine results.
@@ -41,8 +42,9 @@ def _build_advisories(
     For each triggered alert rule we generate one advisory, filtered by the
     requested category.  General advisories always include everything.
     """
+    lang = "ta" if (language or "en").lower().strip() in ("ta", "tamil") else "en"
     engine = AlertEngine()
-    alerts = engine.evaluate(current, forecast)
+    alerts = engine.evaluate(current, forecast, language=lang)
 
     now = int(time.time())
     end = now + 86400  # valid for 24 h
@@ -54,6 +56,24 @@ def _build_advisories(
     if AlertType.HEAT in alert_types:
         heat = next(a for a in alerts if a.alert_type == AlertType.HEAT)
         if category in ("general", "health", "outdoor", "agriculture"):
+            title = "வெப்ப பாதுகாப்பு அறிவுரை" if lang == "ta" else "Heat Safety Advisory"
+            message = (
+                f"அதிக வெப்பநிலை {heat.relevant_value:.1f}°C பதிவாகியுள்ளது. போதுமான தண்ணீர் குடித்து மதிய வேளையில் வெயிலில் நீண்ட நேரம் இருப்பதைத் தவிர்க்கவும்."
+                if lang == "ta"
+                else (
+                    f"High temperature of {heat.relevant_value:.1f}°C detected. "
+                    "Stay hydrated and avoid prolonged exposure during peak afternoon hours."
+                )
+            )
+            recommendation = (
+                "போதுமான அளவு தண்ணீர் குடித்து, அதிக வெப்பத்தில் நீண்ட நேரம் இருப்பதைத் தவிர்க்கவும். தளர்வான ஆடைகளை அணியவும்."
+                if lang == "ta"
+                else (
+                    "Drink at least 2–3 litres of water per day. "
+                    "Wear loose, light-coloured clothing. "
+                    "Avoid strenuous outdoor activity between 11am and 4pm."
+                )
+            )
             advisories.append(Advisory(
                 advisory_id=f"adv-{uuid.uuid4().hex[:8]}",
                 category=(
@@ -61,16 +81,9 @@ def _build_advisories(
                     else AdvisoryCategory.HEALTH if category == "health"
                     else AdvisoryCategory.OUTDOOR
                 ),
-                title="Heat Safety Advisory",
-                message=(
-                    f"High temperature of {heat.relevant_value:.1f}°C detected. "
-                    "Stay hydrated and avoid prolonged exposure during peak afternoon hours."
-                ),
-                recommendation=(
-                    "Drink at least 2–3 litres of water per day. "
-                    "Wear loose, light-coloured clothing. "
-                    "Avoid strenuous outdoor activity between 11am and 4pm."
-                ),
+                title=title,
+                message=message,
+                recommendation=recommendation,
                 valid_until=end,
             ))
 
@@ -78,6 +91,23 @@ def _build_advisories(
     if AlertType.RAIN in alert_types:
         rain = next(a for a in alerts if a.alert_type == AlertType.RAIN)
         if category in ("general", "travel", "outdoor", "agriculture"):
+            title = "மழை பாதுகாப்பு அறிவுரை" if lang == "ta" else "Rain Preparedness Advisory"
+            message = (
+                f"மழை பெய்வதற்கான வாய்ப்பு {rain.relevant_value:.0f}% உள்ளது. குடை எடுத்துச் சென்று அதற்கேற்ப திட்டமிடவும்."
+                if lang == "ta"
+                else (
+                    f"Rain probability of {rain.relevant_value:.0f}% forecast. "
+                    "Carry an umbrella and plan accordingly."
+                )
+            )
+            recommendation = (
+                "வெளியில் செல்லும்போது குடை எடுத்துச் செல்லவும். தாழ்வான நீர் தேங்கும் பகுதிகளைத் தவிர்க்கவும்."
+                if lang == "ta"
+                else (
+                    "Take a waterproof jacket or umbrella when going outdoors. "
+                    "Avoid low-lying areas and check for road flooding if driving."
+                )
+            )
             advisories.append(Advisory(
                 advisory_id=f"adv-{uuid.uuid4().hex[:8]}",
                 category=(
@@ -85,15 +115,9 @@ def _build_advisories(
                     else AdvisoryCategory.TRAVEL if category == "travel"
                     else AdvisoryCategory.GENERAL
                 ),
-                title="Rain Preparedness Advisory",
-                message=(
-                    f"Rain probability of {rain.relevant_value:.0f}% forecast. "
-                    "Carry an umbrella and plan accordingly."
-                ),
-                recommendation=(
-                    "Take a waterproof jacket or umbrella when going outdoors. "
-                    "Avoid low-lying areas and check for road flooding if driving."
-                ),
+                title=title,
+                message=message,
+                recommendation=recommendation,
                 valid_until=end,
             ))
 
@@ -101,6 +125,24 @@ def _build_advisories(
     if AlertType.WIND in alert_types:
         wind = next(a for a in alerts if a.alert_type == AlertType.WIND)
         if category in ("general", "travel", "outdoor", "agriculture"):
+            title = "காற்று பாதுகாப்பு அறிவுரை" if lang == "ta" else "Wind Safety Advisory"
+            message = (
+                f"காற்று வேகம் {wind.relevant_value:.0f} km/h எதிர்பார்க்கப்படுகிறது. தளர்வான பொருட்களைப் பாதுகாப்பாக வைக்கவும்."
+                if lang == "ta"
+                else (
+                    f"Wind speeds of {wind.relevant_value:.0f} km/h expected. "
+                    "Secure loose objects and use caution outdoors."
+                )
+            )
+            recommendation = (
+                "திறந்தவெளி உயரமான இடங்களைத் தவிர்க்கவும். வாகனங்களை எச்சரிக்கையுடன் இயக்கவும்."
+                if lang == "ta"
+                else (
+                    "Avoid exposed elevated areas. "
+                    "Secure outdoor furniture and garden items. "
+                    "Drive carefully — high-sided vehicles may be affected."
+                )
+            )
             advisories.append(Advisory(
                 advisory_id=f"adv-{uuid.uuid4().hex[:8]}",
                 category=(
@@ -108,16 +150,9 @@ def _build_advisories(
                     else AdvisoryCategory.TRAVEL if category == "travel"
                     else AdvisoryCategory.OUTDOOR
                 ),
-                title="Wind Safety Advisory",
-                message=(
-                    f"Wind speeds of {wind.relevant_value:.0f} km/h expected. "
-                    "Secure loose objects and use caution outdoors."
-                ),
-                recommendation=(
-                    "Avoid exposed elevated areas. "
-                    "Secure outdoor furniture and garden items. "
-                    "Drive carefully — high-sided vehicles may be affected."
-                ),
+                title=title,
+                message=message,
+                recommendation=recommendation,
                 valid_until=end,
             ))
 
@@ -125,25 +160,54 @@ def _build_advisories(
     if AlertType.UV in alert_types:
         uv = next(a for a in alerts if a.alert_type == AlertType.UV)
         if category in ("general", "health", "outdoor"):
-            advisories.append(Advisory(
-                advisory_id=f"adv-{uuid.uuid4().hex[:8]}",
-                category=AdvisoryCategory.HEALTH if category == "health" else AdvisoryCategory.OUTDOOR,
-                title="Sun Protection Advisory",
-                message=(
+            title = "சூரிய ஒளி பாதுகாப்பு அறிவுரை" if lang == "ta" else "Sun Protection Advisory"
+            message = (
+                f"UV குறியீடு {uv.relevant_value:.0f} — சூரிய கதிர்வீச்சு அதிகம். வெளியில் செல்லும்போது தோலைப் பாதுகாக்கவும்."
+                if lang == "ta"
+                else (
                     f"UV index of {uv.relevant_value:.0f} — {uv.severity.value} solar radiation. "
                     "Protect your skin when outdoors."
-                ),
-                recommendation=(
+                )
+            )
+            recommendation = (
+                "சன்ஸ்கிரீன் பயன்படுத்தவும், அகலமான தொப்பியை அணியவும். பகல் 10 மணி முதல் மாலை 4 மணி வரை நிழலான இடங்களில் இருக்கவும்."
+                if lang == "ta"
+                else (
                     "Apply broad-spectrum sunscreen (SPF 30+ for moderate; SPF 50+ for extreme). "
                     "Wear a wide-brimmed hat and UV-protective sunglasses. "
                     "Seek shade between 10am and 4pm."
-                ),
+                )
+            )
+            advisories.append(Advisory(
+                advisory_id=f"adv-{uuid.uuid4().hex[:8]}",
+                category=AdvisoryCategory.HEALTH if category == "health" else AdvisoryCategory.OUTDOOR,
+                title=title,
+                message=message,
+                recommendation=recommendation,
                 valid_until=end,
             ))
 
     # ---------- thunderstorm advisory ----------
     if AlertType.THUNDERSTORM in alert_types:
         if category in ("general", "travel", "outdoor", "agriculture"):
+            title = "இடிமின்னல் பாதுகாப்பு அறிவுரை" if lang == "ta" else "Thunderstorm Safety Advisory"
+            message = (
+                "இடிமின்னல் வானிலை நிலவுகிறது. வீட்டிற்குள் பாதுகாப்பாக இருக்கவும்."
+                if lang == "ta"
+                else (
+                    "Thunderstorm conditions detected. "
+                    "Stay indoors and avoid open exposed areas."
+                )
+            )
+            recommendation = (
+                "ஜன்னல்களிலிருந்து தள்ளி வீட்டிற்குள் இருக்கவும். நிலைமை சரியாகும் வரை வெளிப்புறப் பயணங்களைத் தள்ளிவைக்கவும்."
+                if lang == "ta"
+                else (
+                    "Stay indoors away from windows. "
+                    "Avoid using corded phones and unplug sensitive electronics. "
+                    "Postpone outdoor activities until conditions improve."
+                )
+            )
             advisories.append(Advisory(
                 advisory_id=f"adv-{uuid.uuid4().hex[:8]}",
                 category=(
@@ -151,34 +215,39 @@ def _build_advisories(
                     else AdvisoryCategory.TRAVEL if category == "travel"
                     else AdvisoryCategory.GENERAL
                 ),
-                title="Thunderstorm Safety Advisory",
-                message=(
-                    "Thunderstorm conditions detected. "
-                    "Stay indoors and avoid open exposed areas."
-                ),
-                recommendation=(
-                    "Stay indoors away from windows. "
-                    "Avoid using corded phones and unplug sensitive electronics. "
-                    "Postpone outdoor activities until conditions improve."
-                ),
+                title=title,
+                message=message,
+                recommendation=recommendation,
                 valid_until=end,
             ))
 
     # ---------- all-clear advisory ----------
     if not advisories:
+        loc_display = current.location.city or ("உங்கள் பகுதி" if lang == "ta" else "your location")
+        title = "அனைத்தும் சீரானது" if lang == "ta" else "All Clear"
+        message = (
+            f"{loc_display} பகுதியில் எவ்வித தீவிர வானிலை எச்சரிக்கையும் இல்லை. வானிலை இயல்பாக உள்ளது."
+            if lang == "ta"
+            else (
+                f"No significant weather hazards detected for "
+                f"{current.location.city or 'your location'}. "
+                "Conditions are suitable for outdoor activities."
+            )
+        )
+        recommendation = (
+            "வானிலை பாதுகாப்பாக உள்ளது — சிறப்பு முன்னெச்சரிக்கைகள் தேவையில்லை."
+            if lang == "ta"
+            else "Enjoy the day — no special weather precautions needed."
+        )
         advisories.append(Advisory(
             advisory_id=f"adv-{uuid.uuid4().hex[:8]}",
             category=(
                 AdvisoryCategory.AGRICULTURE if category == "agriculture"
                 else AdvisoryCategory.GENERAL
             ),
-            title="All Clear",
-            message=(
-                f"No significant weather hazards detected for "
-                f"{current.location.city or 'your location'}. "
-                "Conditions are suitable for outdoor activities."
-            ),
-            recommendation="Enjoy the day — no special weather precautions needed.",
+            title=title,
+            message=message,
+            recommendation=recommendation,
             valid_until=end,
         ))
 
@@ -190,6 +259,8 @@ async def get_advisory(
     lat: float = Query(0.0, description="Latitude"),
     lon: float = Query(0.0, description="Longitude"),
     category: str = Query("general", description="Advisory category: general | travel | agriculture | health | outdoor"),
+    language: str = Query("en", description="Response language: 'en' | 'ta'"),
+    lang: str = Query(None, description="Alias for language parameter: 'en' | 'ta'"),
     service: WeatherService = Depends(get_weather_service),
 ) -> AdvisoryResponse:
     """
@@ -200,8 +271,9 @@ async def get_advisory(
 
     No AI/LLM is used. All decisions are deterministic.
 
-    [Phase 6 — REAL]
+    [Phase 6 — REAL, Phase 8 — Multilingual]
     """
+    selected_lang = lang or language or "en"
     current = await service.get_current(lat, lon)
     forecast = await service.get_forecast(lat, lon, days=1)
-    return _build_advisories(current, forecast, category.lower())
+    return _build_advisories(current, forecast, category.lower(), language=selected_lang)

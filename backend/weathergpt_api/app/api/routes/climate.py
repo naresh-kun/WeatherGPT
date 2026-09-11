@@ -44,6 +44,8 @@ async def get_climate(
     metric: Optional[str] = Query(
         None, description="Optional metric focus: 'temperature' or 'rainfall'"
     ),
+    language: str = Query("en", description="Response language: 'en' | 'ta'"),
+    lang: Optional[str] = Query(None, description="Alias for language parameter: 'en' | 'ta'"),
 ) -> ClimateResponse:
     """Return comprehensive historical climate analysis for a location."""
     if year_from > year_to:
@@ -52,12 +54,14 @@ async def get_climate(
             detail=f"year_from ({year_from}) cannot be greater than year_to ({year_to})",
         )
 
+    selected_lang = lang or language or "en"
     try:
         response = _climate_service.get_climate(
             location=location,
             year_from=year_from,
             year_to=year_to,
             month=month,
+            language=selected_lang,
         )
         return response
     except ValueError as exc:
@@ -80,6 +84,8 @@ async def get_climate_trends(
     ),
     start_year: int = Query(2000, ge=1990, le=2030, description="Start year"),
     end_year: int = Query(2023, ge=1990, le=2030, description="End year"),
+    language: str = Query("en", description="Response language: 'en' | 'ta'"),
+    lang: Optional[str] = Query(None, description="Alias for language: 'en' | 'ta'"),
 ) -> dict:
     """Convenience / legacy endpoint for trend data."""
     if start_year > end_year:
@@ -88,11 +94,13 @@ async def get_climate_trends(
             detail=f"start_year ({start_year}) cannot be greater than end_year ({end_year})",
         )
 
+    selected_lang = lang or language or "en"
     try:
         full = _climate_service.get_climate(
             location=location,
             year_from=start_year,
             year_to=end_year,
+            language=selected_lang,
         )
         if parameter.lower() == "rainfall":
             trend_data = full.rainfall_trend.model_dump()

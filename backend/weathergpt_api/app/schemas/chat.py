@@ -27,6 +27,8 @@ class ChatRequest(BaseModel):
     conversation_id: Optional[str] = Field(None, description="ID to continue an existing conversation")
     language: str = Field("en", description="BCP-47 language tag for the response")
     location: Optional[dict] = Field(None, description="Optional location context {lat, lon}")
+    lat: Optional[float] = Field(None, description="Optional latitude coordinate")
+    lon: Optional[float] = Field(None, description="Optional longitude coordinate")
     voice: bool = Field(False, description="Whether the response should be optimised for TTS")
 
 

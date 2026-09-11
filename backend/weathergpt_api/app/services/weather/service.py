@@ -212,9 +212,10 @@ class WeatherService:
             total=len(mapped_alerts)
         )
 
-    async def get_alerts_smart(self, lat: float, lon: float) -> AlertsResponse:
+    async def get_alerts_smart(self, lat: float, lon: float, language: str = "en") -> AlertsResponse:
         """
         Phase 6 — Smart alert endpoint.
+        Phase 8 — Multilingual alert evaluation.
 
         Strategy:
           1. Fetch current weather and 1-day forecast concurrently.
@@ -222,7 +223,7 @@ class WeatherService:
           3. Merge with any native WeatherAPI alerts (if any are issued).
           4. Deduplicate by alert_type so the same rule doesn't show twice.
 
-        [Phase 6 — REAL]
+        [Phase 6 — REAL, Phase 8 — Multilingual]
         """
         # Fetch concurrently to minimise latency
         current, forecast, raw_alerts_resp = await asyncio.gather(
@@ -233,7 +234,7 @@ class WeatherService:
 
         # Run deterministic rule engine
         engine = AlertEngine()
-        engine_alerts = engine.evaluate(current, forecast)
+        engine_alerts = engine.evaluate(current, forecast, language=language)
 
         # Merge: smart alerts first, then any WeatherAPI-native alerts
         seen_types: set = {a.alert_type for a in engine_alerts}

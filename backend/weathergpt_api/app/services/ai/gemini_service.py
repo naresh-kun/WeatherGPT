@@ -35,6 +35,27 @@ When answering, use natural language. Avoid bullet points unless clearly helpful
 Keep responses concise — typically 1-3 sentences unless more detail is warranted.
 """
 
+_TAMIL_INSTRUCTION = """Language Instruction:
+- Respond in natural, conversational Tamil (தமிழ்).
+- Use clear Tamil weather terminology:
+  * Temperature -> வெப்பநிலை
+  * Feels like -> உணரப்படும் வெப்பநிலை
+  * Humidity -> ஈரப்பதம்
+  * Rain -> மழை
+  * Wind -> காற்று
+  * Forecast -> வானிலை முன்னறிவிப்பு
+  * Alert -> எச்சரிக்கை
+  * Advisory -> அறிவுரை
+  * UV Index -> UV குறியீடு
+- Maintain exact numerical values and units (°C, %, km/h, mm) as provided in the weather context.
+- Weather facts MUST come strictly from the injected real weather context. Never fabricate or extrapolate.
+- Non-weather scope restrictions remain strictly in effect."""
+
+_ENGLISH_INSTRUCTION = """Language Instruction:
+- Respond in clear, natural English.
+- Weather facts MUST come strictly from the injected real weather context. Never fabricate or extrapolate.
+- Non-weather scope restrictions remain strictly in effect."""
+
 _WEATHER_CONTEXT_TEMPLATE = """Current real-time weather data for {location_name}:
 
 {weather_json}
@@ -50,7 +71,7 @@ class GeminiChatService:
     Uses google-genai (new unified SDK). The API key is loaded from
     settings.gemini_api_key (env var: GEMINI_API_KEY).
 
-    [REAL — Phase 5]
+    [REAL — Phase 5, Phase 8: Multilingual]
     """
 
     def __init__(self) -> None:
@@ -81,13 +102,15 @@ class GeminiChatService:
         self,
         user_message: str,
         weather_context: Dict[str, Any],
+        language: str = "en",
     ) -> str:
         """
-        Generate a weather-grounded response from Gemini.
+        Generate a weather-grounded response from Gemini in the requested language.
 
         Args:
             user_message: The user's natural-language weather question.
             weather_context: Dict of current weather fields for the user's location.
+            language: Requested response language ('en' or 'ta').
 
         Returns:
             AI-generated response text.
@@ -113,9 +136,12 @@ class GeminiChatService:
             weather_json=weather_json_str,
         )
 
-        # Combined prompt: system + context + user question
+        lang_instruction = _TAMIL_INSTRUCTION if language == "ta" else _ENGLISH_INSTRUCTION
+
+        # Combined prompt: system + language instruction + context + user question
         full_prompt = (
             f"{_SYSTEM_INSTRUCTION}\n\n"
+            f"{lang_instruction}\n\n"
             f"{weather_context_text}\n\n"
             f"User question: {user_message}"
         )

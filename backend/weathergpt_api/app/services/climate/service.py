@@ -54,6 +54,21 @@ _SEASON_MAP: Dict[int, str] = {
     12: "Winter",
 }
 
+_SEASON_MAP_TA: Dict[int, str] = {
+    1: "குளிர்காலம்",
+    2: "குளிர்காலம்",
+    3: "கோடைகாலம்",
+    4: "கோடைகாலம்",
+    5: "கோடைகாலம்",
+    6: "தென்மேற்கு பருவமழை",
+    7: "தென்மேற்கு பருவமழை",
+    8: "தென்மேற்கு பருவமழை",
+    9: "தென்மேற்கு பருவமழை",
+    10: "வடகிழக்கு பருவமழை",
+    11: "வடகிழக்கு பருவமழை",
+    12: "குளிர்காலம்",
+}
+
 # ---------------------------------------------------------------------------
 # Near-average band: ±5 % of the baseline is considered "near average"
 # ---------------------------------------------------------------------------
@@ -89,6 +104,7 @@ class ClimateService:
         year_from: int = 2000,
         year_to: int = 2023,
         month: Optional[int] = None,
+        language: str = "en",
     ) -> ClimateResponse:
         """
         Return a full climate analysis for the requested location and period.
@@ -99,7 +115,9 @@ class ClimateService:
         year_from : First year of the analysis window.
         year_to   : Last year of the analysis window (inclusive).
         month     : Optional — restrict analysis to a single calendar month.
+        language  : Response language ('en' or 'ta').
         """
+        lang = "ta" if (language or "en").lower().strip() in ("ta", "tamil") else "en"
         records = self._load_records()
         available = self._available_locations or []
 
@@ -145,7 +163,11 @@ class ClimateService:
 
         # --- Season (use the middle month of the range or the specified month) ---
         ref_month = month if month else 6  # default to June (SW Monsoon)
-        season = _SEASON_MAP.get(ref_month, "Southwest Monsoon")
+        season = (
+            _SEASON_MAP_TA.get(ref_month, "தென்மேற்கு பருவமழை")
+            if lang == "ta"
+            else _SEASON_MAP.get(ref_month, "Southwest Monsoon")
+        )
 
         # --- Insight (rule-based, no LLM) ---
         insight = self._generate_insight(
@@ -153,6 +175,7 @@ class ClimateService:
             rain_comparison.interpretation,
             temp_anomaly,
             rain_anomaly,
+            language=lang,
         )
 
         return ClimateResponse(
@@ -361,11 +384,49 @@ class ClimateService:
         rain_interp: str,
         temp_anomaly: float,
         rain_anomaly: float,
+        language: str = "en",
     ) -> str:
         """
         Generate a human-readable climate insight purely from calculated values.
         No Gemini / LLM calls — the text is fully deterministic.
+        Supports English ('en') and Tamil ('ta').
         """
+        if language == "ta":
+            parts: List[str] = []
+
+            # Temperature insight
+            if temp_interp == "above_average":
+                parts.append(
+                    f"வெப்பநிலை வரலாற்று சராசரியை விட அதிகமாக உள்ளது "
+                    f"(+{temp_anomaly:.1f}°C சராசரியை விட அதிகம்)."
+                )
+            elif temp_interp == "below_average":
+                parts.append(
+                    f"வெப்பநிலை வரலாற்று சராசரியை விட குறைவாக உள்ளது "
+                    f"({temp_anomaly:.1f}°C சராசரியை விட குறைவு)."
+                )
+            else:
+                parts.append(
+                    "சமீபத்திய வெப்பநிலை வரலாற்று சராசரியுடன் ஒப்பிடும்போது நிலையாக உள்ளது."
+                )
+
+            # Rainfall insight
+            if rain_interp == "above_average":
+                parts.append(
+                    f"தேர்ந்தெடுக்கப்பட்ட காலத்தில் மழைப்பொழிவு வரலாற்று சராசரியை விட அதிகமாக உள்ளது "
+                    f"(+{rain_anomaly:.0f} mm சராசரியை விட அதிகம்)."
+                )
+            elif rain_interp == "below_average":
+                parts.append(
+                    f"மழைப்பொழிவு வரலாற்று சராசரியை விட குறைவாக உள்ளது "
+                    f"({rain_anomaly:.0f} mm சராசரியை விட குறைவு)."
+                )
+            else:
+                parts.append("மழைப்பொழிவு இந்த காலத்திற்கான வரலாற்று சராசரிக்கு அருகில் உள்ளது.")
+
+            return " ".join(parts)
+
+        # English
         parts: List[str] = []
 
         # Temperature insight

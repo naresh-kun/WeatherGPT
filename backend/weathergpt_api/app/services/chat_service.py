@@ -56,7 +56,7 @@ class ChatService:
           2. Resolve coordinates
           3. Fetch current weather from WeatherService
           4. Build weather context
-          5. Generate Gemini response
+          5. Generate Gemini response (in requested language: en or ta)
           6. Return ChatResponse
         """
         # Step 1 — validate message
@@ -64,8 +64,12 @@ class ChatService:
         if not message:
             raise HTTPException(status_code=400, detail="Message cannot be empty.")
 
+        # Resolve requested language (supported: en, ta; fallback: en)
+        raw_lang = (request.language or "en").lower().strip()
+        language = "ta" if raw_lang in ("ta", "tamil") else "en"
+
         # Step 2 — resolve coordinates
-        lat, lon = self._resolve_location(request.location)
+        lat, lon = self._resolve_location(request)
 
         # Step 3 — fetch live weather (reuses existing WeatherService)
         weather_context = await self._fetch_weather_context(lat, lon)
@@ -74,6 +78,7 @@ class ChatService:
         ai_reply = await self._gemini.generate_response(
             user_message=message,
             weather_context=weather_context,
+            language=language,
         )
 
         # Step 5 — build and return response
@@ -81,17 +86,32 @@ class ChatService:
         return ChatResponse(
             message=ai_reply,
             conversation_id=conversation_id,
-            language=request.language,
+            language=language,
             suggestions=[],  # Phase 6+: AI-generated follow-up suggestions
         )
 
     def _resolve_location(
-        self, location: Optional[Dict[str, Any]]
+        self, request: ChatRequest
     ) -> tuple[float, float]:
         """
-        Extract lat/lon from the optional location dict.
+        Extract lat/lon from top-level fields or the optional location dict.
         Falls back to default (Madurai) if not provided.
         """
+        if request.lat is not None and request.lon is not None:
+            try:
+                lat = float(request.lat)
+                lon = float(request.lon)
+                if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+                    raise ValueError("Coordinates out of range")
+                return lat, lon
+            except (ValueError, TypeError) as exc:
+                logger.warning("Invalid location coordinates in chat request: %s", exc)
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid location coordinates.",
+                )
+
+        location = request.location
         if location and "lat" in location and "lon" in location:
             try:
                 lat = float(location["lat"])

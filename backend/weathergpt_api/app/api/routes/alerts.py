@@ -24,6 +24,8 @@ def get_weather_service() -> WeatherService:
 async def get_alerts(
     lat: float = Query(0.0, description="Latitude"),
     lon: float = Query(0.0, description="Longitude"),
+    language: str = Query("en", description="Response language: 'en' | 'ta'"),
+    lang: str = Query(None, description="Alias for language parameter: 'en' | 'ta'"),
     service: WeatherService = Depends(get_weather_service),
 ) -> AlertsResponse:
     """
@@ -33,6 +35,7 @@ async def get_alerts(
     weather data from WeatherAPI.com evaluated against configurable
     thresholds. No AI/LLM is used to decide whether an alert exists.
 
-    [Phase 6 — REAL]
+    [Phase 6 — REAL, Phase 8 — Multilingual]
     """
-    return await service.get_alerts_smart(lat, lon)
+    selected_lang = lang or language or "en"
+    return await service.get_alerts_smart(lat, lon, language=selected_lang)
