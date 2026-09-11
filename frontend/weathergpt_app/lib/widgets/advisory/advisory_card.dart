@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:weathergpt_app/core/theme/app_theme.dart';
 import 'package:weathergpt_app/data/mock_data.dart';
+import 'package:weathergpt_app/l10n/app_localizations.dart';
 import 'package:weathergpt_app/models/advisory.dart';
 import 'package:weathergpt_app/widgets/common/common_card.dart';
 
@@ -42,28 +43,30 @@ class AdvisoryCard extends StatelessWidget {
     }
   }
 
-  String _labelForCategory(AdvisoryCategory cat) {
+  String _labelForCategory(BuildContext context, AdvisoryCategory cat) {
+    final l10n = AppLocalizations.of(context);
     switch (cat) {
       case AdvisoryCategory.health:
-        return 'Health';
+        return l10n?.categoryHealth ?? 'Health';
       case AdvisoryCategory.outdoor:
-        return 'Outdoor';
+        return l10n?.categoryOutdoor ?? 'Outdoor';
       case AdvisoryCategory.travel:
-        return 'Travel';
+        return l10n?.categoryTravel ?? 'Travel';
       case AdvisoryCategory.farming:
-        return 'Farming';
+        return l10n?.categoryAgriculture ?? 'Farming';
       case AdvisoryCategory.driving:
-        return 'Driving';
+        return l10n?.categoryTravel ?? 'Driving';
       case AdvisoryCategory.general:
-        return 'General';
+        return l10n?.categoryGeneral ?? 'General';
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final catColor = _colorForCategory(advisory.category);
     final catIcon = _iconForCategory(advisory.category);
-    final catLabel = _labelForCategory(advisory.category);
+    final catLabel = _labelForCategory(context, advisory.category);
 
     return CommonCard(
       onTap: onTap,
@@ -135,9 +138,9 @@ class AdvisoryCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Recommendation',
-                          style: TextStyle(
+                        Text(
+                          l10n?.recommendation ?? 'Recommendation',
+                          style: const TextStyle(
                             fontWeight: FontWeight.w600,
                             color: AppColors.primary,
                             fontSize: 13,
@@ -202,6 +205,7 @@ class AdvisoryDetailCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return CommonCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,7 +221,7 @@ class AdvisoryDetailCard extends StatelessWidget {
           ),
           const SizedBox(height: AppDimensions.paddingMedium),
           _InfoSection(
-            title: 'Recommendation',
+            title: l10n?.recommendation ?? 'Recommendation',
             content: advisory.recommendation,
             icon: Icons.check_circle_outline,
             color: AppColors.primary,
@@ -225,7 +229,7 @@ class AdvisoryDetailCard extends StatelessWidget {
           if (advisory.reason != null && advisory.reason!.isNotEmpty) ...[
             const SizedBox(height: AppDimensions.paddingSmall),
             _InfoSection(
-              title: 'Reason',
+              title: l10n?.reason ?? 'Reason',
               content: advisory.reason!,
               icon: Icons.info_outline,
               color: AppColors.severityModerate,
@@ -234,7 +238,7 @@ class AdvisoryDetailCard extends StatelessWidget {
           if (advisory.weatherFactors.isNotEmpty) ...[
             const SizedBox(height: AppDimensions.paddingMedium),
             Text(
-              'Weather factors considered',
+              l10n?.weatherFactors ?? 'Weather factors considered',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: AppDimensions.paddingSmall),

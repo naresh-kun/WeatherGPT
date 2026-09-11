@@ -31,6 +31,9 @@ class ClimateProvider extends ChangeNotifier {
   int? _selectedMonth;
   int? get selectedMonth => _selectedMonth;
 
+  String? _activeLanguage;
+  String? get activeLanguage => _activeLanguage;
+
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
@@ -45,10 +48,12 @@ class ClimateProvider extends ChangeNotifier {
     int? yearFrom,
     int? yearTo,
     int? month,
+    String? language,
   }) async {
     if (location != null) _selectedLocation = location;
     if (yearFrom != null) _yearFrom = yearFrom;
     if (yearTo != null) _yearTo = yearTo;
+    if (language != null) _activeLanguage = language;
     _selectedMonth = month; // Can be set or set back to null
 
     _state = ClimateState.loading;
@@ -61,6 +66,7 @@ class ClimateProvider extends ChangeNotifier {
         yearFrom: _yearFrom,
         yearTo: _yearTo,
         month: _selectedMonth,
+        language: _activeLanguage,
       );
 
       _climateResponse = response;
@@ -82,25 +88,25 @@ class ClimateProvider extends ChangeNotifier {
   Future<void> setLocation(String location) async {
     if (_selectedLocation == location && _state == ClimateState.success) return;
     _selectedLocation = location;
-    await loadClimate(location: location);
+    await loadClimate(location: location, language: _activeLanguage);
   }
 
   /// Change the year range and reload data.
   Future<void> setYearRange(int from, int to) async {
     _yearFrom = from;
     _yearTo = to;
-    await loadClimate(yearFrom: from, yearTo: to);
+    await loadClimate(yearFrom: from, yearTo: to, language: _activeLanguage);
   }
 
   /// Change the month filter and reload data.
   Future<void> setMonth(int? month) async {
     _selectedMonth = month;
-    await loadClimate(month: month);
+    await loadClimate(month: month, language: _activeLanguage);
   }
 
   /// Retry the last climate fetch.
-  Future<void> retry() => loadClimate();
+  Future<void> retry() => loadClimate(language: _activeLanguage);
 
   /// Refresh climate data.
-  Future<void> refresh() => loadClimate();
+  Future<void> refresh({String? language}) => loadClimate(language: language ?? _activeLanguage);
 }

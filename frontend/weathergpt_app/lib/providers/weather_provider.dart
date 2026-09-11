@@ -33,17 +33,22 @@ class WeatherProvider extends ChangeNotifier {
 
   double? _activeLat;
   double? _activeLon;
+  String? _activeLanguage;
 
   /// Load all weather data for the given coordinates.
   /// Fetches current weather, forecast (hourly + daily), alerts, and advisories
   /// concurrently to minimize latency.
-  Future<void> loadWeather(double lat, double lon) async {
-    // Guard against duplicate in-flight requests for the exact same location
-    if (_state == WeatherState.loading && _activeLat == lat && _activeLon == lon) {
+  Future<void> loadWeather(double lat, double lon, {String? language}) async {
+    // Guard against duplicate in-flight requests for the exact same location and language
+    if (_state == WeatherState.loading &&
+        _activeLat == lat &&
+        _activeLon == lon &&
+        _activeLanguage == language) {
       return;
     }
     _activeLat = lat;
     _activeLon = lon;
+    _activeLanguage = language;
 
     _state = WeatherState.loading;
     _errorMessage = null;
@@ -54,8 +59,8 @@ class WeatherProvider extends ChangeNotifier {
       final results = await Future.wait([
         _api.getCurrentWeather(lat, lon),
         _api.getForecast(lat, lon),
-        _api.getAlerts(lat, lon),
-        _api.getAdvisories(lat, lon),
+        _api.getAlerts(lat, lon, language: language),
+        _api.getAdvisories(lat, lon, language: language),
       ]);
 
       _currentWeather = results[0] as WeatherCurrent;
@@ -81,5 +86,6 @@ class WeatherProvider extends ChangeNotifier {
   }
 
   /// Refresh weather data for the same location.
-  Future<void> refresh(double lat, double lon) => loadWeather(lat, lon);
+  Future<void> refresh(double lat, double lon, {String? language}) =>
+      loadWeather(lat, lon, language: language ?? _activeLanguage);
 }

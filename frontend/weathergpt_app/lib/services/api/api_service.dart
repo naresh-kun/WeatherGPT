@@ -179,11 +179,13 @@ class ApiService {
         .toList();
   }
 
-  Future<WeatherAlertsResponse> getAlerts(double lat, double lon) async {
-    final data = await _get('/alerts', {
+  Future<WeatherAlertsResponse> getAlerts(double lat, double lon, {String? language}) async {
+    final query = <String, String>{
       'lat': lat.toString(),
       'lon': lon.toString(),
-    });
+    };
+    if (language != null) query['language'] = language;
+    final data = await _get('/alerts', query);
     return WeatherAlertsResponse.fromJson(data as Map<String, dynamic>);
   }
 
@@ -191,56 +193,66 @@ class ApiService {
     double lat,
     double lon, {
     String category = 'general',
+    String? language,
   }) async {
-    final data = await _get('/advisory', {
+    final query = <String, String>{
       'lat': lat.toString(),
       'lon': lon.toString(),
       'category': category,
-    });
+    };
+    if (language != null) query['language'] = language;
+    final data = await _get('/advisory', query);
     return WeatherAdvisoriesResponse.fromJson(data as Map<String, dynamic>);
   }
 
-  // --- Chat endpoint (Phase 5) ---
+  // --- Chat endpoint (Phase 5, Phase 8) ---
 
   /// Send a natural-language message to the WeatherGPT AI chat backend.
   ///
   /// The [lat]/[lon] are the user's currently selected location and are
   /// included in every request so the backend can ground the answer in
   /// real weather data. The Gemini API key is **never** sent from Flutter.
+  /// [language] specifies the requested response language (default: 'en').
   Future<ChatApiResponse> sendChatMessage({
     required String message,
     required double lat,
     required double lon,
     String? conversationId,
+    String language = 'en',
   }) async {
     final body = ChatApiRequest(
       message: message,
       lat: lat,
       lon: lon,
       conversationId: conversationId,
+      language: language,
     ).toJson();
 
     final data = await _post('/chat', body, timeout: AppConfig.chatApiTimeout);
     return ChatApiResponse.fromJson(data as Map<String, dynamic>);
   }
 
-  // --- Climate (Phase 7) ---
+  // --- Climate (Phase 7, Phase 8) ---
 
   /// Fetch deterministic historical climate analysis for [location].
   ///
-  /// Supports optional [yearFrom], [yearTo], and [month] (1–12) filters.
+  /// Supports optional [yearFrom], [yearTo], [month] (1–12), and [language] filters.
   /// Results are computed deterministically from curated reference data.
   Future<ClimateResponse> getClimate({
     String location = 'Madurai',
     int yearFrom = 2000,
     int yearTo = 2023,
     int? month,
+    String? language,
   }) async {
     final queryParams = <String, String>{
       'location': location,
       'year_from': yearFrom.toString(),
       'year_to': yearTo.toString(),
     };
+    if (language != null) {
+      queryParams['language'] = language;
+    }
     if (month != null) {
       queryParams['month'] = month.toString();
     }

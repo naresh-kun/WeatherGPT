@@ -4,6 +4,9 @@
 import 'package:flutter/material.dart';
 import 'package:weathergpt_app/core/theme/app_theme.dart';
 import 'package:weathergpt_app/data/mock_data.dart';
+import 'package:weathergpt_app/l10n/app_localizations.dart';
+import 'package:weathergpt_app/main.dart'
+    show languageProvider, locationProvider, weatherProvider, climateProvider;
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -15,23 +18,50 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _weatherAlertsEnabled = true;
   bool _voiceResponsesEnabled = false;
-  String _selectedLanguage = 'English';
+
+  @override
+  void initState() {
+    super.initState();
+    languageProvider.addListener(_onLanguageChanged);
+  }
+
+  @override
+  void dispose() {
+    languageProvider.removeListener(_onLanguageChanged);
+    super.dispose();
+  }
+
+  void _onLanguageChanged() {
+    if (mounted) setState(() {});
+  }
+
+  void _selectLanguage(String code) {
+    languageProvider.setLanguageCode(code);
+    final loc = locationProvider.selectedLocation;
+    weatherProvider.loadWeather(loc.lat, loc.lon, language: code);
+    climateProvider.loadClimate(language: code);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final isTamil = languageProvider.isTamil;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: Text(l10n?.settingsTitle ?? 'Settings'),
       ),
       body: ListView(
         children: [
           _SettingsSection(
-            title: 'Location',
+            title: l10n?.locationSection ?? 'Location',
             children: [
               ListTile(
                 leading: const Icon(Icons.location_on_outlined),
-                title: const Text('Current Location'),
-                subtitle: Text(MockData.currentLocation.displayName),
+                title: Text(l10n?.currentLocation ?? 'Current Location'),
+                subtitle: Text(locationProvider.selectedLocation.displayName.isNotEmpty
+                    ? locationProvider.selectedLocation.displayName
+                    : MockData.currentLocation.displayName),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -44,66 +74,59 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
           _SettingsSection(
-            title: 'Language',
+            title: l10n?.languageSection ?? 'Language',
             children: [
               _LanguageTile(
                 label: 'English',
-                selected: _selectedLanguage == 'English',
-                onTap: () => setState(() => _selectedLanguage = 'English'),
+                selected: !isTamil,
+                onTap: () => _selectLanguage('en'),
               ),
               _LanguageTile(
-                label: 'Tamil',
-                selected: _selectedLanguage == 'Tamil',
-                onTap: () {
-                  setState(() => _selectedLanguage = 'Tamil');
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Tamil localization will be available in a future phase.'),
-                    ),
-                  );
-                },
+                label: 'தமிழ்',
+                selected: isTamil,
+                onTap: () => _selectLanguage('ta'),
               ),
             ],
           ),
           _SettingsSection(
-            title: 'Notifications',
+            title: l10n?.notificationsSection ?? 'Notifications',
             children: [
               SwitchListTile(
-                title: const Text('Weather Alerts'),
-                subtitle: const Text('Receive weather alert notifications'),
+                title: Text(l10n?.weatherAlerts ?? 'Weather Alerts'),
+                subtitle: Text(l10n?.receiveWeatherAlerts ?? 'Receive weather alert notifications'),
                 value: _weatherAlertsEnabled,
                 onChanged: (value) => setState(() => _weatherAlertsEnabled = value),
               ),
             ],
           ),
           _SettingsSection(
-            title: 'Voice',
+            title: l10n?.voiceSection ?? 'Voice',
             children: [
               SwitchListTile(
-                title: const Text('Voice Responses'),
-                subtitle: const Text('Enable text-to-speech for WeatherGPT'),
+                title: Text(l10n?.voiceResponses ?? 'Voice Responses'),
+                subtitle: Text(l10n?.enableTts ?? 'Enable text-to-speech for WeatherGPT'),
                 value: _voiceResponsesEnabled,
                 onChanged: (value) => setState(() => _voiceResponsesEnabled = value),
               ),
             ],
           ),
           _SettingsSection(
-            title: 'Units',
-            children: const [
+            title: l10n?.unitsSection ?? 'Units',
+            children: [
               ListTile(
-                leading: Icon(Icons.thermostat_outlined),
-                title: Text('Temperature'),
-                trailing: Text('°C'),
+                leading: const Icon(Icons.thermostat_outlined),
+                title: Text(l10n?.temperature ?? 'Temperature'),
+                trailing: const Text('°C'),
               ),
               ListTile(
-                leading: Icon(Icons.speed_outlined),
-                title: Text('Wind'),
-                trailing: Text('km/h'),
+                leading: const Icon(Icons.speed_outlined),
+                title: Text(l10n?.wind ?? 'Wind'),
+                trailing: const Text('km/h'),
               ),
             ],
           ),
           _SettingsSection(
-            title: 'About',
+            title: l10n?.aboutSection ?? 'About',
             children: [
               ListTile(
                 leading: Container(
@@ -114,9 +137,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   child: const Icon(Icons.cloud_queue, color: AppColors.primary),
                 ),
-                title: const Text('WeatherGPT'),
-                subtitle: const Text(
-                  'SIH Prototype\nAI-powered conversational weather assistant',
+                title: Text(l10n?.appTitle ?? 'WeatherGPT'),
+                subtitle: Text(
+                  l10n?.aboutSubtitle ?? 'SIH Prototype\nAI-powered conversational weather assistant',
                 ),
                 isThreeLine: true,
               ),

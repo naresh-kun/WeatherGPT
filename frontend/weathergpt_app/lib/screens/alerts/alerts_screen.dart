@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:weathergpt_app/core/theme/app_theme.dart';
+import 'package:weathergpt_app/l10n/app_localizations.dart';
 import 'package:weathergpt_app/main.dart';
 import 'package:weathergpt_app/models/alert.dart';
 import 'package:weathergpt_app/providers/weather_provider.dart';
@@ -22,12 +23,14 @@ class _AlertsScreenState extends State<AlertsScreen> {
     super.initState();
     weatherProvider.addListener(_onWeatherChanged);
     locationProvider.addListener(_onLocationChanged);
+    languageProvider.addListener(_onWeatherChanged);
   }
 
   @override
   void dispose() {
     weatherProvider.removeListener(_onWeatherChanged);
     locationProvider.removeListener(_onLocationChanged);
+    languageProvider.removeListener(_onWeatherChanged);
     super.dispose();
   }
 
@@ -41,7 +44,11 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
   Future<void> _refresh() async {
     final loc = locationProvider.selectedLocation;
-    await weatherProvider.loadWeather(loc.lat, loc.lon);
+    await weatherProvider.loadWeather(
+      loc.lat,
+      loc.lon,
+      language: languageProvider.languageCode,
+    );
   }
 
   void _showAlertDetail(BuildContext context, WeatherAlert alert) {
@@ -80,26 +87,27 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final state = weatherProvider.state;
     final loc = locationProvider.selectedLocation;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Weather Alerts'),
+        title: Text(l10n?.alertsTitle ?? 'Weather Alerts'),
       ),
       body: RefreshIndicator(
         onRefresh: _refresh,
-        child: _buildBody(context, state, loc.displayName),
+        child: _buildBody(context, state, loc.displayName, l10n),
       ),
     );
   }
 
   Widget _buildBody(
-      BuildContext context, WeatherState state, String locationName) {
+      BuildContext context, WeatherState state, String locationName, AppLocalizations? l10n) {
     switch (state) {
       case WeatherState.initial:
       case WeatherState.loading:
-        return const LoadingWidget(message: 'Fetching alerts...');
+        return LoadingWidget(message: l10n?.fetchingAlerts ?? 'Fetching alerts...');
 
       case WeatherState.error:
         return ErrorDisplayWidget(
@@ -118,7 +126,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
               Padding(
                 padding: const EdgeInsets.all(AppDimensions.paddingMedium),
                 child: Text(
-                  'Alerts for $locationName',
+                  l10n?.alertsForLocation(locationName) ?? 'Alerts for $locationName',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ),
@@ -134,12 +142,12 @@ class _AlertsScreenState extends State<AlertsScreen> {
                     ),
                     const SizedBox(height: AppDimensions.paddingMedium),
                     Text(
-                      'No active weather alerts',
+                      l10n?.noActiveAlerts ?? 'No active weather alerts',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'All clear for $locationName',
+                      l10n?.allClearFor(locationName) ?? 'All clear for $locationName',
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],
@@ -154,7 +162,8 @@ class _AlertsScreenState extends State<AlertsScreen> {
           padding: const EdgeInsets.all(AppDimensions.paddingMedium),
           children: [
             Text(
-              '${alerts.length} active ${alerts.length == 1 ? 'alert' : 'alerts'} for $locationName',
+              l10n?.activeAlertsSummary(alerts.length, locationName) ??
+                  '${alerts.length} active ${alerts.length == 1 ? 'alert' : 'alerts'} for $locationName',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: AppDimensions.paddingMedium),

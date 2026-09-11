@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:weathergpt_app/core/theme/app_theme.dart';
+import 'package:weathergpt_app/l10n/app_localizations.dart';
 import 'package:weathergpt_app/main.dart';
 import 'package:weathergpt_app/providers/weather_provider.dart';
 import 'package:weathergpt_app/widgets/common/common_widgets.dart';
@@ -21,12 +22,14 @@ class _ForecastScreenState extends State<ForecastScreen> {
     super.initState();
     weatherProvider.addListener(_onWeatherChanged);
     locationProvider.addListener(_onLocationChanged);
+    languageProvider.addListener(_onWeatherChanged);
   }
 
   @override
   void dispose() {
     weatherProvider.removeListener(_onWeatherChanged);
     locationProvider.removeListener(_onLocationChanged);
+    languageProvider.removeListener(_onWeatherChanged);
     super.dispose();
   }
 
@@ -40,34 +43,40 @@ class _ForecastScreenState extends State<ForecastScreen> {
 
   Future<void> _refresh() async {
     final loc = locationProvider.selectedLocation;
-    await weatherProvider.loadWeather(loc.lat, loc.lon);
+    await weatherProvider.loadWeather(
+      loc.lat,
+      loc.lon,
+      language: languageProvider.languageCode,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final state = weatherProvider.state;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Forecast'),
+        title: Text(l10n?.forecastTitle ?? 'Forecast'),
       ),
       body: RefreshIndicator(
         onRefresh: _refresh,
-        child: _buildBody(state),
+        child: _buildBody(state, l10n),
       ),
     );
   }
 
-  Widget _buildBody(WeatherState state) {
+  Widget _buildBody(WeatherState state, AppLocalizations? l10n) {
     switch (state) {
       case WeatherState.initial:
       case WeatherState.loading:
-        return const LoadingWidget(message: 'Loading forecast...');
+        return LoadingWidget(message: l10n?.loadingForecast ?? 'Loading forecast...');
 
       case WeatherState.error:
         return ErrorDisplayWidget(
           message: weatherProvider.errorMessage ??
-              'Unable to load forecast right now.\nPlease check your connection and try again.',
+              (l10n?.unableToFetchWeather ??
+                  'Unable to load forecast right now.\nPlease check your connection and try again.'),
           onRetry: _refresh,
         );
 
@@ -89,7 +98,7 @@ class _ForecastScreenState extends State<ForecastScreen> {
               const SizedBox(height: AppDimensions.paddingMedium),
 
               // Hourly forecast
-              const SectionHeader(title: 'Hourly Forecast'),
+              SectionHeader(title: l10n?.hourlyForecast ?? 'Hourly Forecast'),
               SizedBox(
                 height: 130,
                 child: ListView.builder(
@@ -114,7 +123,7 @@ class _ForecastScreenState extends State<ForecastScreen> {
 
               // Daily forecast
               const SizedBox(height: AppDimensions.paddingLarge),
-              const SectionHeader(title: '7-Day Forecast'),
+              SectionHeader(title: l10n?.sevenDayForecast ?? '7-Day Forecast'),
               if (forecast.daily.isEmpty)
                 const CommonCard(
                   child: Padding(

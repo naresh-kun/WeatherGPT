@@ -39,6 +39,9 @@ class ChatProvider extends ChangeNotifier {
   /// The location that was active when the last message was sent.
   Location? _lastLocation;
 
+  /// The language that was active when the last message was sent.
+  String? _lastLanguage;
+
   /// Adds initial messages for a warm UX start (session-only; no persistence).
   void setInitialMessages(List<ChatMessage> msgs) {
     _messages
@@ -51,13 +54,19 @@ class ChatProvider extends ChangeNotifier {
   ///
   /// - [message]: The user's natural-language query (must be non-empty).
   /// - [location]: The currently selected location used to ground the answer.
-  Future<void> sendMessage(String message, Location location) async {
+  /// - [language]: The active language code ('en' or 'ta').
+  Future<void> sendMessage(
+    String message,
+    Location location, {
+    String language = 'en',
+  }) async {
     final trimmed = message.trim();
     if (trimmed.isEmpty) return; // spec: do not send empty messages
 
     // Persist for retry
     _lastUserMessage = trimmed;
     _lastLocation = location;
+    _lastLanguage = language;
 
     // Add user message immediately for responsive UI
     _messages.add(ChatMessage(
@@ -74,6 +83,7 @@ class ChatProvider extends ChangeNotifier {
         message: trimmed,
         lat: location.lat,
         lon: location.lon,
+        language: language,
       );
 
       _messages.add(ChatMessage(
@@ -93,7 +103,7 @@ class ChatProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Retry the last failed message using the same location.
+  /// Retry the last failed message using the same location and language.
   Future<void> retry() async {
     if (_lastUserMessage == null || _lastLocation == null) return;
 
@@ -107,7 +117,11 @@ class ChatProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    await sendMessage(_lastUserMessage!, _lastLocation!);
+    await sendMessage(
+      _lastUserMessage!,
+      _lastLocation!,
+      language: _lastLanguage ?? 'en',
+    );
   }
 
   /// Dismiss the current error without retrying.

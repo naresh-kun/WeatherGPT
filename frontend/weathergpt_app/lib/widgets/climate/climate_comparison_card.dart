@@ -4,6 +4,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:weathergpt_app/core/theme/app_theme.dart';
+import 'package:weathergpt_app/l10n/app_localizations.dart';
 import 'package:weathergpt_app/models/climate.dart';
 import 'package:weathergpt_app/widgets/common/common_widgets.dart';
 
@@ -19,12 +20,13 @@ class ClimateComparisonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return CommonCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Historical Comparison vs 2000–2023 Baseline',
+            l10n?.historicalComparison ?? 'Historical Comparison vs 2000–2023 Baseline',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
@@ -35,7 +37,7 @@ class ClimateComparisonCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _ComparisonTile(
-                  title: 'Temperature',
+                  title: l10n?.temperature ?? 'Temperature',
                   currentValue: '${temperatureComparison.currentValue.toStringAsFixed(1)}°C',
                   baselineValue: 'avg ${temperatureComparison.historicalAverage.toStringAsFixed(1)}°C',
                   differenceText: '${temperatureComparison.difference >= 0 ? '+' : ''}${temperatureComparison.difference.toStringAsFixed(1)}°C',
@@ -46,7 +48,7 @@ class ClimateComparisonCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _ComparisonTile(
-                  title: 'Rainfall',
+                  title: l10n?.rainfall ?? 'Rainfall',
                   currentValue: '${rainfallComparison.currentValue.round()} mm',
                   baselineValue: 'avg ${rainfallComparison.historicalAverage.round()} mm',
                   differenceText: '${rainfallComparison.difference >= 0 ? '+' : ''}${rainfallComparison.difference.round()} mm (${rainfallComparison.differencePercent >= 0 ? '+' : ''}${rainfallComparison.differencePercent.toStringAsFixed(1)}%)',
@@ -90,14 +92,15 @@ class _ComparisonTile extends StatelessWidget {
     }
   }
 
-  String _formatInterpretation() {
+  String _formatInterpretation(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     switch (interpretation) {
       case 'above_average':
-        return 'Above Avg';
+        return l10n?.aboveAvg ?? 'Above Avg';
       case 'below_average':
-        return 'Below Avg';
+        return l10n?.belowAvg ?? 'Below Avg';
       default:
-        return 'Near Avg';
+        return l10n?.nearAvg ?? 'Near Avg';
     }
   }
 
@@ -135,7 +138,7 @@ class _ComparisonTile extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  _formatInterpretation(),
+                  _formatInterpretation(context),
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
@@ -191,6 +194,7 @@ class ClimateInsightCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return CommonCard(
       color: AppColors.primary.withValues(alpha: 0.06),
       child: Column(
@@ -200,9 +204,9 @@ class ClimateInsightCard extends StatelessWidget {
             children: [
               const Icon(Icons.insights, color: AppColors.primary, size: 22),
               const SizedBox(width: 8),
-              const Text(
-                'Climate Intelligence Insight',
-                style: TextStyle(
+              Text(
+                l10n?.climateInsightTitle ?? 'Climate Intelligence Insight',
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                   color: AppColors.primary,

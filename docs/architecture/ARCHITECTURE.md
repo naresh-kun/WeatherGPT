@@ -31,7 +31,7 @@
 │  ├── Alert Engine      [REAL — Phase 6]  │
 │  ├── Advisory Service  [REAL — Phase 6]  │
 │  ├── Climate Service   [REAL — Phase 7]  │
-│  └── Localization      [PLANNED — Ph.8]  │
+│  └── Localization      [REAL — Phase 8]  │
 └─────────────────────────────────────────┘
           │              │
           ▼              ▼
@@ -47,26 +47,26 @@
 
 **Critical Rule**: The Flutter frontend must **never** call the External Weather Provider or LLM Provider directly. All external API calls go through the FastAPI backend.
 
-**Phase 7 Note**: The ClimateScreen now uses `ClimateProvider` → `ApiService.getClimate` → `GET /api/v1/climate` → `ClimateService` → `historical_weather.csv` (2000–2023 monthly reference dataset). Calculations (trends, baseline comparisons, anomalies, seasonal analysis, insights) are 100% deterministic without LLM involvement.
+**Phase 8 Note**: Full bilingual capability (English & Tamil) is implemented across the Flutter frontend and FastAPI backend. The Flutter app uses `LanguageProvider` with `SharedPreferences` persistence and `flutter_localizations` / ARB dictionaries. The backend evaluates Smart Alerts, Advisories, Climate Insights, and Gemini AI Chat in the requested language while strictly preserving meteorological facts and numeric precision.
 
 ---
 
-## 1.1 Phase 7 Architecture (Current)
+## 1.1 Phase 8 Architecture (Current)
 
 ```
 SplashScreen
      ↓ (2s transition)
 MainShell (Bottom Navigation — IndexedStack)
-     ├── HomeScreen          → WeatherProvider & LocationProvider (Real API Data)
-     ├── ChatScreen          → ChatProvider → POST /api/v1/chat (Gemini AI) [REAL — Phase 5]
-     ├── AlertsScreen        → WeatherProvider.alerts (Real Smart Alerts) [REAL — Phase 6]
-     ├── AdvisoryScreen      → WeatherProvider.advisories (Real Advisory Data) [REAL — Phase 6]
-     └── ClimateScreen       → ClimateProvider → GET /api/v1/climate (Real Reference Data) [REAL — Phase 7]
+     ├── HomeScreen          → WeatherProvider & LocationProvider (Real API Data, Localized)
+     ├── ChatScreen          → ChatProvider → POST /api/v1/chat (Bilingual Gemini AI) [REAL — Phase 5 & 8]
+     ├── AlertsScreen        → WeatherProvider.alerts (Bilingual Smart Alerts) [REAL — Phase 6 & 8]
+     ├── AdvisoryScreen      → WeatherProvider.advisories (Bilingual Advisory Data) [REAL — Phase 6 & 8]
+     └── ClimateScreen       → ClimateProvider → GET /api/v1/climate (Bilingual Reference Data) [REAL — Phase 7 & 8]
 
 Secondary routes (Navigator.push):
-     ├── ForecastScreen      → WeatherProvider.forecast (Real API Data)
+     ├── ForecastScreen      → WeatherProvider.forecast (Real API Data, Localized)
      ├── LocationSearchScreen→ LocationProvider (Real API Data)
-     └── SettingsScreen      → Local state only (toggles, language UI)
+     └── SettingsScreen      → LanguageProvider (Persistent English/Tamil toggle)
 
 Widget layers:
      Screens → Reusable Widgets (widgets/) → Providers (providers/) → API Service
@@ -77,12 +77,13 @@ Widget layers:
 | Screens & navigation | **Implemented** |
 | Reusable widgets | **Implemented** |
 | Dart data models | **Implemented** (aligned with API contract) |
-| API service / providers | **Implemented** (wired to backend; ChatProvider, WeatherProvider, ClimateProvider) |
+| API service / providers | **Implemented** (wired to backend; ChatProvider, WeatherProvider, ClimateProvider, LanguageProvider) |
 | Backend HTTP calls | **Implemented** (Weather/Alerts/Advisory/Location/Chat/Climate) |
-| Real AI chat (Gemini) | **Implemented [Phase 5]** |
-| Real Smart Alert Engine | **Implemented [Phase 6]** (Deterministic, rule-based) |
-| Real Advisory Service | **Implemented [Phase 6]** (Rule-based templates, category filters) |
-| Real Climate Intelligence | **Implemented [Phase 7]** (Deterministic calculations, reference CSV) |
+| Real AI chat (Gemini) | **Implemented [Phase 5 & 8]** (Bilingual, weather-grounded) |
+| Real Smart Alert Engine | **Implemented [Phase 6 & 8]** (Deterministic, English & Tamil) |
+| Real Advisory Service | **Implemented [Phase 6 & 8]** (Deterministic templates, English & Tamil) |
+| Real Climate Intelligence | **Implemented [Phase 7 & 8]** (Deterministic calculations, English & Tamil) |
+| Multilingual (Tamil) | **Implemented [Phase 8]** (Full UI + Backend + AI) |
 
 ---
 

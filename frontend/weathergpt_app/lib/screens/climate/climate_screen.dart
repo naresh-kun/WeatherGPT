@@ -5,6 +5,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:weathergpt_app/core/theme/app_theme.dart';
+import 'package:weathergpt_app/l10n/app_localizations.dart';
 import 'package:weathergpt_app/main.dart';
 import 'package:weathergpt_app/models/climate.dart';
 import 'package:weathergpt_app/providers/climate_provider.dart';
@@ -38,14 +39,16 @@ class _ClimateScreenState extends State<ClimateScreen> {
   void initState() {
     super.initState();
     _provider.addListener(_onStateChanged);
+    languageProvider.addListener(_onStateChanged);
     if (_provider.state == ClimateState.initial) {
-      _provider.loadClimate();
+      _provider.loadClimate(language: languageProvider.languageCode);
     }
   }
 
   @override
   void dispose() {
     _provider.removeListener(_onStateChanged);
+    languageProvider.removeListener(_onStateChanged);
     super.dispose();
   }
 
@@ -55,34 +58,35 @@ class _ClimateScreenState extends State<ClimateScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Climate Intelligence'),
+        title: Text(l10n?.climateTitle ?? 'Climate Intelligence'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh Climate Data',
-            onPressed: () => _provider.refresh(),
+            tooltip: l10n?.refreshClimate ?? 'Refresh Climate Data',
+            onPressed: () => _provider.refresh(language: languageProvider.languageCode),
           ),
         ],
       ),
-      body: _buildBody(),
+      body: _buildBody(l10n),
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(AppLocalizations? l10n) {
     switch (_provider.state) {
       case ClimateState.initial:
       case ClimateState.loading:
-        return const Center(
+        return Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
               Text(
-                'Analyzing historical climate records...',
-                style: TextStyle(color: AppColors.textSecondary),
+                l10n?.analyzingClimate ?? 'Analyzing historical climate records...',
+                style: const TextStyle(color: AppColors.textSecondary),
               ),
             ],
           ),
@@ -117,7 +121,7 @@ class _ClimateScreenState extends State<ClimateScreen> {
                 ElevatedButton.icon(
                   onPressed: () => _provider.retry(),
                   icon: const Icon(Icons.refresh),
-                  label: const Text('Retry'),
+                  label: Text(l10n?.retry ?? 'Retry'),
                 ),
               ],
             ),

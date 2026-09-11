@@ -5,7 +5,8 @@
 import 'package:flutter/material.dart';
 import 'package:weathergpt_app/core/theme/app_theme.dart';
 import 'package:weathergpt_app/data/mock_data.dart';
-import 'package:weathergpt_app/main.dart' show chatProvider, locationProvider;
+import 'package:weathergpt_app/l10n/app_localizations.dart';
+import 'package:weathergpt_app/main.dart' show chatProvider, locationProvider, languageProvider;
 import 'package:weathergpt_app/widgets/chat/chat_widgets.dart';
 import 'package:weathergpt_app/widgets/common/common_widgets.dart';
 
@@ -39,6 +40,7 @@ class _ChatScreenState extends State<ChatScreen> {
     // Listen to provider changes
     chatProvider.addListener(_onChatUpdate);
     locationProvider.addListener(_onChatUpdate);
+    languageProvider.addListener(_onChatUpdate);
 
     if (widget.initialMessage != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -52,6 +54,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void dispose() {
     chatProvider.removeListener(_onChatUpdate);
     locationProvider.removeListener(_onChatUpdate);
+    languageProvider.removeListener(_onChatUpdate);
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -81,20 +84,26 @@ class _ChatScreenState extends State<ChatScreen> {
     if (message.isEmpty) return; // spec: do not send empty messages
 
     _controller.clear();
-    await chatProvider.sendMessage(message, locationProvider.selectedLocation);
+    await chatProvider.sendMessage(
+      message,
+      locationProvider.selectedLocation,
+      language: languageProvider.languageCode,
+    );
   }
 
   void _onVoiceTap() {
+    final l10n = AppLocalizations.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Voice input will be available in a future phase.'),
-        duration: Duration(seconds: 2),
+      SnackBar(
+        content: Text(l10n?.voiceNotAvailable ?? 'Voice input will be available in a future phase.'),
+        duration: const Duration(seconds: 2),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final messages = chatProvider.messages;
     final isLoading = chatProvider.isLoading;
     final error = chatProvider.errorMessage;
@@ -105,11 +114,11 @@ class _ChatScreenState extends State<ChatScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'WeatherGPT',
+              l10n?.appTitle ?? 'WeatherGPT',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             Text(
-              'Your AI Weather Assistant',
+              l10n?.aiAssistantSubtitle ?? 'Your AI Weather Assistant',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12),
             ),
           ],
@@ -134,17 +143,17 @@ class _ChatScreenState extends State<ChatScreen> {
               itemBuilder: (context, index) {
                 // Typing indicator
                 if (isLoading && index == messages.length) {
-                  return const Padding(
-                    padding: EdgeInsets.only(left: 8, bottom: 8),
+                  return Padding(
+                    padding: const EdgeInsets.only(left: 8, bottom: 8),
                     child: Row(
                       children: [
-                        SizedBox(
+                        const SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ),
-                        SizedBox(width: 8),
-                        Text('WeatherGPT is thinking...'),
+                        const SizedBox(width: 8),
+                        Text(l10n?.weatherGptThinking ?? 'WeatherGPT is thinking...'),
                       ],
                     ),
                   );
@@ -192,10 +201,10 @@ class _ChatScreenState extends State<ChatScreen> {
                   Expanded(
                     child: TextField(
                       controller: _controller,
-                      decoration: const InputDecoration(
-                        hintText: 'Ask about the weather...',
+                      decoration: InputDecoration(
+                        hintText: l10n?.askWeatherHint ?? 'Ask about the weather...',
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                       ),
                       textInputAction: TextInputAction.send,
                       onSubmitted: isLoading ? null : (_) => _sendMessage(),
@@ -244,6 +253,7 @@ class _ErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -260,12 +270,12 @@ class _ErrorBanner extends StatelessWidget {
           ),
           TextButton(
             onPressed: onRetry,
-            child: const Text('Retry', style: TextStyle(color: Colors.red)),
+            child: Text(l10n?.retry ?? 'Retry', style: const TextStyle(color: Colors.red)),
           ),
           IconButton(
             icon: const Icon(Icons.close, size: 18, color: Colors.red),
             onPressed: onDismiss,
-            tooltip: 'Dismiss',
+            tooltip: l10n?.dismiss ?? 'Dismiss',
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
           ),

@@ -2,11 +2,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:weathergpt_app/core/theme/app_theme.dart';
+import 'package:weathergpt_app/l10n/app_localizations.dart';
 import 'package:weathergpt_app/navigation/app_routes.dart';
 import 'package:weathergpt_app/providers/weather_provider.dart';
 import 'package:weathergpt_app/providers/location_provider.dart';
 import 'package:weathergpt_app/providers/chat_provider.dart';
 import 'package:weathergpt_app/providers/climate_provider.dart';
+import 'package:weathergpt_app/providers/language_provider.dart';
 
 /// Global providers — lightweight approach without a DI framework.
 /// Shared across all screens via InheritedWidget-style accessor.
@@ -14,6 +16,7 @@ final weatherProvider = WeatherProvider();
 final locationProvider = LocationProvider();
 final chatProvider = ChatProvider(); // Phase 5: real Gemini-backed chat
 final climateProvider = ClimateProvider(); // Phase 7: deterministic climate intelligence
+final languageProvider = LanguageProvider(); // Phase 8: multilingual support
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,23 +39,31 @@ class _WeatherGptAppState extends State<WeatherGptApp> {
   }
 
   Future<void> _initApp() async {
+    await languageProvider.init();
     await locationProvider.init();
     _loadWeather();
     locationProvider.addListener(_onLocationChanged);
+    languageProvider.addListener(_onLanguageChanged);
   }
 
   void _onLocationChanged() {
     _loadWeather();
   }
 
+  void _onLanguageChanged() {
+    if (mounted) setState(() {});
+    _loadWeather();
+  }
+
   void _loadWeather() {
     final loc = locationProvider.selectedLocation;
-    weatherProvider.loadWeather(loc.lat, loc.lon);
+    weatherProvider.loadWeather(loc.lat, loc.lon, language: languageProvider.languageCode);
   }
 
   @override
   void dispose() {
     locationProvider.removeListener(_onLocationChanged);
+    languageProvider.removeListener(_onLanguageChanged);
     super.dispose();
   }
 
@@ -64,6 +75,9 @@ class _WeatherGptAppState extends State<WeatherGptApp> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.light,
+      locale: languageProvider.currentLocale,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       initialRoute: AppRoutes.splash,
       routes: AppRoutes.routes,
     );

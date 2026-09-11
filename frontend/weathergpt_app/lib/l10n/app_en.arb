@@ -1,0 +1,99 @@
+{
+  "@@locale": "en",
+  "appTitle": "WeatherGPT",
+  "@appTitle": { "description": "The title of the application" },
+  "navHome": "Home",
+  "navChat": "WeatherGPT",
+  "navAlerts": "Alerts",
+  "navAdvisory": "Advisory",
+  "navClimate": "Climate",
+
+  "retry": "Retry",
+  "dismiss": "Dismiss",
+  "loading": "Loading...",
+  "viewAll": "View all",
+
+  "fetchingWeather": "Fetching weather...",
+  "unableToFetchWeather": "Unable to fetch weather right now.\nPlease check your connection and try again.",
+  "hourlyForecast": "Hourly Forecast",
+  "fullForecast": "Full forecast",
+  "sevenDayPreview": "7-Day Preview",
+  "useCurrentLocation": "Use current location",
+  "humidity": "Humidity",
+  "wind": "Wind",
+  "rain": "Rain",
+  "uvIndex": "UV Index",
+  "feelsLike": "Feels like",
+
+  "forecastTitle": "Forecast",
+  "loadingForecast": "Loading forecast...",
+  "sevenDayForecast": "7-Day Forecast",
+
+  "alertsTitle": "Weather Alerts",
+  "fetchingAlerts": "Fetching alerts...",
+  "noActiveAlerts": "No active weather alerts",
+  "allClearFor": "All clear for {location}",
+  "@allClearFor": {
+    "placeholders": {
+      "location": { "type": "String" }
+    }
+  },
+  "alertsForLocation": "Alerts for {location}",
+  "@alertsForLocation": {
+    "placeholders": {
+      "location": { "type": "String" }
+    }
+  },
+  "activeAlertsSummary": "{count} active {count, plural, =1{alert} other{alerts}} for {location}",
+  "@activeAlertsSummary": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "location": { "type": "String" }
+    }
+  },
+
+  "advisoryTitle": "Weather Advisory",
+  "fetchingAdvisories": "Fetching advisories...",
+  "noAdvisories": "No weather advisories",
+  "categoryAll": "All",
+  "categoryGeneral": "General",
+  "categoryTravel": "Travel",
+  "categoryHealth": "Health",
+  "categoryOutdoor": "Outdoor",
+  "categoryAgriculture": "Agriculture",
+  "recommendation": "Recommendation",
+  "reason": "Reason",
+  "weatherFactors": "Weather factors considered",
+
+  "climateTitle": "Climate Intelligence",
+  "analyzingClimate": "Analyzing historical climate records...",
+  "refreshClimate": "Refresh Climate Data",
+  "historicalComparison": "Historical Comparison vs 2000–2023 Baseline",
+  "temperature": "Temperature",
+  "rainfall": "Rainfall",
+  "aboveAvg": "Above Avg",
+  "belowAvg": "Below Avg",
+  "nearAvg": "Near Avg",
+  "climateInsightTitle": "Climate Intelligence Insight",
+
+  "aiAssistantSubtitle": "Your AI Weather Assistant",
+  "weatherGptThinking": "WeatherGPT is thinking...",
+  "askWeatherHint": "Ask about the weather...",
+  "voiceNotAvailable": "Voice input will be available in a future phase.",
+
+  "settingsTitle": "Settings",
+  "locationSection": "Location",
+  "currentLocation": "Current Location",
+  "languageSection": "Language",
+  "english": "English",
+  "tamil": "தமிழ்",
+  "notificationsSection": "Notifications",
+  "weatherAlerts": "Weather Alerts",
+  "receiveWeatherAlerts": "Receive weather alert notifications",
+  "voiceSection": "Voice",
+  "voiceResponses": "Voice Responses",
+  "enableTts": "Enable text-to-speech for WeatherGPT",
+  "unitsSection": "Units",
+  "aboutSection": "About",
+  "aboutSubtitle": "SIH Prototype\nAI-powered conversational weather assistant"
+}

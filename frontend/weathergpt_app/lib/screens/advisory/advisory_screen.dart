@@ -4,6 +4,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:weathergpt_app/core/theme/app_theme.dart';
+import 'package:weathergpt_app/l10n/app_localizations.dart';
 import 'package:weathergpt_app/main.dart';
 import 'package:weathergpt_app/models/advisory.dart';
 import 'package:weathergpt_app/providers/weather_provider.dart';
@@ -25,12 +26,14 @@ class _AdvisoryScreenState extends State<AdvisoryScreen> {
     super.initState();
     weatherProvider.addListener(_onWeatherChanged);
     locationProvider.addListener(_onLocationChanged);
+    languageProvider.addListener(_onWeatherChanged);
   }
 
   @override
   void dispose() {
     weatherProvider.removeListener(_onWeatherChanged);
     locationProvider.removeListener(_onLocationChanged);
+    languageProvider.removeListener(_onWeatherChanged);
     super.dispose();
   }
 
@@ -44,7 +47,11 @@ class _AdvisoryScreenState extends State<AdvisoryScreen> {
 
   Future<void> _refresh() async {
     final loc = locationProvider.selectedLocation;
-    await weatherProvider.loadWeather(loc.lat, loc.lon);
+    await weatherProvider.loadWeather(
+      loc.lat,
+      loc.lon,
+      language: languageProvider.languageCode,
+    );
   }
 
   void _showAdvisoryDetail(BuildContext context, WeatherAdvisory advisory) {
@@ -83,26 +90,27 @@ class _AdvisoryScreenState extends State<AdvisoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final state = weatherProvider.state;
     final loc = locationProvider.selectedLocation;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Weather Advisory'),
+        title: Text(l10n?.advisoryTitle ?? 'Weather Advisory'),
       ),
       body: RefreshIndicator(
         onRefresh: _refresh,
-        child: _buildBody(context, state, loc.displayName),
+        child: _buildBody(context, state, loc.displayName, l10n),
       ),
     );
   }
 
   Widget _buildBody(
-      BuildContext context, WeatherState state, String locationName) {
+      BuildContext context, WeatherState state, String locationName, AppLocalizations? l10n) {
     switch (state) {
       case WeatherState.initial:
       case WeatherState.loading:
-        return const LoadingWidget(message: 'Fetching advisories...');
+        return LoadingWidget(message: l10n?.fetchingAdvisories ?? 'Fetching advisories...');
 
       case WeatherState.error:
         return ErrorDisplayWidget(
@@ -131,7 +139,7 @@ class _AdvisoryScreenState extends State<AdvisoryScreen> {
               ),
             ),
             const SizedBox(height: AppDimensions.paddingMedium),
-            _buildCategoryFilters(),
+            _buildCategoryFilters(l10n),
             const SizedBox(height: AppDimensions.paddingMedium),
             if (advisories.isEmpty)
               Padding(
@@ -147,7 +155,7 @@ class _AdvisoryScreenState extends State<AdvisoryScreen> {
                       ),
                       const SizedBox(height: AppDimensions.paddingMedium),
                       Text(
-                        'No active advisories',
+                        l10n?.noAdvisories ?? 'No active advisories',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 8),
@@ -183,7 +191,7 @@ class _AdvisoryScreenState extends State<AdvisoryScreen> {
     }
   }
 
-  Widget _buildCategoryFilters() {
+  Widget _buildCategoryFilters(AppLocalizations? l10n) {
     const filterCategories = [
       null,
       AdvisoryCategory.health,
@@ -198,12 +206,13 @@ class _AdvisoryScreenState extends State<AdvisoryScreen> {
         children: filterCategories.map((category) {
           final isSelected = _selectedCategory == category;
           final label = category == null
-              ? 'All'
+              ? (l10n?.categoryAll ?? 'All')
               : switch (category) {
-                  AdvisoryCategory.health => 'Health',
-                  AdvisoryCategory.outdoor => 'Outdoor',
-                  AdvisoryCategory.travel => 'Travel',
-                  AdvisoryCategory.general => 'General',
+                  AdvisoryCategory.health => l10n?.categoryHealth ?? 'Health',
+                  AdvisoryCategory.outdoor => l10n?.categoryOutdoor ?? 'Outdoor',
+                  AdvisoryCategory.travel => l10n?.categoryTravel ?? 'Travel',
+                  AdvisoryCategory.general => l10n?.categoryGeneral ?? 'General',
+                  AdvisoryCategory.farming => l10n?.categoryAgriculture ?? 'Farming',
                   _ => category.name,
                 };
 

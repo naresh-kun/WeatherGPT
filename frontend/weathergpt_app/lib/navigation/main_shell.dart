@@ -6,6 +6,8 @@ import 'package:weathergpt_app/screens/chat/chat_screen.dart';
 import 'package:weathergpt_app/screens/climate/climate_screen.dart';
 import 'package:weathergpt_app/screens/home/home_screen.dart';
 
+import 'package:weathergpt_app/l10n/app_localizations.dart';
+
 /// Main application shell with bottom navigation.
 class MainShell extends StatefulWidget {
   const MainShell({
@@ -47,6 +49,8 @@ class MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
@@ -69,31 +73,31 @@ class MainShellState extends State<MainShell> {
         onDestinationSelected: (index) {
           setState(() => _currentIndex = index);
         },
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
+            icon: const Icon(Icons.home_outlined),
+            selectedIcon: const Icon(Icons.home),
+            label: l10n?.navHome ?? 'Home',
           ),
           NavigationDestination(
-            icon: Icon(Icons.chat_outlined),
-            selectedIcon: Icon(Icons.chat),
-            label: 'WeatherGPT',
+            icon: const Icon(Icons.chat_outlined),
+            selectedIcon: const Icon(Icons.chat),
+            label: l10n?.navChat ?? 'WeatherGPT',
           ),
           NavigationDestination(
-            icon: Icon(Icons.notifications_outlined),
-            selectedIcon: Icon(Icons.notifications),
-            label: 'Alerts',
+            icon: const Icon(Icons.notifications_outlined),
+            selectedIcon: const Icon(Icons.notifications),
+            label: l10n?.navAlerts ?? 'Alerts',
           ),
           NavigationDestination(
-            icon: Icon(Icons.tips_and_updates_outlined),
-            selectedIcon: Icon(Icons.tips_and_updates),
-            label: 'Advisory',
+            icon: const Icon(Icons.tips_and_updates_outlined),
+            selectedIcon: const Icon(Icons.tips_and_updates),
+            label: l10n?.navAdvisory ?? 'Advisory',
           ),
           NavigationDestination(
-            icon: Icon(Icons.show_chart_outlined),
-            selectedIcon: Icon(Icons.show_chart),
-            label: 'Climate',
+            icon: const Icon(Icons.show_chart_outlined),
+            selectedIcon: const Icon(Icons.show_chart),
+            label: l10n?.navClimate ?? 'Climate',
           ),
         ],
       ),

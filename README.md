@@ -15,38 +15,37 @@ A conversational weather intelligence prototype providing real-time weather data
 | Phase 5 | **Complete** | AI Chat Integration (Gemini 3.7 Flash + real weather grounding) |
 | Phase 6 | **Complete** | Smart Alerts & Advisories Engine (Deterministic, rule-based) |
 | Phase 7 | **Complete** | Climate Intelligence (Deterministic trends, baselines, anomalies, reference data) |
-| Phase 8+ | Planned | Multilingual (Tamil), Voice (STT/TTS) |
+| Phase 8 | **Complete** | Multilingual Support (English & Tamil across UI, Backend, Alerts, Advisories, Climate, Gemini Chat) |
+| Phase 9 | Planned | Voice (STT/TTS) |
 
-### Phase 7 — Climate Intelligence Status
+### Phase 8 — Multilingual (English & Tamil) Support Status
 
-The Flutter application (`frontend/weathergpt_app/`) and FastAPI backend (`backend/weathergpt_api/`) now feature deterministic Climate Intelligence powered by a curated reference dataset:
+The Flutter application (`frontend/weathergpt_app/`) and FastAPI backend (`backend/weathergpt_api/`) now feature full bilingual capability supporting English (default, `en`) and Tamil (`ta`):
 
-- **Deterministic Climate Service [REAL — Phase 7]**:
-  - Purely data-driven calculations for annual/monthly temperature and rainfall trends.
-  - Zero LLM involvement for climate trend calculations or baseline comparisons.
-  - Historical comparison metrics: difference, percentage difference, and categorical interpretations (`above_average`, `near_average`, `below_average`).
-  - Anomaly calculation relative to full-period baseline (2000–2023).
-  - Seasonal context mapping (Winter, Summer, Southwest Monsoon, Northeast Monsoon).
-  - Rule-based textual insights derived directly from calculated values.
-- **Reference Dataset [REAL — Prototype Reference]**:
-  - Curated monthly dataset for Tamil Nadu cities (`Madurai`, `Chennai`, `Coimbatore`, `Tirunelveli`) spanning 2000–2023.
-  - Located at `backend/weathergpt_api/data/climate/historical_weather.csv`.
-  - Clearly documented as a prototype/reference dataset, not official meteorological observations.
-- **Climate Screen UI [REAL — Phase 7]**:
-  - Interactive location selector and period range preset chips (2000–2023, 2010–2023, etc.).
-  - `fl_chart` LineChart for temperature trends and BarChart for annual rainfall.
-  - Comparison cards with colored badges and season-aware insight cards.
-  - Comprehensive loading, error, retry, and pull-to-refresh states.
+- **Persistent Language Selection [REAL — Phase 8]**:
+  - Settings screen provides a dedicated Language section with immediate toggle between English and தமிழ்.
+  - Persisted using `SharedPreferences` (`app_language_code`) and initialized at startup.
+- **Flutter UI Localization [REAL — Phase 8]**:
+  - Built with official `flutter_localizations` and ARB dictionaries (`lib/l10n/app_en.arb`, `lib/l10n/app_ta.arb`).
+  - Human-authored translations for navigation, weather cards, alerts, advisories, climate intelligence, chat, and settings.
+- **Bilingual Deterministic Engines [REAL — Phase 8]**:
+  - Smart Alert Engine produces localized alerts (English & Tamil) based on requested language without using LLMs.
+  - Advisory Service generates human-authored bilingual advisories and actionable recommendations.
+  - Climate Intelligence computes deterministic insights with localized season names and summary templates.
+  - Numerical values, thresholds, and units (`°C`, `%`, `km/h`, `mm`) strictly preserved across languages.
+- **Language-Aware AI Chat [REAL — Phase 8]**:
+  - Chat endpoint accepts `language` param (`en` or `ta`).
+  - Gemini 3.7 Flash prompted in Tamil when selected, preserving strict factual weather grounding and numeric accuracy.
 
 **Implementation Status Matrix**:
 
 - **Real-time Weather & Forecast**: **[REAL — Phase 3 & 4]**
 - **Location Search & GPS**: **[REAL — Phase 4]**
-- **AI Conversational Chat**: **[REAL — Phase 5]** (Google Gemini 3.7 Flash)
-- **Smart Alert Engine**: **[REAL — Phase 6]** (Deterministic rules & thresholds)
-- **Weather Advisory System**: **[REAL — Phase 6]** (Rule-based templates & filters)
-- **Climate Historical Trends**: **[REAL — Phase 7]** (Deterministic calculations & reference dataset)
-- **Tamil Localization**: **[PLANNED — Phase 8]**
+- **AI Conversational Chat**: **[REAL — Phase 5 & 8]** (Google Gemini 3.7 Flash in English & Tamil)
+- **Smart Alert Engine**: **[REAL — Phase 6 & 8]** (Deterministic rules, English & Tamil)
+- **Weather Advisory System**: **[REAL — Phase 6 & 8]** (Rule-based templates, English & Tamil)
+- **Climate Historical Trends**: **[REAL — Phase 7 & 8]** (Deterministic calculations, English & Tamil)
+- **Tamil Localization**: **[REAL — Phase 8]**
 - **Speech-to-Text / Voice**: **[PLANNED — Phase 9]**
 
 ---
@@ -170,7 +169,7 @@ See [`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md) for
 
 ---
 
-## Implementation Status (Post-Phase 7)
+## Implementation Status (Post-Phase 8)
 
 | Component | Status |
 |---|---|
@@ -178,14 +177,14 @@ See [`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md) for
 | WeatherAPI.com Integration | ✅ Implemented (Current, Forecast, Hourly, Search, Alerts) |
 | Flutter UI | ✅ Implemented |
 | Flutter ↔ Backend Integration | ✅ Implemented (Phase 4 Complete) |
-| WeatherGPT AI Chat (Gemini) | ✅ **REAL** — Phase 5 Complete |
-| Smart Alert Rule Engine | ✅ **REAL** — Phase 6 Complete |
-| Weather Advisories Engine | ✅ **REAL** — Phase 6 Complete |
-| Climate Intelligence & Reference Data | ✅ **REAL** — Phase 7 Complete |
-| Localization (Tamil) | 🚧 Planned — Phase 8 |
+| WeatherGPT AI Chat (Gemini) | ✅ **REAL** — Phase 5 Complete (Bilingual in Phase 8) |
+| Smart Alert Rule Engine | ✅ **REAL** — Phase 6 Complete (Bilingual in Phase 8) |
+| Weather Advisories Engine | ✅ **REAL** — Phase 6 Complete (Bilingual in Phase 8) |
+| Climate Intelligence & Reference Data | ✅ **REAL** — Phase 7 Complete (Bilingual in Phase 8) |
+| Localization (Tamil) | ✅ **REAL** — Phase 8 Complete |
 | Voice Interaction | 🚧 Planned — Phase 9 |
 
-**Important Note**: Weather, Forecast, Alerts, Advisories, AI Chat, and Climate Intelligence are fully integrated with live backend and reference data. Future phases will introduce Tamil localization (Phase 8) and voice interaction (Phase 9).
+**Important Note**: Weather, Forecast, Alerts, Advisories, AI Chat, Climate Intelligence, and Multilingual Support (English/Tamil) are fully integrated with live backend and reference data. Future phase will introduce voice interaction (Phase 9).
 
 ---
 

@@ -13,6 +13,8 @@ import 'package:weathergpt_app/widgets/alerts/alert_widgets.dart';
 import 'package:weathergpt_app/widgets/common/common_widgets.dart';
 import 'package:weathergpt_app/widgets/weather/weather_widgets.dart';
 
+import 'package:weathergpt_app/l10n/app_localizations.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
@@ -52,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _refresh() async {
     final loc = locationProvider.selectedLocation;
-    await weatherProvider.loadWeather(loc.lat, loc.lon);
+    await weatherProvider.loadWeather(loc.lat, loc.lon, language: languageProvider.languageCode);
   }
 
   Future<void> _openLocationSearch() async {
@@ -73,6 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final loc = locationProvider.selectedLocation;
     final state = weatherProvider.state;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       body: Container(
@@ -135,7 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     )
                                   : const Icon(Icons.my_location,
                                       color: Colors.white),
-                              tooltip: 'Use current location',
+                              tooltip: l10n?.useCurrentLocation ?? 'Use current location',
                               onPressed: locationProvider.gpsLoading
                                   ? null
                                   : () async {
@@ -160,7 +163,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Padding(
                     padding:
                         const EdgeInsets.all(AppDimensions.paddingMedium),
-                    child: _buildBody(state),
+                    child: _buildBody(state, l10n),
                   ),
                 ),
               ],
@@ -171,13 +174,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildBody(WeatherState state) {
+  Widget _buildBody(WeatherState state, AppLocalizations? l10n) {
     switch (state) {
       case WeatherState.initial:
       case WeatherState.loading:
-        return const SizedBox(
+        return SizedBox(
           height: 400,
-          child: LoadingWidget(message: 'Fetching weather...'),
+          child: LoadingWidget(message: l10n?.fetchingWeather ?? 'Fetching weather...'),
         );
 
       case WeatherState.error:
@@ -185,17 +188,18 @@ class _HomeScreenState extends State<HomeScreen> {
           height: 400,
           child: ErrorDisplayWidget(
             message: weatherProvider.errorMessage ??
-                'Unable to fetch weather right now.\nPlease check your connection and try again.',
+                (l10n?.unableToFetchWeather ??
+                    'Unable to fetch weather right now.\nPlease check your connection and try again.'),
             onRetry: _refresh,
           ),
         );
 
       case WeatherState.success:
-        return _buildWeatherContent();
+        return _buildWeatherContent(l10n);
     }
   }
 
-  Widget _buildWeatherContent() {
+  Widget _buildWeatherContent(AppLocalizations? l10n) {
     final weather = weatherProvider.currentWeather!;
     final forecast = weatherProvider.forecast!;
     final alerts = weatherProvider.alerts;
@@ -216,8 +220,8 @@ class _HomeScreenState extends State<HomeScreen> {
         // Hourly forecast
         const SizedBox(height: AppDimensions.paddingLarge),
         SectionHeader(
-          title: 'Hourly Forecast',
-          actionLabel: 'Full forecast',
+          title: l10n?.hourlyForecast ?? 'Hourly Forecast',
+          actionLabel: l10n?.fullForecast ?? 'Full forecast',
           onActionTap: () {
             Navigator.of(context).pushNamed(AppRoutes.forecast);
           },
@@ -235,8 +239,8 @@ class _HomeScreenState extends State<HomeScreen> {
         // 7-day preview
         const SizedBox(height: AppDimensions.paddingMedium),
         SectionHeader(
-          title: '7-Day Preview',
-          actionLabel: 'View all',
+          title: l10n?.sevenDayPreview ?? '7-Day Preview',
+          actionLabel: l10n?.viewAll ?? 'View all',
           onActionTap: () {
             Navigator.of(context).pushNamed(AppRoutes.forecast);
           },

@@ -345,6 +345,7 @@ Returns active weather alerts (severe weather warnings, watches, advisories) for
 |---|---|---|---|---|
 | `lat` | float | Yes | — | Latitude (-90 to 90) |
 | `lon` | float | Yes | — | Longitude (-180 to 180) |
+| `language` | string | No | `en` | Response language: `en` \| `ta` (alias: `lang`) |
 
 ### Request Body
 None.
@@ -392,14 +393,14 @@ None.
 
 ### Example Request
 ```bash
-curl "http://localhost:8000/api/v1/alerts?lat=19.0760&lon=72.8777"
+curl "http://localhost:8000/api/v1/alerts?lat=19.0760&lon=72.8777&language=ta"
 ```
 
 ---
 
 ## 8. GET /advisory
 
-> **Implementation status**: **[REAL — Phase 6]** — deterministic, rule-based weather advisories generated from live weather observations and the Smart Alert Engine. No LLM is used.
+> **Implementation status**: **[REAL — Phase 6 & 8]** — deterministic, rule-based weather advisories generated from live weather observations and the Smart Alert Engine, available in English and Tamil. No LLM is used.
 
 ### Purpose
 Returns practical, actionable weather advisories with recommendations tailored for general guidance, travel, agriculture, health, or outdoor activities.
@@ -413,6 +414,7 @@ Returns practical, actionable weather advisories with recommendations tailored f
 | `lat` | float | Yes | — | Latitude (-90 to 90) |
 | `lon` | float | Yes | — | Longitude (-180 to 180) |
 | `category` | string | No | `general` | Category filter: `general` \| `travel` \| `agriculture` \| `health` \| `outdoor` |
+| `language` | string | No | `en` | Response language: `en` \| `ta` (alias: `lang`) |
 
 ### Request Body
 None.
@@ -442,7 +444,7 @@ None.
 
 ### Example Request
 ```bash
-curl "http://localhost:8000/api/v1/advisory?lat=28.6139&lon=77.2090&category=health"
+curl "http://localhost:8000/api/v1/advisory?lat=28.6139&lon=77.2090&category=health&language=ta"
 ```
 
 ---
@@ -452,7 +454,7 @@ curl "http://localhost:8000/api/v1/advisory?lat=28.6139&lon=77.2090&category=hea
 ## 9. GET /climate
 
 ### Purpose
-Returns deterministic historical climate analysis for a requested location over a specified period. Computes temperature and rainfall trends, historical baseline comparisons, anomalies, Tamil Nadu seasonal context, and rule-based insights without LLM involvement. Powered by a curated reference dataset.
+Returns deterministic historical climate analysis for a requested location over a specified period. Computes temperature and rainfall trends, historical baseline comparisons, anomalies, Tamil Nadu seasonal context, and rule-based insights without LLM involvement. Powered by a curated reference dataset. Fully bilingual (`en` and `ta`).
 
 > **Dataset Notice**: The underlying dataset (`backend/weathergpt_api/data/climate/historical_weather.csv`) is a prototype/reference historical dataset containing representative monthly records for Tamil Nadu cities (`Madurai`, `Chennai`, `Coimbatore`, `Tirunelveli`) spanning 2000–2023. It is not an official government meteorological feed.
 
@@ -467,6 +469,7 @@ Returns deterministic historical climate analysis for a requested location over 
 | `year_to` | int | No | `2023` | End year of analysis (1990–2030) |
 | `month` | int | No | `null` | Optional calendar month (1–12); omit for whole-year analysis |
 | `metric` | string | No | `null` | Optional metric focus: `temperature` \| `rainfall` |
+| `language` | string | No | `en` | Response language: `en` \| `ta` (alias: `lang`) |
 
 ### Request Body
 None.

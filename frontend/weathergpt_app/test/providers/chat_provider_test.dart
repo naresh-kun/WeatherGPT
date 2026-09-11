@@ -295,6 +295,35 @@ void main() {
       expect(provider.state, ChatState.idle);
       expect(provider.errorMessage, isNull);
     });
+
+    test('sends language parameter in request payload', () async {
+      String? sentBody;
+      final client = MockClient((request) async {
+        sentBody = request.body;
+        return http.Response(
+          json.encode({
+            'message': 'இன்று 31°C வெப்பநிலை உள்ளது.',
+            'conversation_id': 'conv-test-ta',
+            'language': 'ta',
+            'suggestions': <String>[],
+          }),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+
+      final provider = ChatProvider(
+        api: ApiService(baseUrl: 'http://test.local/api/v1', client: client),
+      );
+
+      await provider.sendMessage('இன்று மழை பெய்யுமா?', _testLocation, language: 'ta');
+
+      expect(sentBody, isNotNull);
+      final decoded = json.decode(sentBody!) as Map<String, dynamic>;
+      expect(decoded['language'], equals('ta'));
+      expect(decoded['message'], equals('இன்று மழை பெய்யுமா?'));
+      expect(provider.messages.last.content, equals('இன்று 31°C வெப்பநிலை உள்ளது.'));
+    });
   });
 
   group('ChatProvider.setInitialMessages', () {
