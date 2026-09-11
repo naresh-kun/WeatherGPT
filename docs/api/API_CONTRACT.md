@@ -306,12 +306,20 @@ None (body-only).
 | `language` | string | Language of the response |
 | `suggestions` | array of string | Follow-up query suggestions |
 
+### Timeout and Retry Behavior
+- **Client Timeout**: 60 seconds (`AppConfig.chatApiTimeout`). Standard non-chat endpoints retain a 15-second timeout (`AppConfig.apiTimeout`).
+- **Transient Gemini 503 Retry**: Backend automatically attempts 1 retry with a 1.5-second backoff for transient 503 (high demand) errors before failing.
+- **Deduplication**: Weather context retrieval reuses WeatherAPIClient's in-memory 30-second deduplication cache to prevent unnecessary external calls.
+
 ### Possible Errors
-| Status | Description |
-|---|---|
-| `400 Bad Request` | Empty or invalid message / out-of-range coordinates |
-| `422 Unprocessable Entity` | Schema validation failure (missing `message` field) |
-| `503 Service Unavailable` | Gemini provider unreachable or API key not configured |
+| Status | Detail Message | Cause |
+|---|---|---|
+| `400 Bad Request` | `"Message cannot be empty."` / `"Invalid location coordinates."` | Empty message or invalid coordinates |
+| `422 Unprocessable Entity` | Field validation error | Missing `message` field |
+| `429 Too Many Requests` | `"WeatherGPT request limit reached. Please try again later."` | Gemini API rate limit / quota exceeded |
+| `503 Service Unavailable` | `"WeatherGPT is temporarily busy. Please try again."` | Gemini 503 high demand (after 1 retry) |
+| `503 Service Unavailable` | `"Weather service is temporarily unavailable."` | WeatherAPI provider unreachable |
+| `500 Internal Server Error` | `"AI service configuration error."` | Missing/invalid Gemini credentials (no keys leaked) |
 
 ### Example Request
 ```bash

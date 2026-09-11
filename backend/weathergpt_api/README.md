@@ -65,6 +65,22 @@ The `GEMINI_API_KEY` is exclusively used by the backend — it is never sent to 
 
 ---
 
+---
+
+## Reliability, Security & Error Handling
+
+- **Log Sanitization**: `SensitiveDataFilter` (in `app/core/logging.py`) redacts all sensitive query parameters (`?key=***`, `&key=***`) and secret tokens from all logs (including internal `httpx` HTTP request logs) to guarantee no credentials leak.
+- **Gemini 503 Retry Strategy**: Automatically executes up to 1 retry with a 1.5-second backoff for transient 503 ("high demand") errors from Google Gemini before returning an error.
+- **Differentiated Error Statuses**:
+  - Gemini 503: Returns 503 with `"WeatherGPT is temporarily busy. Please try again."`
+  - Gemini 429: Returns 429 with `"WeatherGPT request limit reached. Please try again later."`
+  - WeatherAPI 503: Returns 503 with `"Weather service is temporarily unavailable."`
+  - Auth/Config errors: Returns 500 without leaking keys or raw stack traces.
+- **AFC Elimination**: Automatic function calling (AFC) is explicitly disabled in the `google-genai` SDK configuration (`automatic_function_calling.disable = True`), eliminating unnecessary AFC deprecation warnings while maintaining the current Gemini 3.7 Flash architecture.
+- **WeatherAPI Deduplication Cache**: An in-memory 30-second TTL cache in `WeatherAPIClient` prevents duplicate HTTP requests to WeatherAPI.com during concurrent screen loads (e.g. current, alerts, advisory, and chat grounding).
+
+---
+
 ## Testing
 
 Run tests using pytest (mocks the WeatherAPI client and Gemini SDK):
@@ -77,11 +93,12 @@ pytest
 ```
 
 Tests cover:
-- All weather endpoints (current, forecast, hourly, search, alerts)
+- All weather endpoints (current, forecast, hourly, search, alerts) (`tests/test_weather.py`)
 - Smart Alert Engine rules, thresholds, deduplication, edge cases (`tests/test_alerts.py`)
 - Advisory endpoint and category filtering (`tests/test_alerts.py`)
 - Chat endpoint (valid requests, weather context, Gemini success/failure, validation) (`tests/test_chat.py`)
 - Climate service, temperature & rainfall trends, baselines, anomalies, and insights (`tests/test_climate.py`)
+- Reliability, 503 retry, 429 rate limiting, log sanitization, and deduplication cache (`tests/test_reliability.py`)
 
 ---
 

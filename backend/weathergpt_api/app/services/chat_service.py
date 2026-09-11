@@ -120,13 +120,18 @@ class ChatService:
         """
         try:
             current = await self._weather.get_current(lat, lon)
-        except HTTPException:
-            raise  # propagate FastAPI HTTP errors as-is
+        except HTTPException as exc:
+            if exc.status_code in (502, 503, 504):
+                raise HTTPException(
+                    status_code=503,
+                    detail="Weather service is temporarily unavailable.",
+                )
+            raise
         except Exception as exc:
             logger.error("Weather fetch failed for chat: %s", exc)
             raise HTTPException(
                 status_code=503,
-                detail="Unable to retrieve weather data for your location.",
+                detail="Weather service is temporarily unavailable.",
             )
 
         # Build the context dict from WeatherCurrent fields

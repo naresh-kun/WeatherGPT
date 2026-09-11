@@ -211,13 +211,19 @@ All frontend–backend communication uses the REST API defined in [`../api/API_C
 
 ---
 
-## 5. Security Architecture
+## 5. Security & Reliability Architecture
 
-- All secrets (API keys) are stored in environment variables, never in source code.
-- The backend reads secrets from `.env` via Pydantic Settings.
-- The frontend never has access to backend secrets.
-- The `.env` file is excluded from version control via `.gitignore`.
-- The `.env.example` file documents required variables with empty values.
+- **Credential Isolation**: All secrets (WeatherAPI key, Gemini API key) are loaded from `.env` via Pydantic Settings on the backend. The frontend never receives, stores, or handles provider credentials.
+- **Log Sanitization**: `SensitiveDataFilter` is installed on root handlers and the `httpx` logger. Query parameters containing API keys (`?key=...`, `&key=...`) and configured secret tokens are redacted to `***` in all log messages and log record arguments before emission.
+- **Per-Request Timeouts**: General API requests enforce a 15-second timeout (`AppConfig.apiTimeout`). `/chat` requests enforce a dedicated 60-second timeout (`AppConfig.chatApiTimeout`) to comfortably handle LLM generation latency without stalling the UI.
+- **Gemini 503 Retry Strategy**: Transient 503 (high demand) errors from Gemini trigger at most 1 automatic retry after a 1.5-second backoff. Permanent errors (401/403 auth, 400 validation, 429 quota) are not retried.
+- **Error Distinction**: Backend produces differentiated HTTP status codes and detail messages so the Flutter client can distinguish between:
+  - Gemini temporary busy (`503`, `"WeatherGPT is temporarily busy. Please try again."`)
+  - Gemini rate limit (`429`, `"WeatherGPT request limit reached. Please try again later."`)
+  - Weather provider outage (`503`, `"Weather service is temporarily unavailable."`)
+  - Generic server errors (`500`)
+- **API Call Deduplication**: `WeatherAPIClient` includes an in-memory 30-second TTL cache for `/current.json` and `/forecast.json`. Redundant weather context requests during composite screen loads (`/current`, `/alerts`, `/advisory`, `/chat`) are resolved locally without extra external HTTP requests.
+- **Version Control Exclusions**: `.env` is strictly excluded via `.gitignore`. `.env.example` documents variable names without secrets.
 
 ---
 

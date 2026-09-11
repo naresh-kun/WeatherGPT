@@ -33,8 +33,15 @@ class LocationNotFoundException extends ApiException {
 }
 
 class ServiceUnavailableException extends ApiException {
-  const ServiceUnavailableException()
-      : super('Weather service is temporarily unavailable.');
+  const ServiceUnavailableException([super.message = 'Weather service is temporarily unavailable.']);
+}
+
+class GeminiBusyException extends ApiException {
+  const GeminiBusyException([super.message = 'WeatherGPT is temporarily busy. Please try again.']);
+}
+
+class RateLimitException extends ApiException {
+  const RateLimitException([super.message = 'WeatherGPT request limit reached. Please try again later.']);
 }
 
 // ---------------------------------------------------------------------------
@@ -99,8 +106,18 @@ class ApiService {
       } else if (response.statusCode == 400) {
         final detail = _extractDetail(utf8.decode(response.bodyBytes));
         throw ApiException(detail ?? 'Invalid request.');
+      } else if (response.statusCode == 429) {
+        final detail = _extractDetail(utf8.decode(response.bodyBytes));
+        throw RateLimitException(detail ?? 'WeatherGPT request limit reached. Please try again later.');
+      } else if (response.statusCode == 503) {
+        final detail = _extractDetail(utf8.decode(response.bodyBytes));
+        if (detail != null && detail.contains('busy')) {
+          throw GeminiBusyException(detail);
+        }
+        throw ServiceUnavailableException(detail ?? 'Weather service is temporarily unavailable.');
       } else if (response.statusCode >= 500) {
-        throw const ServiceUnavailableException();
+        final detail = _extractDetail(utf8.decode(response.bodyBytes));
+        throw ApiException(detail ?? 'Unexpected error (${response.statusCode}). Please try again.');
       } else {
         throw ApiException(
             'Unexpected error (${response.statusCode}). Please try again.');
@@ -203,7 +220,7 @@ class ApiService {
       conversationId: conversationId,
     ).toJson();
 
-    final data = await _post('/chat', body, timeout: const Duration(seconds: 60));
+    final data = await _post('/chat', body, timeout: AppConfig.chatApiTimeout);
     return ChatApiResponse.fromJson(data as Map<String, dynamic>);
   }
 

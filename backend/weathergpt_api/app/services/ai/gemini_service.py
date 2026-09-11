@@ -120,37 +120,107 @@ class GeminiChatService:
             f"User question: {user_message}"
         )
 
-        try:
-            # google-genai SDK: synchronous generate_content
-            # We run it in a thread executor to keep FastAPI's async loop unblocked.
-            import asyncio
-            loop = asyncio.get_event_loop()
-            response = await loop.run_in_executor(
-                None,
-                lambda: client.models.generate_content(
-                    model=self._model,
-                    contents=full_prompt,
-                ),
-            )
+        # Build generate_content config to disable automatic function calling (AFC)
+        # and eliminate the warning: "Direct use of automatic function calling (AFC) in Models.generate_content is not recommended."
+        from google.genai import types as genai_types
+        config = genai_types.GenerateContentConfig(
+            automatic_function_calling=genai_types.AutomaticFunctionCallingConfig(disable=True)
+        )
 
-            if response is None or not hasattr(response, "text") or not response.text:
-                logger.error("Gemini returned an empty response")
-                raise HTTPException(
-                    status_code=503,
-                    detail="AI assistant returned an empty response. Please try again.",
+        max_attempts = 2
+        for attempt in range(1, max_attempts + 1):
+            try:
+                # google-genai SDK: synchronous generate_content
+                # We run it in a thread executor to keep FastAPI's async loop unblocked.
+                import asyncio
+                loop = asyncio.get_event_loop()
+                response = await loop.run_in_executor(
+                    None,
+                    lambda: client.models.generate_content(
+                        model=self._model,
+                        contents=full_prompt,
+                        config=config,
+                    ),
                 )
 
-            return response.text.strip()
+                if response is None or not hasattr(response, "text") or not response.text:
+                    logger.error("Gemini returned an empty response")
+                    raise HTTPException(
+                        status_code=503,
+                        detail="WeatherGPT is temporarily busy. Please try again.",
+                    )
 
-        except HTTPException:
-            raise
-        except Exception as exc:
-            # Sanitise: never include API key in logs or responses
-            safe_msg = str(exc)
-            if self._api_key and self._api_key in safe_msg:
-                safe_msg = safe_msg.replace(self._api_key, "***")
-            logger.error("Gemini API error: %s", safe_msg)
-            raise HTTPException(
-                status_code=503,
-                detail="AI assistant is temporarily unavailable. Please try again.",
-            )
+                return response.text.strip()
+
+            except HTTPException:
+                raise
+            except Exception as exc:
+                # Sanitise: never include API key in logs or responses
+                safe_msg = str(exc)
+                if self._api_key and self._api_key in safe_msg:
+                    safe_msg = safe_msg.replace(self._api_key, "***")
+
+                code = getattr(exc, "code", None)
+                status_str = str(getattr(exc, "status", "") or "")
+
+                is_503 = (
+                    code == 503
+                    or "503" in safe_msg
+                    or "UNAVAILABLE" in status_str
+                    or "UNAVAILABLE" in safe_msg
+                    or "high demand" in safe_msg.lower()
+                )
+
+                if is_503 and attempt < max_attempts:
+                    logger.warning(
+                        "Gemini 503 (high demand) on attempt %d/%d; retrying once in 1.5s...",
+                        attempt,
+                        max_attempts,
+                    )
+                    import asyncio
+                    await asyncio.sleep(1.5)
+                    continue
+
+                if is_503:
+                    logger.error("Gemini 503 error after retry: %s", safe_msg)
+                    raise HTTPException(
+                        status_code=503,
+                        detail="WeatherGPT is temporarily busy. Please try again.",
+                    )
+
+                # Check 429 Rate Limit
+                is_429 = (
+                    code == 429
+                    or "429" in safe_msg
+                    or "RESOURCE_EXHAUSTED" in status_str
+                    or "RESOURCE_EXHAUSTED" in safe_msg
+                    or "quota" in safe_msg.lower()
+                )
+                if is_429:
+                    logger.error("Gemini 429 rate limit error: %s", safe_msg)
+                    raise HTTPException(
+                        status_code=429,
+                        detail="WeatherGPT request limit reached. Please try again later.",
+                    )
+
+                # Check Auth / Configuration error
+                is_auth = (
+                    code in (401, 403)
+                    or "401" in safe_msg
+                    or "403" in safe_msg
+                    or "API_KEY_INVALID" in safe_msg
+                    or "PERMISSION_DENIED" in safe_msg
+                )
+                if is_auth:
+                    logger.error("Gemini auth error: %s", safe_msg)
+                    raise HTTPException(
+                        status_code=500,
+                        detail="AI service configuration error.",
+                    )
+
+                # Generic unexpected error
+                logger.error("Gemini API error: %s", safe_msg)
+                raise HTTPException(
+                    status_code=500,
+                    detail="Unexpected error from AI service. Please try again.",
+                )

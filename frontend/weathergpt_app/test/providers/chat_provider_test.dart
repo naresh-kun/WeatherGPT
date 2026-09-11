@@ -188,19 +188,47 @@ void main() {
       expect(capturedBody!['location']['lon'], 78.1198);
     });
 
-    test('enters error state on service unavailable (503)', () async {
+    test('enters error state with Gemini busy message on Gemini 503', () async {
       final provider = ChatProvider(
         api: ApiService(
           baseUrl: 'http://test.local/api/v1',
-          client: _errorClient(503),
+          client: _errorClient(503, 'WeatherGPT is temporarily busy. Please try again.'),
         ),
       );
 
       await provider.sendMessage('How hot is it?', _testLocation);
 
       expect(provider.state, ChatState.error);
-      expect(provider.errorMessage, isNotNull);
+      expect(provider.errorMessage, 'WeatherGPT is temporarily busy. Please try again.');
       expect(provider.isLoading, isFalse);
+    });
+
+    test('enters error state with Weather service message on WeatherAPI 503', () async {
+      final provider = ChatProvider(
+        api: ApiService(
+          baseUrl: 'http://test.local/api/v1',
+          client: _errorClient(503, 'Weather service is temporarily unavailable.'),
+        ),
+      );
+
+      await provider.sendMessage('How hot is it?', _testLocation);
+
+      expect(provider.state, ChatState.error);
+      expect(provider.errorMessage, 'Weather service is temporarily unavailable.');
+    });
+
+    test('enters error state with rate limit message on 429', () async {
+      final provider = ChatProvider(
+        api: ApiService(
+          baseUrl: 'http://test.local/api/v1',
+          client: _errorClient(429, 'WeatherGPT request limit reached. Please try again later.'),
+        ),
+      );
+
+      await provider.sendMessage('How hot is it?', _testLocation);
+
+      expect(provider.state, ChatState.error);
+      expect(provider.errorMessage, 'WeatherGPT request limit reached. Please try again later.');
     });
 
     test('enters error state on network failure', () async {

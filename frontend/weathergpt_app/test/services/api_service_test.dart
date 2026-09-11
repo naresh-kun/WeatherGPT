@@ -485,15 +485,75 @@ void main() {
       expect(bodyStr.contains('GEMINI'), isFalse);
     });
 
-    test('throws ServiceUnavailableException on 503', () async {
-      final service = ApiService(
-        baseUrl: baseUrl,
-        client: _errorClient(503),
-      );
+    test('throws GeminiBusyException on 503 with busy detail', () async {
+      final client = MockClient((_) async {
+        return http.Response(
+          json.encode({'detail': 'WeatherGPT is temporarily busy. Please try again.'}),
+          503,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+      final service = ApiService(baseUrl: baseUrl, client: client);
 
       expect(
         () => service.sendChatMessage(message: 'Test', lat: 9.93, lon: 78.12),
-        throwsA(isA<ServiceUnavailableException>()),
+        throwsA(predicate<GeminiBusyException>(
+          (e) => e.message == 'WeatherGPT is temporarily busy. Please try again.',
+        )),
+      );
+    });
+
+    test('throws ServiceUnavailableException on 503 from weather provider', () async {
+      final client = MockClient((_) async {
+        return http.Response(
+          json.encode({'detail': 'Weather service is temporarily unavailable.'}),
+          503,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+      final service = ApiService(baseUrl: baseUrl, client: client);
+
+      expect(
+        () => service.sendChatMessage(message: 'Test', lat: 9.93, lon: 78.12),
+        throwsA(predicate<ServiceUnavailableException>(
+          (e) => e.message == 'Weather service is temporarily unavailable.',
+        )),
+      );
+    });
+
+    test('throws RateLimitException on 429 rate limit reached', () async {
+      final client = MockClient((_) async {
+        return http.Response(
+          json.encode({'detail': 'WeatherGPT request limit reached. Please try again later.'}),
+          429,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+      final service = ApiService(baseUrl: baseUrl, client: client);
+
+      expect(
+        () => service.sendChatMessage(message: 'Test', lat: 9.93, lon: 78.12),
+        throwsA(predicate<RateLimitException>(
+          (e) => e.message == 'WeatherGPT request limit reached. Please try again later.',
+        )),
+      );
+    });
+
+    test('throws ApiException on generic 500 server error', () async {
+      final client = MockClient((_) async {
+        return http.Response(
+          json.encode({'detail': 'Unexpected error from AI service. Please try again.'}),
+          500,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+      final service = ApiService(baseUrl: baseUrl, client: client);
+
+      expect(
+        () => service.sendChatMessage(message: 'Test', lat: 9.93, lon: 78.12),
+        throwsA(predicate<ApiException>(
+          (e) => e.message == 'Unexpected error from AI service. Please try again.',
+        )),
       );
     });
 

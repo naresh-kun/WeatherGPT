@@ -31,10 +31,20 @@ class WeatherProvider extends ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
+  double? _activeLat;
+  double? _activeLon;
+
   /// Load all weather data for the given coordinates.
   /// Fetches current weather, forecast (hourly + daily), alerts, and advisories
   /// concurrently to minimize latency.
   Future<void> loadWeather(double lat, double lon) async {
+    // Guard against duplicate in-flight requests for the exact same location
+    if (_state == WeatherState.loading && _activeLat == lat && _activeLon == lon) {
+      return;
+    }
+    _activeLat = lat;
+    _activeLon = lon;
+
     _state = WeatherState.loading;
     _errorMessage = null;
     notifyListeners();

@@ -5,14 +5,20 @@ Handles HTTP communication with WeatherAPI.com.
 import httpx
 from fastapi import HTTPException
 import logging
-from typing import Dict, Any, List
+import re
+import time
+from typing import Dict, Any, List, Optional, Tuple
 
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
 class WeatherAPIClient:
-    """Client for WeatherAPI.com REST API."""
+    """Client for WeatherAPI.com REST API with deduplication caching and security sanitization."""
+
+    # Class-level cache shared across WeatherService instances within the process
+    _shared_cache: Dict[str, Tuple[float, Any]] = {}
+    _cache_ttl: float = 30.0  # 30-second TTL prevents duplicate calls during single user actions
 
     def __init__(self):
         self.base_url = settings.weather_base_url.rstrip("/")
@@ -21,9 +27,32 @@ class WeatherAPIClient:
         if not self.api_key:
             logger.warning("WEATHER_API_KEY is not set. WeatherAPI calls will fail.")
 
+    def _sanitize(self, text: str) -> str:
+        s = str(text)
+        s = re.sub(r'([?&]key=)[^&\s\'"]+', r'\g<1>***', s)
+        if self.api_key and self.api_key in s:
+            s = s.replace(self.api_key, "***")
+        return s
+
+    @classmethod
+    def clear_cache(cls) -> None:
+        """Clear the in-memory response cache (useful for testing)."""
+        cls._shared_cache.clear()
+
     async def _request(self, endpoint: str, params: Dict[str, Any]) -> Dict[str, Any]:
         if not self.api_key:
             raise HTTPException(status_code=500, detail="Weather API key is not configured on the server.")
+
+        # Check in-memory deduplication cache for weather endpoints
+        is_cacheable = endpoint in ("/current.json", "/forecast.json")
+        cache_key = f"{endpoint}?" + "&".join(f"{k}={v}" for k, v in sorted(params.items()) if k != "key")
+        now = time.monotonic()
+
+        if is_cacheable and cache_key in self._shared_cache:
+            cached_time, cached_data = self._shared_cache[cache_key]
+            if now - cached_time < self._cache_ttl:
+                logger.debug("WeatherAPI cache hit for %s", endpoint)
+                return cached_data
 
         params["key"] = self.api_key
         url = f"{self.base_url}{endpoint}"
@@ -33,24 +62,27 @@ class WeatherAPIClient:
                 response = await client.get(url, params=params)
                 
                 if response.status_code == 400:
-                    safe_text = response.text.replace(self.api_key, "***") if self.api_key else response.text
+                    safe_text = self._sanitize(response.text)
                     logger.warning(f"WeatherAPI 400: {safe_text}")
                     raise HTTPException(status_code=400, detail="Invalid location or request parameters.")
                 elif response.status_code == 401 or response.status_code == 403:
                     logger.error("WeatherAPI auth error. Check API key.")
                     raise HTTPException(status_code=500, detail="Weather provider configuration error.")
                 elif response.status_code != 200:
-                    safe_text = response.text.replace(self.api_key, "***") if self.api_key else response.text
+                    safe_text = self._sanitize(response.text)
                     logger.error(f"WeatherAPI Error {response.status_code}: {safe_text}")
                     raise HTTPException(status_code=503, detail="Weather provider is currently unavailable.")
                 
-                return response.json()
+                data = response.json()
+                if is_cacheable:
+                    self._shared_cache[cache_key] = (now, data)
+                return data
         except httpx.TimeoutException:
-            logger.error(f"WeatherAPI request timed out for {endpoint}")
+            logger.error("WeatherAPI request timed out for %s", endpoint)
             raise HTTPException(status_code=504, detail="Weather provider request timed out.")
         except httpx.RequestError as e:
-            safe_error = str(e).replace(self.api_key, "***") if self.api_key else str(e)
-            logger.error(f"WeatherAPI request error: {safe_error}")
+            safe_error = self._sanitize(str(e))
+            logger.error("WeatherAPI request error: %s", safe_error)
             raise HTTPException(status_code=503, detail="Error communicating with weather provider.")
 
     async def get_current(self, q: str) -> Dict[str, Any]:

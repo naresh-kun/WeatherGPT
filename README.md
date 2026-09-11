@@ -189,10 +189,14 @@ See [`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md) for
 
 ---
 
-## Security
+## Security & Reliability
 
 - API keys and secrets are **never** hardcoded.
-- All secrets are loaded from environment variables via `.env` (excluded from git).
+- All secrets are loaded from environment variables via `.env` (strictly excluded from git).
 - See `backend/weathergpt_api/.env.example` for required variables.
+- **Log Sanitization**: `SensitiveDataFilter` actively sanitizes all logs (including `httpx` and uvicorn output), replacing `?key=...`, `&key=...`, and secret values with `***` to guarantee credentials never leak.
+- **Dedicated Chat Timeout**: Flutter chat requests use a 60-second timeout (`AppConfig.chatApiTimeout`) to safely accommodate LLM generation latency, while standard endpoints maintain a 15-second timeout (`AppConfig.apiTimeout`).
+- **Gemini 503 Retry Strategy**: Backend handles transient Gemini 503 high-demand errors with 1 automatic retry (1.5s backoff), surfacing clean, distinct messages (`"WeatherGPT is temporarily busy. Please try again."`) to the user.
+- **Deduplication Cache**: An in-memory 30-second TTL cache in `WeatherAPIClient` eliminates duplicate WeatherAPI calls during composite screen loads.
 - **Phase 5**: `GEMINI_API_KEY` is exclusively stored in backend `.env`. Flutter never sends or receives it.
 - The Flutter app only communicates with the FastAPI backend — never directly with Gemini or WeatherAPI.
