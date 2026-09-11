@@ -33,13 +33,15 @@ class WeatherAPIClient:
                 response = await client.get(url, params=params)
                 
                 if response.status_code == 400:
-                    logger.warning(f"WeatherAPI 400: {response.text}")
+                    safe_text = response.text.replace(self.api_key, "***") if self.api_key else response.text
+                    logger.warning(f"WeatherAPI 400: {safe_text}")
                     raise HTTPException(status_code=400, detail="Invalid location or request parameters.")
                 elif response.status_code == 401 or response.status_code == 403:
                     logger.error("WeatherAPI auth error. Check API key.")
                     raise HTTPException(status_code=500, detail="Weather provider configuration error.")
                 elif response.status_code != 200:
-                    logger.error(f"WeatherAPI Error {response.status_code}: {response.text}")
+                    safe_text = response.text.replace(self.api_key, "***") if self.api_key else response.text
+                    logger.error(f"WeatherAPI Error {response.status_code}: {safe_text}")
                     raise HTTPException(status_code=503, detail="Weather provider is currently unavailable.")
                 
                 return response.json()
@@ -47,7 +49,8 @@ class WeatherAPIClient:
             logger.error(f"WeatherAPI request timed out for {endpoint}")
             raise HTTPException(status_code=504, detail="Weather provider request timed out.")
         except httpx.RequestError as e:
-            logger.error(f"WeatherAPI request error: {str(e)}")
+            safe_error = str(e).replace(self.api_key, "***") if self.api_key else str(e)
+            logger.error(f"WeatherAPI request error: {safe_error}")
             raise HTTPException(status_code=503, detail="Error communicating with weather provider.")
 
     async def get_current(self, q: str) -> Dict[str, Any]:

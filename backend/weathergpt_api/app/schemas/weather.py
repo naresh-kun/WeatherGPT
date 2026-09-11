@@ -28,6 +28,7 @@ class WeatherCurrent(BaseModel):
     icon: str = Field(..., description="Weather icon code")
     uv_index: Optional[float] = Field(None, description="UV index")
     visibility: Optional[float] = Field(None, description="Visibility in km")
+    condition_code: Optional[int] = Field(None, description="Weather condition code")
     timestamp: int = Field(..., description="Unix UTC timestamp of the observation")
 
 

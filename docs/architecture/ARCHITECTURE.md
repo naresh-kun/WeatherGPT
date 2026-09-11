@@ -1,9 +1,9 @@
 # WeatherGPT — System Architecture
 
-**Version**: 0.2.0  
+**Version**: 0.5.0  
 **Project Type**: SIH (Smart India Hackathon) Prototype  
 **Developers**: 2 (Frontend, Backend)  
-**Current Phase**: Phase 2 — Flutter UI (mock data)
+**Current Phase**: Phase 5 — AI Chat Integration (Gemini 3.7 Flash)
 
 ---
 
@@ -16,7 +16,7 @@
 │                                          │
 │  Screens → Providers → Repositories     │
 │       → Services → API Client           │
-└──────────────────┬──────────────────────┘
+└──────────────────┼──────────────────────┘
                    │
               REST / JSON
            (HTTP over HTTPS)
@@ -26,58 +26,63 @@
 │         (backend/weathergpt_api/)        │
 │                                          │
 │  Routes → Services → Repositories       │
-│  ├── Weather Service                     │
-│  ├── AI Service                          │
-│  ├── Alert Engine                        │
-│  ├── Advisory Service                    │
-│  ├── Climate Service                     │
-│  └── Localization Service               │
+│  ├── Weather Service   [REAL — Phase 3]  │
+│  ├── AI Service         [REAL — Phase 5]  │
+│  ├── Alert Engine       [PLANNED — Ph.6] │
+│  ├── Advisory Service   [PLANNED — Ph.7] │
+│  ├── Climate Service    [PLANNED — Ph.7] │
+│  └── Localization        [PLANNED — Ph.8] │
 └─────────────────────────────────────────┘
           │              │
           ▼              ▼
-  External Weather    LLM Provider
-     Provider         (e.g., Gemini)
+  External Weather   Gemini 3.7 Flash
+     Provider        (google-genai SDK)
+  [REAL — Phase 3]  [REAL — Phase 5]
           │
           ▼
     Historical
       Dataset
+    [PLANNED]
 ```
 
 **Critical Rule**: The Flutter frontend must **never** call the External Weather Provider or LLM Provider directly. All external API calls go through the FastAPI backend.
 
-**Phase 2 Note**: The Flutter UI is implemented and currently consumes **local mock data** from `frontend/weathergpt_app/lib/data/mock_data.dart`. No HTTP requests are made to the FastAPI backend yet. The backend remains at the Phase 1 scaffold state.
+**Phase 5 Note**: The ChatScreen now uses real `ChatProvider` → `ApiService.sendChatMessage` → `POST /api/v1/chat` → `WeatherService` → `GeminiChatService`. The Gemini API key is exclusively stored in the backend `.env` and never sent to Flutter.
 
 ---
 
-## 1.1 Phase 2 Frontend Architecture (Current)
+## 1.1 Phase 6 Architecture (Current)
 
 ```
 SplashScreen
      ↓ (2s transition)
 MainShell (Bottom Navigation — IndexedStack)
-     ├── HomeScreen          → MockData (weather, forecast preview, alerts preview)
-     ├── ChatScreen          → MockData.simulateChatResponse() (local keyword matching)
-     ├── AlertsScreen        → MockData.alerts
-     ├── AdvisoryScreen      → MockData.advisories
-     └── ClimateScreen       → MockData.climateDatasets (5/10/20 year mock datasets)
+     ├── HomeScreen          → WeatherProvider & LocationProvider (Real API Data)
+     ├── ChatScreen          → ChatProvider → POST /api/v1/chat (Gemini AI) [REAL — Phase 5]
+     ├── AlertsScreen        → WeatherProvider.alerts (Real Smart Alerts) [REAL — Phase 6]
+     ├── AdvisoryScreen      → WeatherProvider.advisories (Real Advisory Data) [REAL — Phase 6]
+     └── ClimateScreen       → MockData.climateDatasets (Phase 7 planned)
 
 Secondary routes (Navigator.push):
-     ├── ForecastScreen      → MockData.forecast
+     ├── ForecastScreen      → WeatherProvider.forecast (Real API Data)
+     ├── LocationSearchScreen→ LocationProvider (Real API Data)
      └── SettingsScreen      → Local state only (toggles, language UI)
 
 Widget layers:
-     Screens → Reusable Widgets (widgets/) → MockData / Models (models/)
+     Screens → Reusable Widgets (widgets/) → Providers (providers/) → API Service
 ```
 
-| Component | Phase 2 Status |
+| Component | Status |
 |---|---|
 | Screens & navigation | **Implemented** |
 | Reusable widgets | **Implemented** |
 | Dart data models | **Implemented** (aligned with API contract) |
-| Mock data layer | **Implemented** (`lib/data/mock_data.dart`) |
-| API service / repositories | **Placeholder** (Phase 1 scaffold, not wired) |
-| Backend HTTP calls | **Not implemented** |
-| Real weather / AI / alerts / climate | **Not implemented** |
+| API service / providers | **Implemented** (wired to backend; ChatProvider, WeatherProvider alerts & advisories) |
+| Backend HTTP calls | **Implemented** (Weather/Alerts/Advisory/Location/Chat) |
+| Real AI chat (Gemini) | **Implemented [Phase 5]** |
+| Real Smart Alert Engine | **Implemented [Phase 6]** (Deterministic, rule-based) |
+| Real Advisory Service | **Implemented [Phase 6]** (Rule-based templates, category filters) |
+| Real climate | **Not implemented** (uses mock data) [PLANNED] |
 
 ---
 
@@ -102,11 +107,11 @@ Widget layers:
 |---|---|
 | **Routes** | HTTP endpoints — validates input, returns responses |
 | **Services / Weather** | Fetches and normalises data from weather provider |
-| **Services / AI** | Interfaces with the LLM provider |
-| **Services / Alerts** | Rule engine that generates weather alerts |
-| **Services / Advisory** | Generates context-aware advisories |
-| **Services / Climate** | Calculates trends from historical datasets |
-| **Services / Localization** | Translates / localises AI responses |
+| **Services / AI** | Interfaces with the LLM provider (Gemini 3.7 Flash) |
+| **Services / Alerts** | Deterministic Smart Alert Engine with configurable thresholds |
+| **Services / Advisory** | Generates rule-based contextual advisories |
+| **Services / Climate** | Calculates trends from historical datasets [PLANNED] |
+| **Services / Localization** | Translates / localises AI responses [PLANNED] |
 | **Repositories** | Data access abstraction |
 | **Schemas** | Pydantic models for request/response validation |
 | **Core / Config** | Environment-variable-based configuration |
@@ -119,53 +124,50 @@ Widget layers:
 
 **User action**: Opens the app / refreshes home screen.
 
-1. **Flutter**: `HomeScreen` requests data from `WeatherRepository`.
-2. **Flutter**: `WeatherRepository` calls `ApiService.getForecast()`.
+1. **Flutter**: `HomeScreen` reads from `WeatherProvider`.
+2. **Flutter**: `WeatherProvider` calls `ApiService.getForecast()`.
 3. **Backend**: `GET /api/v1/weather/forecast` receives the request.
 4. **Backend**: `WeatherService` formats the query and calls `WeatherAPIClient`.
 5. **External**: `WeatherAPIClient` requests `forecast.json` from **WeatherAPI.com**.
 6. **Backend**: `WeatherService` parses the raw WeatherAPI JSON into `WeatherForecast` Pydantic models.
-7. **Flutter**: `WeatherRepository` parses the backend JSON into Dart `WeatherForecast` models.
-8. **Flutter**: `WeatherProvider` notifies the UI to rebuild.
+7. **Flutter**: `ApiService` parses the backend JSON into Dart `WeatherForecast` models.
+8. **Flutter**: `WeatherProvider` updates state and notifies UI to rebuild.
 
-*(Phase 2 Note: The Flutter app currently returns mock data directly from `WeatherRepository` and skips steps 2-7. This will be connected in Phase 4).*
-
-### 3.2 Chat Flow
+### 3.2 Chat Flow (Phase 5)
 
 ```
 Flutter → POST /api/v1/chat { message, language, location }
        → FastAPI AI Service
-       → Intent Understanding (classify query)
-       → Weather Tool / Data Retrieval (fetch relevant weather data)
-       → LLM Provider (e.g., Gemini) generates response
+       → Weather Tool / Data Retrieval (fetch current weather context)
+       → LLM Provider (Google Gemini 3.7 Flash) generates response
        → FastAPI returns ChatResponse
        → Flutter renders AI message in chat UI
 ```
 
-### 3.3 Alerts Flow
+### 3.3 Alerts Flow (Phase 6)
 
 **User action**: Navigates to the Alerts tab.
 
-1. **Flutter**: `AlertsScreen` requests data from `AlertsRepository`.
-2. **Flutter**: `AlertsRepository` calls `ApiService.getAlerts()`.
+1. **Flutter**: `AlertsScreen` reads from `WeatherProvider`.
+2. **Flutter**: `WeatherProvider.loadWeather()` calls `ApiService.getAlerts()`.
 3. **Backend**: `GET /api/v1/alerts` receives the request.
-4. **Backend**: `WeatherService` formats the query and calls `WeatherAPIClient`.
-5. **External**: `WeatherAPIClient` requests `forecast.json` (with `alerts=yes`) from **WeatherAPI.com**.
-6. **Backend**: `WeatherService` parses raw alerts into `Alert` Pydantic models.
-7. **Flutter**: `AlertsRepository` parses JSON into Dart models.
-8. **Flutter**: UI renders severity-colored alert cards.
+4. **Backend**: `WeatherService.get_alerts_smart()` concurrently fetches current weather, forecast, and native WeatherAPI alerts.
+5. **Backend**: Deterministic `AlertEngine` evaluates current & forecast data against configurable thresholds (heat, rain, wind, UV, thunderstorm).
+6. **Backend**: Smart alerts are merged with native WeatherAPI alerts, deduplicated by alert type.
+7. **Flutter**: `ApiService` parses JSON into Dart `WeatherAlert` models with `relevantValue` and `threshold`.
+8. **Flutter**: UI renders severity-colored `AlertCard` widgets with observed sensor values and thresholds.
 
-*(Phase 2 Note: The Flutter app currently returns mock data directly from `AlertsRepository` and skips steps 2-7. This will be connected in Phase 4).*
+### 3.4 Advisory Flow (Phase 6)
 
-### 3.4 Advisory Flow
+**User action**: Navigates to the Advisory tab.
 
-```
-Weather Data
-       → FastAPI Advisory Service (rule/parameter-based evaluation)
-       → Generates Advisory objects per category
-       → GET /api/v1/advisory returns advisories
-       → Flutter displays advisory cards
-```
+1. **Flutter**: `AdvisoryScreen` reads from `WeatherProvider`.
+2. **Flutter**: `WeatherProvider.loadWeather()` calls `ApiService.getAdvisories()`.
+3. **Backend**: `GET /api/v1/advisory` receives the request.
+4. **Backend**: Evaluates live weather data against deterministic rule templates (no LLM).
+5. **Backend**: Generates `Advisory` objects categorized by general, health, outdoor, travel, or agriculture.
+6. **Flutter**: `ApiService` parses JSON into Dart `WeatherAdvisory` models.
+7. **Flutter**: UI renders interactive category filter chips and `AdvisoryCard` widgets with recommendations.
 
 ### 3.5 Climate Flow
 

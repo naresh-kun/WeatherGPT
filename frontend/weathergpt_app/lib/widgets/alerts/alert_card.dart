@@ -120,6 +120,32 @@ class AlertCard extends StatelessWidget {
             alert.description,
             style: Theme.of(context).textTheme.bodyLarge,
           ),
+          if (alert.relevantValue != null) ...[
+            const SizedBox(height: AppDimensions.paddingSmall),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: severityColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.sensors, size: 14, color: severityColor),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Observed: ${alert.formattedRelevantValue ?? alert.relevantValue}'
+                    '${alert.threshold != null ? ' (Threshold: ${alert.threshold})' : ''}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: severityColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           if (alert.displayDate != null) ...[
             const SizedBox(height: AppDimensions.paddingSmall),
             Row(

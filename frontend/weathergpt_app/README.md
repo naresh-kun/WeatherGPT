@@ -2,7 +2,7 @@
 
 Conversational weather intelligence UI for the WeatherGPT SIH prototype.
 
-**Phase 2 status**: UI complete with mock data. Backend integration not yet implemented.
+**Phase 4 status**: UI integrated with FastAPI backend. Real weather data is fetched for Home, Forecast, Alerts, and Location Search. Advanced AI features (Chat, Climate, Advisory) remain mocked pending later phases.
 
 ---
 
@@ -11,13 +11,14 @@ Conversational weather intelligence UI for the WeatherGPT SIH prototype.
 | Screen | Route / Access | Description |
 |---|---|---|
 | Splash | `/` (initial) | Branding screen with 2-second transition to main app |
-| Home | Bottom nav tab | Dashboard with current weather, metrics, hourly/daily preview, suggestions, alert preview |
-| WeatherGPT Chat | Bottom nav tab | Conversational UI with mock AI responses |
-| Forecast | `/forecast` (from Home) | Full hourly forecast, 7-day forecast, temperature chart |
-| Alerts | Bottom nav tab | Weather alerts dashboard with severity indicators |
-| Advisory | Bottom nav tab | Category cards (Farming, Travel, Outdoor, Driving) with detail views |
-| Climate | Bottom nav tab | Historical temperature/rainfall charts with time range selector |
+| Home | Bottom nav tab | Dashboard with real current weather, metrics, hourly/daily preview, suggestions, active alerts preview |
+| WeatherGPT Chat | Bottom nav tab | Conversational UI with mock AI responses (Phase 5) |
+| Forecast | `/forecast` (from Home) | Full real hourly forecast, 7-day forecast, temperature chart |
+| Alerts | Bottom nav tab | Real weather alerts dashboard with severity indicators |
+| Advisory | Bottom nav tab | Category cards (Farming, Travel, Outdoor, Driving) with detail views (Mocked) |
+| Climate | Bottom nav tab | Historical temperature/rainfall charts with time range selector (Mocked) |
 | Settings | `/settings` (from Home app bar) | Location, language, notifications, voice, units, about |
+| Location Search | `/location-search` (from Home) | Real backend-powered city search & GPS |
 
 ---
 
@@ -25,6 +26,7 @@ Conversational weather intelligence UI for the WeatherGPT SIH prototype.
 
 - **Bottom navigation bar**: Home → WeatherGPT → Alerts → Advisory → Climate
 - **Settings**: Accessible via the gear icon on the Home screen app bar
+- **Location Search**: Accessible via tapping the location name in the Home screen header
 - **Forecast**: Accessible via "Full forecast" / "View all" links on Home, or route `/forecast`
 - **Advisory detail**: Tap a category card to open its advisory detail screen
 - **Chat suggestions**: Tapping Home suggestion chips navigates to WeatherGPT tab and pre-fills the input
@@ -52,30 +54,20 @@ Conversational weather intelligence UI for the WeatherGPT SIH prototype.
 
 ---
 
-## Mock Data Approach
+## Data Approach (Phase 4)
 
-All UI data comes from **`lib/data/mock_data.dart`**, a centralized mock data provider.
-
-- Models in `lib/models/` mirror the API contract in `docs/api/DATA_MODELS.md`
-- Screens read from `MockData` — no API calls are made
-- Chat responses are simulated locally via `MockData.simulateChatResponse()`
-- Climate datasets switch by time range (5 / 10 / 20 years) using prepared mock datasets
-
-**Replacing mock data (Phase 3+)**: Introduce repositories that call `ApiService`, map JSON responses to the existing model classes, and swap `MockData` references in screens for repository calls. The UI widgets require minimal changes.
+- **Real Data (Weather, Forecast, Alerts, Location)**: Providers (`WeatherProvider`, `LocationProvider`) communicate with `ApiService` to fetch live data from the FastAPI backend.
+- **Mock Data (Chat, Advisory, Climate)**: Remaining features read from `lib/data/mock_data.dart` until their respective backend services are built.
 
 ---
 
 ## Current Limitations
 
-- **No backend integration** — FastAPI endpoints are not called
-- **No real weather data** — all values are dummy/local
 - **No LLM** — chat responses are keyword-matched mock replies
-- **No real alerts engine** — alerts are static mock entries
 - **No real advisory logic** — advisories are pre-written examples
 - **No real climate processing** — charts use static historical mock data
 - **No Tamil localization** — language selector is UI-only
 - **No STT/TTS** — microphone button shows a placeholder snackbar
-- **No GPS/location** — location is hardcoded to Madurai, Tamil Nadu
 
 ---
 
@@ -85,6 +77,9 @@ All UI data comes from **`lib/data/mock_data.dart`**, a centralized mock data pr
 |---|---|
 | `fl_chart` | Temperature and rainfall charts |
 | `cupertino_icons` | iOS-style icons |
+| `http` | Backend API communication |
+| `geolocator` | GPS coordinates |
+| `shared_preferences` | Local storage (selected city) |
 
 ---
 
@@ -96,15 +91,15 @@ flutter pub get
 flutter run
 ```
 
+**Note**: To see real weather data, you must have the FastAPI backend running (`cd backend/weathergpt_api && uvicorn app.main:app --reload`). The app defaults to connecting to `10.0.2.2:8000` (for Android emulators) or `localhost:8000` (for web/desktop).
+
 ### Verification commands
 
 ```bash
 flutter analyze    # Static analysis
-flutter test       # Widget tests
+flutter test       # Unit and Widget tests
 flutter build apk  # Build Android APK
 ```
-
-No backend server is required for Phase 2.
 
 ---
 
@@ -113,21 +108,21 @@ No backend server is required for Phase 2.
 ```
 lib/
 ├── core/
-│   ├── config/          # App configuration
+│   ├── config/          # App configuration (Base URLs)
 │   ├── constants/       # Shared constants
 │   ├── theme/           # AppTheme, AppColors, AppDimensions
 │   ├── utils/           # WeatherUtils (icons, formatting)
 │   └── errors/          # Exception types
 ├── data/
-│   └── mock_data.dart   # Centralized mock data (Phase 2)
+│   └── mock_data.dart   # Mock data for Chat, Advisory, Climate
 ├── models/              # Dart data models (API-contract aligned)
 ├── navigation/          # AppRoutes, MainShell (bottom nav)
+├── providers/           # State management (Weather, Location)
 ├── screens/             # All feature screens
+├── services/            # API client and local storage services
 ├── widgets/             # Reusable UI components
 └── main.dart            # App entry point
 ```
-
-Services (`api/`, `location/`, `voice/`, `storage/`) and repositories remain as Phase 1 placeholders for future integration.
 
 ---
 

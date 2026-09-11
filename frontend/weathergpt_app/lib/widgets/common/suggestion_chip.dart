@@ -9,7 +9,7 @@ class SuggestionChip extends StatelessWidget {
   });
 
   final String label;
-  final VoidCallback onTap;
+  final VoidCallback? onTap; // nullable: null disables the chip
 
   @override
   Widget build(BuildContext context) {

@@ -1,16 +1,21 @@
 """
-Weather Service
+Weather Service  [Phase 6: upgraded with smart alert engine]
 Business logic layer mapping WeatherAPI data to application schemas.
 """
+import asyncio
 import time
 from typing import List, Dict, Any, Optional
 from app.services.weather.client import WeatherAPIClient
 from app.schemas.weather import (
-    WeatherCurrent, Location, HourlyForecast, DailyForecast, 
+    WeatherCurrent, Location, HourlyForecast, DailyForecast,
     WeatherForecast, LocationSearchResult
 )
 from app.schemas.alerts import Alert, AlertsResponse, AlertSeverity, AlertType
+from app.services.alerts.engine import AlertEngine
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 class WeatherService:
     def __init__(self):
@@ -49,6 +54,7 @@ class WeatherService:
             icon=current.get("condition", {}).get("icon", ""),
             uv_index=current.get("uv"),
             visibility=current.get("vis_km"),
+            condition_code=current.get("condition", {}).get("code"),
             timestamp=current.get("last_updated_epoch", int(time.time()))
         )
 
@@ -205,3 +211,36 @@ class WeatherService:
             alerts=mapped_alerts,
             total=len(mapped_alerts)
         )
+
+    async def get_alerts_smart(self, lat: float, lon: float) -> AlertsResponse:
+        """
+        Phase 6 — Smart alert endpoint.
+
+        Strategy:
+          1. Fetch current weather and 1-day forecast concurrently.
+          2. Run the deterministic AlertEngine against real data.
+          3. Merge with any native WeatherAPI alerts (if any are issued).
+          4. Deduplicate by alert_type so the same rule doesn't show twice.
+
+        [Phase 6 — REAL]
+        """
+        # Fetch concurrently to minimise latency
+        current, forecast, raw_alerts_resp = await asyncio.gather(
+            self.get_current(lat, lon),
+            self.get_forecast(lat, lon, days=1),
+            self.get_alerts(lat, lon),
+        )
+
+        # Run deterministic rule engine
+        engine = AlertEngine()
+        engine_alerts = engine.evaluate(current, forecast)
+
+        # Merge: smart alerts first, then any WeatherAPI-native alerts
+        seen_types: set = {a.alert_type for a in engine_alerts}
+        passthrough_alerts = [
+            a for a in raw_alerts_resp.alerts
+            if a.alert_type not in seen_types
+        ]
+
+        all_alerts = engine_alerts + passthrough_alerts
+        return AlertsResponse(alerts=all_alerts, total=len(all_alerts))

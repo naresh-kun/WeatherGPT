@@ -9,29 +9,39 @@ A conversational weather intelligence prototype providing real-time weather data
 | Phase | Status | Description |
 |---|---|---|
 | Phase 1 | **Complete** | Project scaffold, API contract, backend structure |
-| Phase 2 | **Complete** | Flutter UI with mock data (no backend integration) |
-| Phase 3+ | Planned | Backend API integration, real weather data, AI |
+| Phase 2 | **Complete** | Flutter UI with mock data |
+| Phase 3 | **Complete** | FastAPI backend with real Weather API integration |
+| Phase 4 | **Complete** | Flutter frontend connected to real backend data |
+| Phase 5 | **Complete** | AI Chat Integration (Gemini 3.7 Flash + real weather grounding) |
+| Phase 6 | **Complete** | Smart Alerts & Advisories Engine (Deterministic, rule-based) |
+| Phase 7+ | Planned | Climate Intelligence, Multilingual, Voice |
 
-### Phase 2 — Frontend Status
+### Phase 6 — Smart Alerts & Advisories Status
 
-The Flutter application (`frontend/weathergpt_app/`) now includes a **polished UI prototype** with:
+The Flutter application (`frontend/weathergpt_app/`) and FastAPI backend (`backend/weathergpt_api/`) now feature a deterministic Smart Alert Engine and rule-based advisory system:
 
-- **Screens implemented**: Splash, Home, WeatherGPT Chat, Forecast, Alerts, Advisory, Climate, Settings
-- **Navigation**: Bottom navigation bar (Home, WeatherGPT, Alerts, Advisory, Climate) + Settings from Home
-- **Data source**: Centralized **mock/dummy data** in `lib/data/mock_data.dart`
-- **Charts**: Temperature and rainfall trends using `fl_chart`
+- **Smart Alert Engine [REAL — Phase 6]**:
+  - Deterministic evaluation of current and forecast weather against configurable thresholds.
+  - No LLM dependency for alert or advisory decisions.
+  - Rules: Extreme Heat, Heavy Rain, Strong Wind, High UV, Thunderstorm (using structured WeatherAPI condition codes).
+  - Merged with native WeatherAPI authority alerts without duplication.
+- **Rule-Based Advisories [REAL — Phase 6]**:
+  - Practical, contextual recommendations categorized by `general`, `health`, `outdoor`, `travel`, and `agriculture`.
+  - Filter chips and detailed bottom sheet recommendations in Flutter UI.
+- **Alerts & Advisory UI [REAL — Phase 6]**:
+  - Flutter AlertsScreen and AdvisoryScreen display live backend data.
+  - Observed weather metrics, thresholds, category badges, loading, empty, and retry states.
 
-**Not yet implemented** (deferred to later phases):
+**Implementation Status Matrix**:
 
-- Weather API integration
-- FastAPI backend calls
-- LLM / AI chat backend
-- Real alerts engine
-- Real advisory calculations
-- Real climate backend processing
-- Tamil localization
-- Speech-to-text / text-to-speech
-- Real GPS / location services
+- **Real-time Weather & Forecast**: **[REAL — Phase 3 & 4]**
+- **Location Search & GPS**: **[REAL — Phase 4]**
+- **AI Conversational Chat**: **[REAL — Phase 5]** (Google Gemini 3.7 Flash)
+- **Smart Alert Engine**: **[REAL — Phase 6]** (Deterministic rules & thresholds)
+- **Weather Advisory System**: **[REAL — Phase 6]** (Rule-based templates & filters)
+- **Climate Historical Trends**: **[MOCK — Phase 7 PLANNED]**
+- **Tamil Localization**: **[PLANNED — Phase 8]**
+- **Speech-to-Text / Voice**: **[PLANNED — Phase 9]**
 
 ---
 
@@ -39,24 +49,22 @@ The Flutter application (`frontend/weathergpt_app/`) now includes a **polished U
 
 ```
 Flutter App (frontend/weathergpt_app/)
-        ↓  REST / JSON  [Phase 3+ — not connected yet]
+        ↓  REST / JSON
 FastAPI Backend (backend/weathergpt_api/)
-        ├── Weather Service
-        ├── AI Service
-        ├── Alert Engine
-        ├── Advisory Service
-        ├── Climate Service
-        └── Localization Service
+        ├── Weather Service      [REAL — Phase 3+]
+        ├── AI Service (Gemini)  [REAL — Phase 5]
+        ├── Alert Engine         [REAL — Phase 6]
+        ├── Advisory Service     [REAL — Phase 6]
+        ├── Climate Service      [PLANNED — Phase 7]
+        └── Localization Service  [PLANNED — Phase 8]
               ↓
-        External Weather Provider
-        LLM Provider
-        Historical Dataset
+        External Weather Provider  [REAL]
+        Gemini 3.7 Flash           [REAL — Phase 5]
+        Historical Dataset         [PLANNED]
 ```
 
-The Flutter frontend communicates **only** with the FastAPI backend (once integrated).  
+The Flutter frontend communicates **only** with the FastAPI backend.  
 The frontend must **never** call the weather provider or LLM provider directly.
-
-**Current Phase 2 behaviour**: The Flutter UI renders mock data locally. No HTTP calls are made to the backend.
 
 ---
 
@@ -91,9 +99,9 @@ README.md
 ```
 WeatherGPT/
 ├── frontend/
-│   └── weathergpt_app/        # Flutter application (Phase 2 UI complete)
+│   └── weathergpt_app/        # Flutter application (Phase 4 integrated)
 ├── backend/
-│   └── weathergpt_api/        # FastAPI application (Phase 1 scaffold)
+│   └── weathergpt_api/        # FastAPI application (Phase 3 complete)
 ├── docs/
 │   ├── architecture/
 │   │   └── ARCHITECTURE.md    # System design & data flows
@@ -131,7 +139,7 @@ flutter pub get
 flutter run
 ```
 
-The Flutter app launches with mock data. No backend connection is required for Phase 2.
+The Flutter app requires the backend to be running to fetch live weather data.
 
 ---
 
@@ -156,21 +164,21 @@ See [`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md) for
 
 ---
 
-## Implementation Status (Post-Phase 3)
+## Implementation Status (Post-Phase 4)
 
 | Component | Status |
 |---|---|
 | FastAPI Backend Core | ✅ Implemented |
 | WeatherAPI.com Integration | ✅ Implemented (Current, Forecast, Hourly, Search, Alerts) |
-| Flutter UI | ✅ Mocked (Uses local data for UI testing) |
-| Flutter ↔ Backend Integration | 🚧 Planned for Phase 4 |
-| WeatherGPT LLM AI | 🚧 Planned for Phase 5 |
-| Smart Alert Rule Engine | 🚧 Planned for Phase 6 |
-| Climate Analytics | 🚧 Planned for Phase 7 |
-| Localization (Tamil) | 🚧 Planned for Phase 8 |
-| Voice Interaction | 🚧 Planned for Phase 9 |
+| Flutter UI | ✅ Implemented |
+| Flutter ↔ Backend Integration | ✅ Implemented (Phase 4 Complete) |
+| WeatherGPT AI Chat (Gemini) | ✅ **REAL** — Phase 5 Complete |
+| Smart Alert Rule Engine | 🚧 Planned — Phase 6 |
+| Climate Analytics | 🚧 Planned — Phase 7 |
+| Localization (Tamil) | 🚧 Planned — Phase 8 |
+| Voice Interaction | 🚧 Planned — Phase 9 |
 
-**Important Note**: The Flutter app currently runs on mock data (Phase 2 state). The backend provides real weather data (Phase 3 state) but they are not connected yet.
+**Important Note**: The core weather features (Home, Forecast, Alerts, Search) are fully integrated with the real backend. Advanced features (Chat, Advisory, Climate) are currently mocked pending future phases.
 
 ---
 
@@ -179,3 +187,5 @@ See [`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md) for
 - API keys and secrets are **never** hardcoded.
 - All secrets are loaded from environment variables via `.env` (excluded from git).
 - See `backend/weathergpt_api/.env.example` for required variables.
+- **Phase 5**: `GEMINI_API_KEY` is exclusively stored in backend `.env`. Flutter never sends or receives it.
+- The Flutter app only communicates with the FastAPI backend — never directly with Gemini or WeatherAPI.

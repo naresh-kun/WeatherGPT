@@ -1,6 +1,10 @@
 """
-WeatherGPT — Alerts Schemas
+WeatherGPT — Alerts Schemas  [Phase 6: upgraded]
 Pydantic models for weather alert request/response validation.
+
+Phase 6 additions:
+- AlertType: added heat, rain, wind, uv (Phase 3 types kept for backward compat)
+- Alert:     added relevant_value, threshold (optional; used by smart engine)
 """
 
 from pydantic import BaseModel, Field
@@ -16,6 +20,7 @@ class AlertSeverity(str, Enum):
 
 
 class AlertType(str, Enum):
+    # Phase 3 — WeatherAPI alert passthrough types (kept for backward compat)
     THUNDERSTORM = "thunderstorm"
     FLOOD = "flood"
     CYCLONE = "cyclone"
@@ -24,6 +29,11 @@ class AlertType(str, Enum):
     DROUGHT = "drought"
     FOG = "fog"
     OTHER = "other"
+    # Phase 6 — Smart engine rule types
+    HEAT = "heat"
+    RAIN = "rain"
+    WIND = "wind"
+    UV = "uv"
 
 
 class Alert(BaseModel):
@@ -37,6 +47,13 @@ class Alert(BaseModel):
     start_time: int = Field(..., description="Alert start — Unix UTC timestamp")
     end_time: Optional[int] = Field(None, description="Alert end — Unix UTC timestamp")
     source: Optional[str] = Field(None, description="Issuing authority")
+    # Phase 6 additions — present on smart-engine alerts, None on passthrough alerts
+    relevant_value: Optional[float] = Field(
+        None, description="Observed value that triggered the alert (e.g. 42.1 °C)"
+    )
+    threshold: Optional[float] = Field(
+        None, description="Threshold value that was exceeded (e.g. 42.0 °C)"
+    )
 
 
 class AlertsResponse(BaseModel):
