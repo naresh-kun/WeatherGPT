@@ -1,1 +1,5 @@
-"""WeatherGPT — Climate Service Package. Not yet implemented."""
+"""WeatherGPT — Climate Service Package (Phase 7)."""
+
+from app.services.climate.service import ClimateService
+
+__all__ = ["ClimateService"]

@@ -82,7 +82,7 @@ class ApiService {
 
   // --- generic POST ---
 
-  Future<dynamic> _post(String endpoint, Map<String, dynamic> body) async {
+  Future<dynamic> _post(String endpoint, Map<String, dynamic> body, {Duration? timeout}) async {
     final uri = Uri.parse('$baseUrl$endpoint');
 
     try {
@@ -92,7 +92,7 @@ class ApiService {
             headers: {'Content-Type': 'application/json'},
             body: json.encode(body),
           )
-          .timeout(AppConfig.apiTimeout);
+          .timeout(timeout ?? AppConfig.apiTimeout);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return json.decode(response.body);
@@ -203,7 +203,7 @@ class ApiService {
       conversationId: conversationId,
     ).toJson();
 
-    final data = await _post('/chat', body);
+    final data = await _post('/chat', body, timeout: const Duration(seconds: 60));
     return ChatApiResponse.fromJson(data as Map<String, dynamic>);
   }
 }
