@@ -3,7 +3,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:weathergpt_app/core/theme/app_theme.dart';
-import 'package:weathergpt_app/data/mock_data.dart';
 import 'package:weathergpt_app/main.dart';
 import 'package:weathergpt_app/navigation/app_routes.dart';
 import 'package:weathergpt_app/navigation/main_shell.dart';
@@ -203,6 +202,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final weather = weatherProvider.currentWeather!;
     final forecast = weatherProvider.forecast!;
     final alerts = weatherProvider.alerts;
+    final loc = locationProvider.selectedLocation;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -258,13 +258,17 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-        // WeatherGPT suggestions — kept as mock (Chat is Phase 5)
+        // WeatherGPT suggestions
         const SizedBox(height: AppDimensions.paddingMedium),
-        const SectionHeader(title: 'Ask WeatherGPT'),
+        SectionHeader(title: l10n?.askWeatherGpt ?? 'Ask WeatherGPT'),
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: MockData.homeSuggestions.map((suggestion) {
+          children: [
+            l10n?.homeSuggestionRain(loc.displayName) ?? 'Will it rain today in ${loc.displayName}?',
+            l10n?.homeSuggestionWear ?? 'What should I wear today?',
+            l10n?.homeSuggestionFarming ?? 'Is it good for farming today?',
+          ].map((suggestion) {
             return SuggestionChip(
               label: suggestion,
               onTap: () {
@@ -277,17 +281,17 @@ class _HomeScreenState extends State<HomeScreen> {
         // Active alerts preview
         const SizedBox(height: AppDimensions.paddingLarge),
         SectionHeader(
-          title: 'Active Warnings',
-          actionLabel: 'View all',
+          title: l10n?.activeWarnings ?? 'Active Warnings',
+          actionLabel: l10n?.viewAll ?? 'View all',
           onActionTap: widget.onNavigateToAlerts,
         ),
         if (alerts.isEmpty)
-          const CommonCard(
+          CommonCard(
             child: Row(
               children: [
-                Icon(Icons.check_circle_outline, color: Colors.green),
-                SizedBox(width: 8),
-                Text('No active weather alerts for this location.'),
+                const Icon(Icons.check_circle_outline, color: Colors.green),
+                const SizedBox(width: 8),
+                Text(l10n?.noAlertsForLocation ?? 'No active weather alerts for this location.'),
               ],
             ),
           )

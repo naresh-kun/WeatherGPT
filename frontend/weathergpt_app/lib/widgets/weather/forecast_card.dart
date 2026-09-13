@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:weathergpt_app/core/theme/app_theme.dart';
 import 'package:weathergpt_app/core/utils/weather_utils.dart';
+import 'package:weathergpt_app/l10n/app_localizations.dart';
 import 'package:weathergpt_app/models/weather.dart';
 import 'package:weathergpt_app/widgets/common/common_card.dart';
 
@@ -69,6 +70,11 @@ class DailyForecastCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final isTamil = l10n?.localeName == 'ta';
+    final dayLabel = WeatherUtils.localizeDay(forecast.displayDay, isTamil: isTamil);
+    final conditionLabel = WeatherUtils.localizeCondition(forecast.description, isTamil: isTamil);
+
     if (compact) {
       return CommonCard(
         onTap: onTap,
@@ -79,10 +85,11 @@ class DailyForecastCard extends StatelessWidget {
         child: Row(
           children: [
             SizedBox(
-              width: 48,
+              width: 58,
               child: Text(
-                forecast.displayDay ?? '',
+                dayLabel,
                 style: Theme.of(context).textTheme.titleMedium,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             Icon(
@@ -92,8 +99,9 @@ class DailyForecastCard extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                forecast.description,
+                conditionLabel,
                 style: Theme.of(context).textTheme.bodyMedium,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             Text(
@@ -123,10 +131,11 @@ class DailyForecastCard extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(
-            width: 56,
+            width: 68,
             child: Text(
-              forecast.displayDay ?? '',
+              dayLabel,
               style: Theme.of(context).textTheme.titleMedium,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           Icon(
@@ -140,11 +149,11 @@ class DailyForecastCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  forecast.description,
+                  conditionLabel,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 Text(
-                  'Rain ${WeatherUtils.formatPercent(forecast.precipitationProbability)}',
+                  '${l10n?.rain ?? 'Rain'} ${WeatherUtils.formatPercent(forecast.precipitationProbability)}',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ],

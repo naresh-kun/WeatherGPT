@@ -193,5 +193,40 @@ void main() {
       expect(provider.state, ClimateState.success);
       expect(callCount, 2);
     });
+
+    test('language-only switch reuses fresh climate data without refetching', () async {
+      var callCount = 0;
+      final client = MockClient((request) async {
+        callCount++;
+        return http.Response(
+          jsonEncode(_sampleClimateJson),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      });
+
+      final api = ApiService(baseUrl: 'http://localhost:8000/api/v1', client: client);
+      final provider = ClimateProvider(api: api);
+
+      // Initial load in English
+      await provider.loadClimate(language: 'en');
+      expect(provider.state, ClimateState.success);
+      expect(provider.isFresh(), isTrue);
+      expect(callCount, 1);
+
+      // Language switch to Tamil with same location and period
+      await provider.loadClimate(language: 'ta');
+      // Must NOT make additional network call
+      expect(callCount, 1);
+      expect(provider.state, ClimateState.success);
+
+      // Location change triggers fetch
+      await provider.setLocation('Chennai');
+      expect(callCount, 2);
+
+      // Explicit refresh forces fetch
+      await provider.refresh(language: 'ta');
+      expect(callCount, 3);
+    });
   });
 }

@@ -115,7 +115,8 @@ class _AdvisoryScreenState extends State<AdvisoryScreen> {
       case WeatherState.error:
         return ErrorDisplayWidget(
           message: weatherProvider.errorMessage ??
-              'Unable to fetch advisories right now.\nPlease check your connection and try again.',
+              (l10n?.unableToFetchWeather ??
+                  'Unable to fetch advisories right now.\nPlease check your connection and try again.'),
           onRetry: _refresh,
         );
 
@@ -134,7 +135,7 @@ class _AdvisoryScreenState extends State<AdvisoryScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Text(
-                'Weather-based guidance for $locationName',
+                l10n?.guidanceForLocation(locationName) ?? 'Weather-based guidance for $locationName',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ),
@@ -160,7 +161,7 @@ class _AdvisoryScreenState extends State<AdvisoryScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Conditions are all clear for $locationName',
+                        l10n?.allClearConditions(locationName) ?? 'Conditions are all clear for $locationName',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ],
@@ -169,7 +170,8 @@ class _AdvisoryScreenState extends State<AdvisoryScreen> {
               )
             else ...[
               Text(
-                '${advisories.length} ${advisories.length == 1 ? 'advisory' : 'advisories'} available',
+                l10n?.advisoriesAvailable(advisories.length) ??
+                    '${advisories.length} ${advisories.length == 1 ? 'advisory' : 'advisories'} available',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.textSecondary,
                     ),

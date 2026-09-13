@@ -111,12 +111,12 @@ class _ForecastScreenState extends State<ForecastScreen> {
 
               // Temperature chart
               const SizedBox(height: AppDimensions.paddingLarge),
-              const SectionHeader(title: 'Temperature Trend'),
+              SectionHeader(title: l10n?.temperatureTrend ?? 'Temperature Trend'),
               CommonCard(
                 child: forecast.hourly.isEmpty
-                    ? const Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Center(child: Text('No hourly data available')),
+                    ? Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Center(child: Text(l10n?.noHourlyData ?? 'No hourly data available')),
                       )
                     : TemperatureChart(hourlyData: forecast.hourly),
               ),
@@ -125,10 +125,10 @@ class _ForecastScreenState extends State<ForecastScreen> {
               const SizedBox(height: AppDimensions.paddingLarge),
               SectionHeader(title: l10n?.sevenDayForecast ?? '7-Day Forecast'),
               if (forecast.daily.isEmpty)
-                const CommonCard(
+                CommonCard(
                   child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Center(child: Text('No daily forecast available')),
+                    padding: const EdgeInsets.all(16),
+                    child: Center(child: Text(l10n?.noDailyData ?? 'No daily forecast available')),
                   ),
                 )
               else

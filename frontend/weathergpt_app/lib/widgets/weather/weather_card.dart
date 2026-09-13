@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:weathergpt_app/core/theme/app_theme.dart';
 import 'package:weathergpt_app/core/utils/weather_utils.dart';
+import 'package:weathergpt_app/l10n/app_localizations.dart';
 import 'package:weathergpt_app/models/weather.dart';
 import 'package:weathergpt_app/widgets/common/common_card.dart';
 
@@ -11,6 +12,9 @@ class WeatherCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final isTamil = l10n?.localeName == 'ta';
+
     return CommonCard(
       color: Colors.white.withValues(alpha: 0.95),
       child: Column(
@@ -32,12 +36,12 @@ class WeatherCard extends StatelessWidget {
                           ),
                     ),
                     Text(
-                      weather.description,
+                      WeatherUtils.localizeCondition(weather.description, isTamil: isTamil),
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Feels like ${WeatherUtils.formatTemperature(weather.feelsLike)}',
+                      '${l10n?.feelsLike ?? 'Feels like'} ${WeatherUtils.formatTemperature(weather.feelsLike)}',
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],

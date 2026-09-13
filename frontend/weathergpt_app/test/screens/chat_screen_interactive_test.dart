@@ -13,6 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:weathergpt_app/l10n/app_localizations.dart';
 import 'package:weathergpt_app/main.dart';
 import 'package:weathergpt_app/models/chat.dart';
+import 'package:weathergpt_app/models/location.dart';
 import 'package:weathergpt_app/screens/chat/chat_screen.dart';
 import 'package:weathergpt_app/widgets/chat/forecast_chat_card.dart';
 import 'package:weathergpt_app/widgets/chat/weather_chat_card.dart';
@@ -32,13 +33,63 @@ void main() {
     chatProvider.dismissError();
   });
 
-  group('Phase 10 — ChatScreen Interactive Features', () {
+  group('Phase 10 & Cleanup — ChatScreen Startup & Interactive Features', () {
+    testWidgets('Chat startup displays clean static welcome state in English with no mock messages', (tester) async {
+      await tester.pumpWidget(_createTestApp(locale: const Locale('en')));
+      await tester.pumpAndSettle();
+
+      // Welcome greeting in English
+      expect(
+        find.text("Hey! 👋 I'm WeatherGPT. How can I help you with the weather today?"),
+        findsOneWidget,
+      );
+
+      // Provider messages must remain empty (no fake messages)
+      expect(chatProvider.messages, isEmpty);
+
+      // Quick action chips below welcome message
+      expect(find.text("What's the temperature?"), findsOneWidget);
+      expect(find.text('Will it rain?'), findsOneWidget);
+    });
+
+    testWidgets('Chat startup displays clean static welcome state in Tamil with no mock messages', (tester) async {
+      await tester.pumpWidget(_createTestApp(locale: const Locale('ta')));
+      await tester.pumpAndSettle();
+
+      // Welcome greeting in Tamil
+      expect(
+        find.text("வணக்கம்! 👋 நான் WeatherGPT. இன்று வானிலை பற்றி நான் உங்களுக்கு எப்படி உதவலாம்?"),
+        findsOneWidget,
+      );
+
+      // Provider messages must remain empty (no fake messages)
+      expect(chatProvider.messages, isEmpty);
+
+      // Tamil quick action chips below welcome message
+      expect(find.text('வெப்பநிலை என்ன?'), findsOneWidget);
+      expect(find.text('மழை பெய்யுமா?'), findsOneWidget);
+    });
+
     testWidgets('Active location indicator displays city name and location icon', (tester) async {
       await tester.pumpWidget(_createTestApp());
       await tester.pumpAndSettle();
 
       expect(find.byIcon(Icons.location_on), findsOneWidget);
-      expect(find.text(locationProvider.selectedLocation.city ?? 'Madurai'), findsOneWidget);
+      expect(find.text(locationProvider.selectedLocation.shortDisplayName), findsOneWidget);
+    });
+
+    testWidgets('Active location indicator displays raw coordinates when city is null without Madurai fallback', (tester) async {
+      final prevLocation = locationProvider.selectedLocation;
+      await locationProvider.setLocation(const Location(lat: 9.57, lon: 77.96));
+      await tester.pumpWidget(_createTestApp());
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.location_on), findsOneWidget);
+      expect(find.text('9.57, 77.96'), findsOneWidget);
+      expect(find.text('Madurai'), findsNothing);
+
+      // Restore
+      await locationProvider.setLocation(prevLocation);
     });
 
     testWidgets('Renders contextual quick action chips in English', (tester) async {

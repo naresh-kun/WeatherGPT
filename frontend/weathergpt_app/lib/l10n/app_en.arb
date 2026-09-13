@@ -121,5 +121,60 @@
   "errorGeminiBusy": "WeatherGPT is temporarily busy. Please try again.",
   "errorRateLimit": "WeatherGPT is temporarily rate-limited. Please try again later.",
   "errorChatTimeout": "WeatherGPT is taking longer than expected. Please try again.",
-  "errorConnection": "Unable to reach the WeatherGPT server. Check your connection."
+  "errorConnection": "Unable to reach the WeatherGPT server. Check your connection.",
+
+  "chatWelcomeMessage": "Hey! 👋 I'm WeatherGPT. How can I help you with the weather today?",
+  "askWeatherGpt": "Ask WeatherGPT",
+  "activeWarnings": "Active Warnings",
+  "noAlertsForLocation": "No active weather alerts for this location.",
+  "temperatureTrend": "Temperature Trend",
+  "noHourlyData": "No hourly data available",
+  "noDailyData": "No daily forecast available",
+  "observedLabel": "Observed",
+  "thresholdLabel": "Threshold",
+  "guidanceForLocation": "Weather-based guidance for {location}",
+  "@guidanceForLocation": {
+    "placeholders": {
+      "location": { "type": "String" }
+    }
+  },
+  "allClearConditions": "Conditions are all clear for {location}",
+  "@allClearConditions": {
+    "placeholders": {
+      "location": { "type": "String" }
+    }
+  },
+  "advisoriesAvailable": "{count} {count, plural, =1{advisory} other{advisories}} available",
+  "@advisoriesAvailable": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "failedToLoadClimate": "Failed to load climate data",
+  "noClimateRecords": "No climate records available.",
+  "locationLabel": "Location:",
+  "periodRange": "Period Range",
+  "annualAvgTemp": "Annual Average Temperature ({period})",
+  "@annualAvgTemp": {
+    "placeholders": {
+      "period": { "type": "String" }
+    }
+  },
+  "annualRainfallTrend": "Annual Rainfall Trend",
+  "annualPrecipitation": "Annual Total Precipitation ({period})",
+  "@annualPrecipitation": {
+    "placeholders": {
+      "period": { "type": "String" }
+    }
+  },
+  "anomaly": "anomaly",
+  "averageAbbr": "avg",
+  "homeSuggestionRain": "Will it rain today in {location}?",
+  "@homeSuggestionRain": {
+    "placeholders": {
+      "location": { "type": "String" }
+    }
+  },
+  "homeSuggestionWear": "What should I wear today?",
+  "homeSuggestionFarming": "Is it good for farming today?"
 }

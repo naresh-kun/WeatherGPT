@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:weathergpt_app/core/theme/app_theme.dart';
 import 'package:weathergpt_app/core/utils/weather_utils.dart';
+import 'package:weathergpt_app/l10n/app_localizations.dart';
 import 'package:weathergpt_app/widgets/common/common_card.dart';
 
 class WeatherMetricCard extends StatelessWidget {
@@ -54,6 +55,8 @@ class WeatherMetricGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return SizedBox(
       height: 110,
       child: Row(
@@ -61,7 +64,7 @@ class WeatherMetricGrid extends StatelessWidget {
           Expanded(
             child: WeatherMetricCard(
               icon: Icons.water_drop_outlined,
-              label: 'Humidity',
+              label: l10n?.humidity ?? 'Humidity',
               value: '$humidity%',
               iconColor: AppColors.accent,
             ),
@@ -70,7 +73,7 @@ class WeatherMetricGrid extends StatelessWidget {
           Expanded(
             child: WeatherMetricCard(
               icon: Icons.air,
-              label: 'Wind',
+              label: l10n?.wind ?? 'Wind',
               value: '${windSpeed.round()} km/h',
               iconColor: AppColors.primaryLight,
             ),
@@ -79,7 +82,7 @@ class WeatherMetricGrid extends StatelessWidget {
           Expanded(
             child: WeatherMetricCard(
               icon: Icons.umbrella_outlined,
-              label: 'Rain',
+              label: l10n?.rain ?? 'Rain',
               value: WeatherUtils.formatPercent(rainProbability),
               iconColor: AppColors.primary,
             ),
@@ -88,7 +91,7 @@ class WeatherMetricGrid extends StatelessWidget {
           Expanded(
             child: WeatherMetricCard(
               icon: Icons.wb_sunny_outlined,
-              label: 'UV Index',
+              label: l10n?.uvIndex ?? 'UV Index',
               value: uvIndex.round().toString(),
               iconColor: Colors.amber.shade700,
             ),

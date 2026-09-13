@@ -673,6 +673,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unable to reach the WeatherGPT server. Check your connection.'**
   String get errorConnection;
+
+  /// No description provided for @chatWelcomeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Hey! 👋 I\'m WeatherGPT. How can I help you with the weather today?'**
+  String get chatWelcomeMessage;
+
+  /// No description provided for @askWeatherGpt.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask WeatherGPT'**
+  String get askWeatherGpt;
+
+  /// No description provided for @activeWarnings.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Warnings'**
+  String get activeWarnings;
+
+  /// No description provided for @noAlertsForLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'No active weather alerts for this location.'**
+  String get noAlertsForLocation;
+
+  /// No description provided for @temperatureTrend.
+  ///
+  /// In en, this message translates to:
+  /// **'Temperature Trend'**
+  String get temperatureTrend;
+
+  /// No description provided for @noHourlyData.
+  ///
+  /// In en, this message translates to:
+  /// **'No hourly data available'**
+  String get noHourlyData;
+
+  /// No description provided for @noDailyData.
+  ///
+  /// In en, this message translates to:
+  /// **'No daily forecast available'**
+  String get noDailyData;
+
+  /// No description provided for @observedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Observed'**
+  String get observedLabel;
+
+  /// No description provided for @thresholdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Threshold'**
+  String get thresholdLabel;
+
+  /// No description provided for @guidanceForLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather-based guidance for {location}'**
+  String guidanceForLocation(String location);
+
+  /// No description provided for @allClearConditions.
+  ///
+  /// In en, this message translates to:
+  /// **'Conditions are all clear for {location}'**
+  String allClearConditions(String location);
+
+  /// No description provided for @advisoriesAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} {count, plural, =1{advisory} other{advisories}} available'**
+  String advisoriesAvailable(int count);
+
+  /// No description provided for @failedToLoadClimate.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load climate data'**
+  String get failedToLoadClimate;
+
+  /// No description provided for @noClimateRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'No climate records available.'**
+  String get noClimateRecords;
+
+  /// No description provided for @locationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Location:'**
+  String get locationLabel;
+
+  /// No description provided for @periodRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Period Range'**
+  String get periodRange;
+
+  /// No description provided for @annualAvgTemp.
+  ///
+  /// In en, this message translates to:
+  /// **'Annual Average Temperature ({period})'**
+  String annualAvgTemp(String period);
+
+  /// No description provided for @annualRainfallTrend.
+  ///
+  /// In en, this message translates to:
+  /// **'Annual Rainfall Trend'**
+  String get annualRainfallTrend;
+
+  /// No description provided for @annualPrecipitation.
+  ///
+  /// In en, this message translates to:
+  /// **'Annual Total Precipitation ({period})'**
+  String annualPrecipitation(String period);
+
+  /// No description provided for @anomaly.
+  ///
+  /// In en, this message translates to:
+  /// **'anomaly'**
+  String get anomaly;
+
+  /// No description provided for @averageAbbr.
+  ///
+  /// In en, this message translates to:
+  /// **'avg'**
+  String get averageAbbr;
+
+  /// No description provided for @homeSuggestionRain.
+  ///
+  /// In en, this message translates to:
+  /// **'Will it rain today in {location}?'**
+  String homeSuggestionRain(String location);
+
+  /// No description provided for @homeSuggestionWear.
+  ///
+  /// In en, this message translates to:
+  /// **'What should I wear today?'**
+  String get homeSuggestionWear;
+
+  /// No description provided for @homeSuggestionFarming.
+  ///
+  /// In en, this message translates to:
+  /// **'Is it good for farming today?'**
+  String get homeSuggestionFarming;
 }
 
 class _AppLocalizationsDelegate

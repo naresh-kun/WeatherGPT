@@ -39,21 +39,36 @@ class _ClimateScreenState extends State<ClimateScreen> {
   void initState() {
     super.initState();
     _provider.addListener(_onStateChanged);
+    locationProvider.addListener(_onLocationChanged);
     languageProvider.addListener(_onStateChanged);
     if (_provider.state == ClimateState.initial) {
-      _provider.loadClimate(language: languageProvider.languageCode);
+      _provider.syncWithLocation(
+        locationProvider.selectedLocation,
+        language: languageProvider.languageCode,
+      );
     }
   }
 
   @override
   void dispose() {
     _provider.removeListener(_onStateChanged);
+    locationProvider.removeListener(_onLocationChanged);
     languageProvider.removeListener(_onStateChanged);
     super.dispose();
   }
 
   void _onStateChanged() {
     if (mounted) setState(() {});
+  }
+
+  void _onLocationChanged() {
+    if (mounted) {
+      setState(() {});
+      _provider.syncWithLocation(
+        locationProvider.selectedLocation,
+        language: languageProvider.languageCode,
+      );
+    }
   }
 
   @override
@@ -106,7 +121,7 @@ class _ClimateScreenState extends State<ClimateScreen> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Failed to load climate data',
+                  l10n?.failedToLoadClimate ?? 'Failed to load climate data',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -131,19 +146,20 @@ class _ClimateScreenState extends State<ClimateScreen> {
       case ClimateState.success:
         final data = _provider.climateResponse;
         if (data == null) {
-          return const Center(
+          return Center(
             child: Text(
-              'No climate records available.',
-              style: TextStyle(color: AppColors.textSecondary),
+              l10n?.noClimateRecords ?? 'No climate records available.',
+              style: const TextStyle(color: AppColors.textSecondary),
             ),
           );
         }
-        return _buildSuccessContent(data);
+        return _buildSuccessContent(data, l10n);
     }
   }
 
-  Widget _buildSuccessContent(ClimateResponse data) {
+  Widget _buildSuccessContent(ClimateResponse data, AppLocalizations? l10n) {
     final availableLocs = _provider.availableLocations;
+    final activeLoc = locationProvider.selectedLocation;
 
     return RefreshIndicator(
       onRefresh: () => _provider.refresh(),
@@ -158,13 +174,40 @@ class _ClimateScreenState extends State<ClimateScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Active Live Location row
                   Row(
                     children: [
-                      const Icon(Icons.location_on, color: AppColors.primary, size: 20),
+                      const Icon(Icons.my_location, color: AppColors.primary, size: 18),
                       const SizedBox(width: 8),
                       const Text(
-                        'Location:',
+                        'Active Location: ',
                         style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          activeLoc.displayName,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      const Icon(Icons.analytics_outlined, color: AppColors.primary, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        l10n?.locationLabel ?? 'Location:',
+                        style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
                         ),
@@ -195,10 +238,33 @@ class _ClimateScreenState extends State<ClimateScreen> {
                       ),
                     ],
                   ),
+                  if (!_provider.isExactMatch) ...[
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline, size: 14, color: AppColors.primary),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Nearest climate station reference for ${activeLoc.shortDisplayName}.',
+                              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const Divider(height: 20),
-                  const Text(
-                    'Period Range',
-                    style: TextStyle(
+                  Text(
+                    l10n?.periodRange ?? 'Period Range',
+                    style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textSecondary,
@@ -255,7 +321,7 @@ class _ClimateScreenState extends State<ClimateScreen> {
             // Temperature Trend Section
             Row(
               children: [
-                const SectionHeader(title: 'Temperature Trend'),
+                SectionHeader(title: l10n?.temperatureTrend ?? 'Temperature Trend'),
                 const Spacer(),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -264,7 +330,7 @@ class _ClimateScreenState extends State<ClimateScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    '${data.temperatureAnomaly >= 0 ? '+' : ''}${data.temperatureAnomaly.toStringAsFixed(1)}°C anomaly',
+                    '${data.temperatureAnomaly >= 0 ? '+' : ''}${data.temperatureAnomaly.toStringAsFixed(1)}°C ${l10n?.anomaly ?? 'anomaly'}',
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
@@ -280,7 +346,8 @@ class _ClimateScreenState extends State<ClimateScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Annual Average Temperature (${data.temperatureTrend.period})',
+                    l10n?.annualAvgTemp(data.temperatureTrend.period) ??
+                        'Annual Average Temperature (${data.temperatureTrend.period})',
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -297,7 +364,7 @@ class _ClimateScreenState extends State<ClimateScreen> {
             // Rainfall Trend Section
             Row(
               children: [
-                const SectionHeader(title: 'Annual Rainfall Trend'),
+                SectionHeader(title: l10n?.annualRainfallTrend ?? 'Annual Rainfall Trend'),
                 const Spacer(),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -306,7 +373,7 @@ class _ClimateScreenState extends State<ClimateScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    '${data.rainfallAnomaly >= 0 ? '+' : ''}${data.rainfallAnomaly.round()} mm anomaly',
+                    '${data.rainfallAnomaly >= 0 ? '+' : ''}${data.rainfallAnomaly.round()} mm ${l10n?.anomaly ?? 'anomaly'}',
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
@@ -322,7 +389,8 @@ class _ClimateScreenState extends State<ClimateScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Annual Total Precipitation (${data.rainfallTrend.period})',
+                    l10n?.annualPrecipitation(data.rainfallTrend.period) ??
+                        'Annual Total Precipitation (${data.rainfallTrend.period})',
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,

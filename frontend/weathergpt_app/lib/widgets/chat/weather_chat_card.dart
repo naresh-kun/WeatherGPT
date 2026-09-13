@@ -5,6 +5,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:weathergpt_app/core/theme/app_theme.dart';
+import 'package:weathergpt_app/core/utils/weather_utils.dart';
 import 'package:weathergpt_app/l10n/app_localizations.dart';
 import 'package:weathergpt_app/models/chat.dart';
 
@@ -124,7 +125,7 @@ class WeatherChatCard extends StatelessWidget {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  summary.condition,
+                  WeatherUtils.localizeCondition(summary.condition, isTamil: isTamil),
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,

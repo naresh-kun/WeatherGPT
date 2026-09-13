@@ -43,23 +43,24 @@ class _WeatherGptAppState extends State<WeatherGptApp> {
   Future<void> _initApp() async {
     await languageProvider.init();
     await locationProvider.init();
-    _loadWeather();
+    _syncLocation();
     locationProvider.addListener(_onLocationChanged);
     languageProvider.addListener(_onLanguageChanged);
   }
 
   void _onLocationChanged() {
-    _loadWeather();
+    _syncLocation();
   }
 
   void _onLanguageChanged() {
     if (mounted) setState(() {});
-    _loadWeather();
+    _syncLocation();
   }
 
-  void _loadWeather() {
+  void _syncLocation() {
     final loc = locationProvider.selectedLocation;
     weatherProvider.loadWeather(loc.lat, loc.lon, language: languageProvider.languageCode);
+    climateProvider.syncWithLocation(loc, language: languageProvider.languageCode);
   }
 
   @override

@@ -3,9 +3,11 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:weathergpt_app/core/utils/weather_utils.dart';
 import 'package:weathergpt_app/l10n/app_localizations.dart';
 import 'package:weathergpt_app/main.dart';
 import 'package:weathergpt_app/models/advisory.dart';
+import 'package:weathergpt_app/models/alert.dart';
 import 'package:weathergpt_app/screens/settings/settings_screen.dart';
 import 'package:weathergpt_app/widgets/advisory/advisory_card.dart';
 
@@ -132,6 +134,92 @@ void main() {
       expect(find.text('மொழி'), findsOneWidget);
       expect(find.text('English'), findsOneWidget);
       expect(find.text('தமிழ்'), findsOneWidget);
+    });
+
+    test('Tamil AppLocalizations contains complete UI labels', () async {
+      final l10nTa = await AppLocalizations.delegate.load(const Locale('ta'));
+      final l10nEn = await AppLocalizations.delegate.load(const Locale('en'));
+
+      // Core weather metrics
+      expect(l10nTa.humidity, equals('ஈரப்பதம்'));
+      expect(l10nTa.wind, equals('காற்று'));
+      expect(l10nTa.rain, equals('மழை'));
+      expect(l10nTa.uvIndex, equals('UV குறியீடு'));
+      expect(l10nTa.feelsLike, equals('உணரப்படும் வெப்பநிலை'));
+
+      // Headers & sections
+      expect(l10nTa.askWeatherGpt, equals('WeatherGPT-யிடம் கேளுங்கள்'));
+      expect(l10nTa.activeWarnings, equals('செயலில் உள்ள எச்சரிக்கைகள்'));
+      expect(l10nTa.temperatureTrend, equals('வெப்பநிலை போக்கு'));
+      expect(l10nTa.forecastTitle, equals('வானிலை முன்னறிவிப்பு'));
+
+      // Empty & error states
+      expect(l10nTa.noAlertsForLocation, equals('இந்த இடத்திற்கு செயலில் உள்ள வானிலை எச்சரிக்கைகள் இல்லை.'));
+      expect(l10nTa.noHourlyData, equals('மணிநேர தரவு எதுவும் கிடைக்கவில்லை'));
+      expect(l10nTa.noDailyData, equals('தினசரி முன்னறிவிப்பு கிடைக்கவில்லை'));
+
+      // Welcome message
+      expect(l10nTa.chatWelcomeMessage, equals('வணக்கம்! 👋 நான் WeatherGPT. இன்று வானிலை பற்றி நான் உங்களுக்கு எப்படி உதவலாம்?'));
+      expect(l10nEn.chatWelcomeMessage, equals("Hey! 👋 I'm WeatherGPT. How can I help you with the weather today?"));
+    });
+
+    test('Deterministic WeatherAPI condition mapping in Tamil vs English', () {
+      // In Tamil
+      expect(WeatherUtils.localizeCondition('Sunny', isTamil: true), equals('வெயில்'));
+      expect(WeatherUtils.localizeCondition('Clear', isTamil: true), equals('தெளிவான வானம்'));
+      expect(WeatherUtils.localizeCondition('Partly cloudy', isTamil: true), equals('பகுதி மேகமூட்டம்'));
+      expect(WeatherUtils.localizeCondition('Overcast', isTamil: true), equals('மந்தமான வானம்'));
+      expect(WeatherUtils.localizeCondition('Light rain', isTamil: true), equals('லேசான மழை'));
+      expect(WeatherUtils.localizeCondition('Moderate rain', isTamil: true), equals('மிதமான மழை'));
+      expect(WeatherUtils.localizeCondition('Heavy rain', isTamil: true), equals('பலத்த மழை'));
+      expect(WeatherUtils.localizeCondition('Thunderstorm', isTamil: true), equals('இடிமின்னலுடன் புயல்'));
+
+      // In English (must remain completely unchanged)
+      expect(WeatherUtils.localizeCondition('Sunny', isTamil: false), equals('Sunny'));
+      expect(WeatherUtils.localizeCondition('Partly cloudy', isTamil: false), equals('Partly cloudy'));
+      expect(WeatherUtils.localizeCondition('Overcast', isTamil: false), equals('Overcast'));
+      expect(WeatherUtils.localizeCondition('Light rain', isTamil: false), equals('Light rain'));
+    });
+
+    test('Deterministic Day name mapping in Tamil vs English', () {
+      // In Tamil
+      expect(WeatherUtils.localizeDay('Mon', isTamil: true), equals('திங்கள்'));
+      expect(WeatherUtils.localizeDay('Tue', isTamil: true), equals('செவ்வாய்'));
+      expect(WeatherUtils.localizeDay('Wed', isTamil: true), equals('புதன்'));
+      expect(WeatherUtils.localizeDay('Thu', isTamil: true), equals('வியாழன்'));
+      expect(WeatherUtils.localizeDay('Fri', isTamil: true), equals('வெள்ளி'));
+      expect(WeatherUtils.localizeDay('Sat', isTamil: true), equals('சனி'));
+      expect(WeatherUtils.localizeDay('Sun', isTamil: true), equals('ஞாயிறு'));
+      expect(WeatherUtils.localizeDay('Today', isTamil: true), equals('இன்று'));
+      expect(WeatherUtils.localizeDay('Tomorrow', isTamil: true), equals('நாளை'));
+
+      // In English (must remain completely unchanged)
+      expect(WeatherUtils.localizeDay('Mon', isTamil: false), equals('Mon'));
+      expect(WeatherUtils.localizeDay('Today', isTamil: false), equals('Today'));
+      expect(WeatherUtils.localizeDay('Tomorrow', isTamil: false), equals('Tomorrow'));
+    });
+
+    test('Deterministic Alert severity label mapping in Tamil vs English', () {
+      // In Tamil
+      expect(WeatherUtils.labelForSeverity(AlertSeverity.minor, isTamil: true), equals('தகவல்'));
+      expect(WeatherUtils.labelForSeverity(AlertSeverity.moderate, isTamil: true), equals('மிதமான'));
+      expect(WeatherUtils.labelForSeverity(AlertSeverity.severe, isTamil: true), equals('கடுமையான'));
+      expect(WeatherUtils.labelForSeverity(AlertSeverity.extreme, isTamil: true), equals('தீவிரமான'));
+
+      // In English
+      expect(WeatherUtils.labelForSeverity(AlertSeverity.minor, isTamil: false), equals('Informational'));
+      expect(WeatherUtils.labelForSeverity(AlertSeverity.moderate, isTamil: false), equals('Moderate'));
+      expect(WeatherUtils.labelForSeverity(AlertSeverity.severe, isTamil: false), equals('Severe'));
+      expect(WeatherUtils.labelForSeverity(AlertSeverity.extreme, isTamil: false), equals('Extreme'));
+    });
+
+    test('Numeric values and unit symbols remain exact', () {
+      expect(WeatherUtils.formatTemperature(28.7), equals('29°'));
+      expect(WeatherUtils.formatTemperature(0.0), equals('0°'));
+      expect(WeatherUtils.formatTemperature(-3.2), equals('-3°'));
+      expect(WeatherUtils.formatPercent(0.45), equals('45%'));
+      expect(WeatherUtils.formatPercent(1.0), equals('100%'));
+      expect(WeatherUtils.formatPercent(0.0), equals('0%'));
     });
   });
 }

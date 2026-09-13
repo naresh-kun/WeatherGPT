@@ -112,7 +112,8 @@ class _AlertsScreenState extends State<AlertsScreen> {
       case WeatherState.error:
         return ErrorDisplayWidget(
           message: weatherProvider.errorMessage ??
-              'Unable to fetch alerts right now.\nPlease check your connection and try again.',
+              (l10n?.unableToFetchWeather ??
+                  'Unable to fetch alerts right now.\nPlease check your connection and try again.'),
           onRetry: _refresh,
         );
 

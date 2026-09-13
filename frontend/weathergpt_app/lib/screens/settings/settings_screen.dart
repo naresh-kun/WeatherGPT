@@ -3,7 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:weathergpt_app/core/theme/app_theme.dart';
-import 'package:weathergpt_app/data/mock_data.dart';
+import 'package:weathergpt_app/screens/location/location_search_screen.dart';
 import 'package:weathergpt_app/l10n/app_localizations.dart';
 import 'package:weathergpt_app/main.dart'
     show languageProvider, locationProvider, weatherProvider, climateProvider;
@@ -23,15 +23,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     languageProvider.addListener(_onLanguageChanged);
+    locationProvider.addListener(_onLocationChanged);
   }
 
   @override
   void dispose() {
     languageProvider.removeListener(_onLanguageChanged);
+    locationProvider.removeListener(_onLocationChanged);
     super.dispose();
   }
 
   void _onLanguageChanged() {
+    if (mounted) setState(() {});
+  }
+
+  void _onLocationChanged() {
     if (mounted) setState(() {});
   }
 
@@ -59,14 +65,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ListTile(
                 leading: const Icon(Icons.location_on_outlined),
                 title: Text(l10n?.currentLocation ?? 'Current Location'),
-                subtitle: Text(locationProvider.selectedLocation.displayName.isNotEmpty
-                    ? locationProvider.selectedLocation.displayName
-                    : MockData.currentLocation.displayName),
+                subtitle: Text(locationProvider.selectedLocation.displayName),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Location selection will be available in a future phase.'),
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          LocationSearchScreen(locationProvider: locationProvider),
                     ),
                   );
                 },

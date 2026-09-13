@@ -18,10 +18,18 @@ class Location {
   final String? timezone;
 
   String get displayName {
-    if (city != null && country != null) {
+    final hasCity = city != null && city!.trim().isNotEmpty;
+    final hasCountry = country != null && country!.trim().isNotEmpty;
+    if (hasCity && hasCountry) {
       return '$city, $country';
     }
-    if (city != null) return city!;
+    if (hasCity) return city!.trim();
+    return '${lat.toStringAsFixed(2)}, ${lon.toStringAsFixed(2)}';
+  }
+
+  String get shortDisplayName {
+    final hasCity = city != null && city!.trim().isNotEmpty;
+    if (hasCity) return city!.trim();
     return '${lat.toStringAsFixed(2)}, ${lon.toStringAsFixed(2)}';
   }
 

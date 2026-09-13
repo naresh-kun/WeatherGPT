@@ -315,4 +315,90 @@ class AppLocalizationsTa extends AppLocalizations {
   @override
   String get errorConnection =>
       'WeatherGPT சேவையகத்தை தொடர்பு கொள்ள முடியவில்லை. உங்கள் இணைப்பை சரிபார்க்கவும்.';
+
+  @override
+  String get chatWelcomeMessage =>
+      'வணக்கம்! 👋 நான் WeatherGPT. இன்று வானிலை பற்றி நான் உங்களுக்கு எப்படி உதவலாம்?';
+
+  @override
+  String get askWeatherGpt => 'WeatherGPT-யிடம் கேளுங்கள்';
+
+  @override
+  String get activeWarnings => 'செயலில் உள்ள எச்சரிக்கைகள்';
+
+  @override
+  String get noAlertsForLocation =>
+      'இந்த இடத்திற்கு செயலில் உள்ள வானிலை எச்சரிக்கைகள் இல்லை.';
+
+  @override
+  String get temperatureTrend => 'வெப்பநிலை போக்கு';
+
+  @override
+  String get noHourlyData => 'மணிநேர தரவு எதுவும் கிடைக்கவில்லை';
+
+  @override
+  String get noDailyData => 'தினசரி முன்னறிவிப்பு கிடைக்கவில்லை';
+
+  @override
+  String get observedLabel => 'கண்டறியப்பட்டது';
+
+  @override
+  String get thresholdLabel => 'வரம்பு';
+
+  @override
+  String guidanceForLocation(String location) {
+    return '$location பகுதிக்கான வானிலை வழிகாட்டுதல்';
+  }
+
+  @override
+  String allClearConditions(String location) {
+    return '$location பகுதியில் அனைத்து நிலைகளும் சீராக உள்ளன';
+  }
+
+  @override
+  String advisoriesAvailable(int count) {
+    return '$count அறிவுரைகள் உள்ளன';
+  }
+
+  @override
+  String get failedToLoadClimate => 'காலநிலை தரவை ஏற்றுவதில் தோல்வி';
+
+  @override
+  String get noClimateRecords => 'காலநிலை பதிவுகள் எதுவும் கிடைக்கவில்லை.';
+
+  @override
+  String get locationLabel => 'இருப்பிடம்:';
+
+  @override
+  String get periodRange => 'கால வரம்பு';
+
+  @override
+  String annualAvgTemp(String period) {
+    return 'ஆண்டு சராசரி வெப்பநிலை ($period)';
+  }
+
+  @override
+  String get annualRainfallTrend => 'ஆண்டு மழைப்பொழிவு போக்கு';
+
+  @override
+  String annualPrecipitation(String period) {
+    return 'ஆண்டு மொத்த மழைப்பொழிவு ($period)';
+  }
+
+  @override
+  String get anomaly => 'மாறுபாடு';
+
+  @override
+  String get averageAbbr => 'சராசரி';
+
+  @override
+  String homeSuggestionRain(String location) {
+    return 'இன்று $location-ல் மழை பெய்யுமா?';
+  }
+
+  @override
+  String get homeSuggestionWear => 'இன்று என்ன உடை அணியலாம்?';
+
+  @override
+  String get homeSuggestionFarming => 'இன்று விவசாயத்திற்கு ஏற்ற நாளா?';
 }

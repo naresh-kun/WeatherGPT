@@ -73,11 +73,29 @@ class LocationProvider extends ChangeNotifier {
 
     final coords = await _locationService.getCurrentLocation();
     if (coords != null) {
+      final lat = coords['lat']!;
+      final lon = coords['lon']!;
+      String? resolvedCity;
+      String? resolvedCountry;
+
+      try {
+        final results = await _apiService.searchLocations('$lat,$lon');
+        if (results.isNotEmpty && results.first.name.trim().isNotEmpty) {
+          resolvedCity = results.first.name.trim();
+          final region = results.first.region.trim();
+          final country = results.first.country.trim();
+          final parts = [if (region.isNotEmpty) region, if (country.isNotEmpty) country];
+          resolvedCountry = parts.isNotEmpty ? parts.join(', ') : null;
+        }
+      } catch (_) {
+        // Reverse-resolution failed or offline: keep city null to display coordinates
+      }
+
       _selectedLocation = Location(
-        lat: coords['lat']!,
-        lon: coords['lon']!,
-        city: null, // we don't have reverse-geocoding yet
-        country: null,
+        lat: lat,
+        lon: lon,
+        city: resolvedCity,
+        country: resolvedCountry,
       );
       await _persist();
     } else {

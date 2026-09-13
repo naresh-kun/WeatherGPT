@@ -416,5 +416,61 @@ void main() {
       expect(provider.state, WeatherState.success);
       expect(provider.errorMessage, isNull);
     });
+
+    test('language-only switch does not make redundant API calls when location is unchanged and data is fresh', () async {
+      int requestCount = 0;
+      final client = MockClient((request) async {
+        requestCount++;
+        final path = request.url.path;
+        dynamic body;
+        if (path.contains('/weather/current')) {
+          body = _currentWeatherJson;
+        } else if (path.contains('/weather/forecast')) {
+          body = _forecastJson;
+        } else if (path.contains('/alerts')) {
+          body = _emptyAlertsJson;
+        } else if (path.contains('/advisory')) {
+          body = _advisoriesJson;
+        } else {
+          body = {};
+        }
+        return http.Response(
+          json.encode(body),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+
+      final provider = WeatherProvider(
+        api: ApiService(baseUrl: 'http://test.local/api/v1', client: client),
+      );
+
+      // 1. Initial load in English
+      await provider.loadWeather(9.93, 78.12, language: 'en');
+      expect(provider.state, WeatherState.success);
+      expect(provider.isFresh(), isTrue);
+      // 4 concurrent API calls: current, forecast, alerts, advisories
+      expect(requestCount, 4);
+
+      // 2. Language-only switch from English to Tamil for the same location
+      await provider.loadWeather(9.93, 78.12, language: 'ta');
+      // Must NOT make additional network calls because location is unchanged & data is fresh
+      expect(requestCount, 4);
+      expect(provider.state, WeatherState.success);
+
+      // 3. Switch back to English for the same location
+      await provider.loadWeather(9.93, 78.12, language: 'en');
+      expect(requestCount, 4);
+      expect(provider.state, WeatherState.success);
+
+      // 4. Changing location MUST fetch new data
+      await provider.loadWeather(13.08, 80.27, language: 'en');
+      expect(requestCount, 8);
+      expect(provider.state, WeatherState.success);
+
+      // 5. Explicit refresh/force MUST refetch even if location is unchanged
+      await provider.refresh(13.08, 80.27, language: 'en');
+      expect(requestCount, 12);
+    });
   });
 }

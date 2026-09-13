@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:weathergpt_app/core/theme/app_theme.dart';
 import 'package:weathergpt_app/core/utils/weather_utils.dart';
+import 'package:weathergpt_app/l10n/app_localizations.dart';
 import 'package:weathergpt_app/models/alert.dart';
 import 'package:weathergpt_app/widgets/common/common_card.dart';
 
@@ -18,8 +19,10 @@ class AlertCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final isTamil = l10n?.localeName == 'ta';
     final severityColor = WeatherUtils.colorForSeverity(alert.severity);
-    final severityLabel = WeatherUtils.labelForSeverity(alert.severity);
+    final severityLabel = WeatherUtils.labelForSeverity(alert.severity, isTamil: isTamil);
 
     if (compact) {
       return CommonCard(
@@ -134,8 +137,8 @@ class AlertCard extends StatelessWidget {
                   Icon(Icons.sensors, size: 14, color: severityColor),
                   const SizedBox(width: 6),
                   Text(
-                    'Observed: ${alert.formattedRelevantValue ?? alert.relevantValue}'
-                    '${alert.threshold != null ? ' (Threshold: ${alert.threshold})' : ''}',
+                    '${l10n?.observedLabel ?? 'Observed'}: ${alert.formattedRelevantValue ?? alert.relevantValue}'
+                    '${alert.threshold != null ? ' (${l10n?.thresholdLabel ?? 'Threshold'}: ${alert.threshold})' : ''}',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,

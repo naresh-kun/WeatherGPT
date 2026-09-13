@@ -39,7 +39,7 @@ class ClimateComparisonCard extends StatelessWidget {
                 child: _ComparisonTile(
                   title: l10n?.temperature ?? 'Temperature',
                   currentValue: '${temperatureComparison.currentValue.toStringAsFixed(1)}°C',
-                  baselineValue: 'avg ${temperatureComparison.historicalAverage.toStringAsFixed(1)}°C',
+                  baselineValue: '${l10n?.averageAbbr ?? 'avg'} ${temperatureComparison.historicalAverage.toStringAsFixed(1)}°C',
                   differenceText: '${temperatureComparison.difference >= 0 ? '+' : ''}${temperatureComparison.difference.toStringAsFixed(1)}°C',
                   interpretation: temperatureComparison.interpretation,
                   isPositiveWarm: true,
@@ -50,7 +50,7 @@ class ClimateComparisonCard extends StatelessWidget {
                 child: _ComparisonTile(
                   title: l10n?.rainfall ?? 'Rainfall',
                   currentValue: '${rainfallComparison.currentValue.round()} mm',
-                  baselineValue: 'avg ${rainfallComparison.historicalAverage.round()} mm',
+                  baselineValue: '${l10n?.averageAbbr ?? 'avg'} ${rainfallComparison.historicalAverage.round()} mm',
                   differenceText: '${rainfallComparison.difference >= 0 ? '+' : ''}${rainfallComparison.difference.round()} mm (${rainfallComparison.differencePercent >= 0 ? '+' : ''}${rainfallComparison.differencePercent.toStringAsFixed(1)}%)',
                   interpretation: rainfallComparison.interpretation,
                   isPositiveWarm: false,

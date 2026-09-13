@@ -320,4 +320,96 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorConnection =>
       'Unable to reach the WeatherGPT server. Check your connection.';
+
+  @override
+  String get chatWelcomeMessage =>
+      'Hey! 👋 I\'m WeatherGPT. How can I help you with the weather today?';
+
+  @override
+  String get askWeatherGpt => 'Ask WeatherGPT';
+
+  @override
+  String get activeWarnings => 'Active Warnings';
+
+  @override
+  String get noAlertsForLocation =>
+      'No active weather alerts for this location.';
+
+  @override
+  String get temperatureTrend => 'Temperature Trend';
+
+  @override
+  String get noHourlyData => 'No hourly data available';
+
+  @override
+  String get noDailyData => 'No daily forecast available';
+
+  @override
+  String get observedLabel => 'Observed';
+
+  @override
+  String get thresholdLabel => 'Threshold';
+
+  @override
+  String guidanceForLocation(String location) {
+    return 'Weather-based guidance for $location';
+  }
+
+  @override
+  String allClearConditions(String location) {
+    return 'Conditions are all clear for $location';
+  }
+
+  @override
+  String advisoriesAvailable(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'advisories',
+      one: 'advisory',
+    );
+    return '$count $_temp0 available';
+  }
+
+  @override
+  String get failedToLoadClimate => 'Failed to load climate data';
+
+  @override
+  String get noClimateRecords => 'No climate records available.';
+
+  @override
+  String get locationLabel => 'Location:';
+
+  @override
+  String get periodRange => 'Period Range';
+
+  @override
+  String annualAvgTemp(String period) {
+    return 'Annual Average Temperature ($period)';
+  }
+
+  @override
+  String get annualRainfallTrend => 'Annual Rainfall Trend';
+
+  @override
+  String annualPrecipitation(String period) {
+    return 'Annual Total Precipitation ($period)';
+  }
+
+  @override
+  String get anomaly => 'anomaly';
+
+  @override
+  String get averageAbbr => 'avg';
+
+  @override
+  String homeSuggestionRain(String location) {
+    return 'Will it rain today in $location?';
+  }
+
+  @override
+  String get homeSuggestionWear => 'What should I wear today?';
+
+  @override
+  String get homeSuggestionFarming => 'Is it good for farming today?';
 }

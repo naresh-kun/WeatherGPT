@@ -35,10 +35,38 @@ class WeatherProvider extends ChangeNotifier {
   double? _activeLon;
   String? _activeLanguage;
 
+  DateTime? _lastFetched;
+  DateTime? get lastFetched => _lastFetched;
+
+  /// Default TTL for cached weather data (5 minutes).
+  static const Duration defaultTtl = Duration(minutes: 5);
+
+  /// Check whether existing loaded weather data is still fresh.
+  bool isFresh([Duration ttl = defaultTtl]) {
+    if (_state != WeatherState.success || _currentWeather == null || _lastFetched == null) {
+      return false;
+    }
+    return DateTime.now().difference(_lastFetched!) < ttl;
+  }
+
   /// Load all weather data for the given coordinates.
   /// Fetches current weather, forecast (hourly + daily), alerts, and advisories
   /// concurrently to minimize latency.
-  Future<void> loadWeather(double lat, double lon, {String? language}) async {
+  ///
+  /// If data for the exact same coordinates is already loaded and fresh (within [defaultTtl]),
+  /// and [force] is false, existing data is reused without unnecessary API calls.
+  Future<void> loadWeather(
+    double lat,
+    double lon, {
+    String? language,
+    bool force = false,
+  }) async {
+    // Reuse valid, fresh existing data when location is unchanged and not forced
+    if (!force && isFresh() && _activeLat == lat && _activeLon == lon) {
+      _activeLanguage = language ?? _activeLanguage;
+      return;
+    }
+
     // Guard against duplicate in-flight requests for the exact same location and language
     if (_state == WeatherState.loading &&
         _activeLat == lat &&
@@ -69,6 +97,7 @@ class WeatherProvider extends ChangeNotifier {
       _alerts = alertsResponse.alerts;
       final advisoriesResponse = results[3] as WeatherAdvisoriesResponse;
       _advisories = advisoriesResponse.advisories;
+      _lastFetched = DateTime.now();
       _state = WeatherState.success;
     } on ApiException catch (e) {
       _errorMessage = e.message;
@@ -85,7 +114,7 @@ class WeatherProvider extends ChangeNotifier {
     return _advisories.where((a) => a.category == category).toList();
   }
 
-  /// Refresh weather data for the same location.
+  /// Refresh weather data for the same location (forces fresh network fetch).
   Future<void> refresh(double lat, double lon, {String? language}) =>
-      loadWeather(lat, lon, language: language ?? _activeLanguage);
+      loadWeather(lat, lon, language: language ?? _activeLanguage, force: true);
 }

@@ -55,11 +55,30 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
     Navigator.of(context).pop(true); // signal that a location was selected
   }
 
+  Future<void> _useCurrentLocation() async {
+    await _loc.useCurrentLocation();
+    if (!mounted) return;
+    Navigator.of(context).pop(true);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Search Location'),
+        actions: [
+          IconButton(
+            icon: _loc.gpsLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.my_location),
+            tooltip: 'Use current location',
+            onPressed: _loc.gpsLoading ? null : _useCurrentLocation,
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -94,13 +113,37 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
             ),
           Expanded(
             child: _loc.searchResults.isEmpty
-                ? Center(
-                    child: Text(
-                      _controller.text.isEmpty
-                          ? 'Type a city name to search'
-                          : 'No results found',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
+                ? ListView(
+                    children: [
+                      ListTile(
+                        leading: _loc.gpsLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.my_location, color: AppColors.primary),
+                        title: const Text('Use current location'),
+                        subtitle: Text(
+                          _loc.selectedLocation.displayName.isNotEmpty
+                              ? 'Active: ${_loc.selectedLocation.displayName}'
+                              : 'Fetch current GPS position',
+                        ),
+                        onTap: _loc.gpsLoading ? null : _useCurrentLocation,
+                      ),
+                      const Divider(height: 1),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 32),
+                        child: Center(
+                          child: Text(
+                            _controller.text.isEmpty
+                                ? 'Type a city name to search'
+                                : 'No results found',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ),
+                      ),
+                    ],
                   )
                 : ListView.separated(
                     itemCount: _loc.searchResults.length,
