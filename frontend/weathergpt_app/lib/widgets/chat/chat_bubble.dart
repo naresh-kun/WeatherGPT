@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:weathergpt_app/core/theme/app_theme.dart';
 import 'package:weathergpt_app/models/chat.dart';
+import 'package:weathergpt_app/widgets/chat/weather_chat_card.dart';
+import 'package:weathergpt_app/widgets/chat/forecast_chat_card.dart';
 
 class ChatBubble extends StatelessWidget {
   const ChatBubble({
@@ -55,7 +57,7 @@ class ChatBubble extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (!isUser)
+            if (!isUser) ...[
               Padding(
                 padding: const EdgeInsets.only(bottom: 6),
                 child: Row(
@@ -107,6 +109,11 @@ class ChatBubble extends StatelessWidget {
                   ],
                 ),
               ),
+              if (message.forecastSummary != null)
+                ForecastChatCard(forecast: message.forecastSummary!),
+              if (message.weatherSummary != null && message.forecastSummary == null)
+                WeatherChatCard(summary: message.weatherSummary!),
+            ],
             Text(
               message.content,
               style: TextStyle(

@@ -60,6 +60,9 @@ class ChatProvider extends ChangeNotifier {
     Location location, {
     String language = 'en',
   }) async {
+    // Spec: Disable duplicate sends while current request is in progress
+    if (_state == ChatState.loading) return;
+
     final trimmed = message.trim();
     if (trimmed.isEmpty) return; // spec: do not send empty messages
 
@@ -90,13 +93,17 @@ class ChatProvider extends ChangeNotifier {
         role: ChatRole.assistant,
         content: response.message,
         timestamp: DateTime.now().millisecondsSinceEpoch,
+        weatherSummary: response.weatherSummary,
+        forecastSummary: response.forecastSummary,
       ));
       _state = ChatState.idle;
     } on ApiException catch (e) {
       _errorMessage = e.message;
       _state = ChatState.error;
     } catch (_) {
-      _errorMessage = 'Something went wrong. Please try again.';
+      _errorMessage = language == 'ta'
+          ? 'ஏதோ தவறு நடந்துவிட்டது. மீண்டும் முயற்சிக்கவும்.'
+          : 'Something went wrong. Please try again.';
       _state = ChatState.error;
     }
 

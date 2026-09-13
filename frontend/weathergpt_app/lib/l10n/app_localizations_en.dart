@@ -272,4 +272,52 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get aboutSubtitle =>
       'SIH Prototype\nAI-powered conversational weather assistant';
+
+  @override
+  String get weatherGptCheckingWeather =>
+      'WeatherGPT is checking the weather...';
+
+  @override
+  String get quickActionTemperature => 'What\'s the temperature?';
+
+  @override
+  String get quickActionRain => 'Will it rain?';
+
+  @override
+  String get quickActionAlerts => 'Any weather alerts?';
+
+  @override
+  String get quickActionOutdoor => 'Is it good for outdoor activities?';
+
+  @override
+  String get quickActionForecast => 'What is tomorrow\'s forecast?';
+
+  @override
+  String get quickActionUmbrella => 'Do I need an umbrella?';
+
+  @override
+  String get changeLocation => 'Change location';
+
+  @override
+  String get activeLocation => 'Active Location';
+
+  @override
+  String get errorWeatherUnavailable =>
+      'We\'re unable to retrieve current weather right now. Please try again.';
+
+  @override
+  String get errorGeminiBusy =>
+      'WeatherGPT is temporarily busy. Please try again.';
+
+  @override
+  String get errorRateLimit =>
+      'WeatherGPT is temporarily rate-limited. Please try again later.';
+
+  @override
+  String get errorChatTimeout =>
+      'WeatherGPT is taking longer than expected. Please try again.';
+
+  @override
+  String get errorConnection =>
+      'Unable to reach the WeatherGPT server. Check your connection.';
 }

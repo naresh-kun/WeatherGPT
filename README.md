@@ -17,6 +17,33 @@ A conversational weather intelligence prototype providing real-time weather data
 | Phase 7 | **Complete** | Climate Intelligence (Deterministic trends, baselines, anomalies, reference data) |
 | Phase 8 | **Complete** | Multilingual Support (English & Tamil across UI, Backend, Alerts, Advisories, Climate, Gemini Chat) |
 | Phase 9 | **Complete** | Voice Interaction (Speech-to-Text via `speech_to_text`, Text-to-Speech via `flutter_tts`, English & Tamil) |
+| Phase 10 | **Complete** | Interactive Chat, AI Fallback & Reliability (Weather cards, Quick Actions, Dual-Model Gemini Fallback, 60s Timeout) |
+
+### Phase 10 — Interactive Chat, AI Fallback & Reliability Status
+
+WeatherGPT Phase 10 delivers rich interactive chat components, dual-model AI reliability, and enterprise-grade resilience:
+
+- **Interactive Weather Cards [REAL — Phase 10]**:
+  - `WeatherChatCard`: Compact summary card showing city, temperature, feels-like, condition, humidity, and wind.
+  - `ForecastChatCard`: Structured hourly forecast strip showing time, temperature, condition icon, and rain probability.
+  - Cards embedded directly into assistant chat bubbles when grounded weather data is available.
+- **Contextual Quick Actions [REAL — Phase 10]**:
+  - One-tap quick question chips for common queries ("Will it rain?", "What's the temperature?", etc.).
+  - Full English and Tamil localization support.
+  - Disabled during request processing to prevent accidental concurrent queries.
+- **Active Location Indicator [REAL — Phase 10]**:
+  - App bar badge displaying current active location with direct navigation to `LocationSearchScreen`.
+- **Duplicate-Send Guard & Thinking State [REAL — Phase 10]**:
+  - Dedicated thinking indicator ("WeatherGPT is checking the weather...").
+  - Send button and input field disabled while a query is in-flight.
+- **Dual-Model AI Fallback & Bounded Retry [REAL — Phase 10]**:
+  - Primary model: `gemini-3.7-flash`, Fallback model: `gemini-3.6-flash`.
+  - 1 bounded retry with 1.0s backoff on transient errors (503, 429, timeout).
+  - Automatically switches to fallback model with identical grounded weather context if primary fails.
+  - Differentiated error messages (busy, rate-limited, weather provider error, timeout).
+- **API Deduplication & Query Normalization [REAL — Phase 10]**:
+  - Coordinates rounded to 4 decimal places (~11m precision).
+  - Cached forecast responses (30s TTL) cross-reused to fulfill current weather requests without extra API calls.
 
 ### Phase 9 — Voice Interaction (English & Tamil STT / TTS) Status
 
@@ -62,12 +89,13 @@ The Flutter application (`frontend/weathergpt_app/`) and FastAPI backend (`backe
 
 - **Real-time Weather & Forecast**: **[REAL — Phase 3 & 4]**
 - **Location Search & GPS**: **[REAL — Phase 4]**
-- **AI Conversational Chat**: **[REAL — Phase 5 & 8]** (Google Gemini 3.7 Flash in English & Tamil)
+- **AI Conversational Chat**: **[REAL — Phase 5, 8 & 10]** (Google Gemini 3.7 Flash + 3.6 Flash fallback, Bilingual)
 - **Smart Alert Engine**: **[REAL — Phase 6 & 8]** (Deterministic rules, English & Tamil)
 - **Weather Advisory System**: **[REAL — Phase 6 & 8]** (Rule-based templates, English & Tamil)
 - **Climate Historical Trends**: **[REAL — Phase 7 & 8]** (Deterministic calculations, English & Tamil)
 - **Tamil Localization**: **[REAL — Phase 8]**
 - **Speech-to-Text / Voice (STT & TTS)**: **[REAL — Phase 9]** (English & Tamil with graceful fallback)
+- **Interactive Chat & Reliability**: **[REAL — Phase 10]** (Cards, Quick Actions, Dual-Model Fallback, Deduplication)
 
 ---
 
@@ -78,14 +106,14 @@ Flutter App (frontend/weathergpt_app/)
         ↓  REST / JSON
 FastAPI Backend (backend/weathergpt_api/)
         ├── Weather Service      [REAL — Phase 3+]
-        ├── AI Service (Gemini)  [REAL — Phase 5]
+        ├── AI Service (Gemini)  [REAL — Phase 10: 3.7 Flash + 3.6 Flash fallback]
         ├── Alert Engine         [REAL — Phase 6]
         ├── Advisory Service     [REAL — Phase 6]
         ├── Climate Service      [REAL — Phase 7]
-        └── Localization Service [PLANNED — Phase 8]
+        └── Localization Service [REAL — Phase 8]
               ↓
         External Weather Provider  [REAL]
-        Gemini 3.7 Flash           [REAL — Phase 5]
+        Gemini 3.7 Flash & 3.6 Flash [REAL — Phase 10]
         Historical Dataset (CSV)   [REAL — Reference]
 ```
 
@@ -190,7 +218,7 @@ See [`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md) for
 
 ---
 
-## Implementation Status (Post-Phase 8)
+## Implementation Status (Post-Phase 10)
 
 | Component | Status |
 |---|---|
@@ -198,14 +226,15 @@ See [`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md) for
 | WeatherAPI.com Integration | ✅ Implemented (Current, Forecast, Hourly, Search, Alerts) |
 | Flutter UI | ✅ Implemented |
 | Flutter ↔ Backend Integration | ✅ Implemented (Phase 4 Complete) |
-| WeatherGPT AI Chat (Gemini) | ✅ **REAL** — Phase 5 Complete (Bilingual in Phase 8) |
+| WeatherGPT AI Chat (Gemini) | ✅ **REAL** — Phase 5, 8 & 10 Complete (Bilingual, Dual-Model Fallback) |
 | Smart Alert Rule Engine | ✅ **REAL** — Phase 6 Complete (Bilingual in Phase 8) |
 | Weather Advisories Engine | ✅ **REAL** — Phase 6 Complete (Bilingual in Phase 8) |
 | Climate Intelligence & Reference Data | ✅ **REAL** — Phase 7 Complete (Bilingual in Phase 8) |
 | Localization (Tamil) | ✅ **REAL** — Phase 8 Complete |
 | Voice Interaction (STT & TTS) | ✅ **REAL** — Phase 9 Complete (`speech_to_text: 7.4.0`, `flutter_tts: 4.2.5`) |
+| Interactive Chat & Reliability | ✅ **REAL** — Phase 10 Complete (Weather & Forecast Cards, Quick Actions, Dual-Model Fallback, Deduplication) |
 
-**Important Note**: Weather, Forecast, Alerts, Advisories, AI Chat, Climate Intelligence, Multilingual Support (English/Tamil), and Voice Interaction (STT & TTS) are fully implemented and verified.
+**Important Note**: Weather, Forecast, Alerts, Advisories, AI Chat with Dual-Model Fallback, Climate Intelligence, Multilingual Support (English/Tamil), Voice Interaction (STT & TTS), and Interactive Weather Cards are fully implemented and verified.
 
 ---
 
@@ -214,9 +243,9 @@ See [`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md) for
 - API keys and secrets are **never** hardcoded.
 - All secrets are loaded from environment variables via `.env` (strictly excluded from git).
 - See `backend/weathergpt_api/.env.example` for required variables.
-- **Log Sanitization**: `SensitiveDataFilter` actively sanitizes all logs (including `httpx` and uvicorn output), replacing `?key=...`, `&key=...`, and secret values with `***` to guarantee credentials never leak.
-- **Dedicated Chat Timeout**: Flutter chat requests use a 60-second timeout (`AppConfig.chatApiTimeout`) to safely accommodate LLM generation latency, while standard endpoints maintain a 15-second timeout (`AppConfig.apiTimeout`).
-- **Gemini 503 Retry Strategy**: Backend handles transient Gemini 503 high-demand errors with 1 automatic retry (1.5s backoff), surfacing clean, distinct messages (`"WeatherGPT is temporarily busy. Please try again."`) to the user.
-- **Deduplication Cache**: An in-memory 30-second TTL cache in `WeatherAPIClient` eliminates duplicate WeatherAPI calls during composite screen loads.
-- **Phase 5**: `GEMINI_API_KEY` is exclusively stored in backend `.env`. Flutter never sends or receives it.
+- **Dynamic Log Sanitization**: `SensitiveDataFilter` actively sanitizes all logs (including `httpx` and uvicorn output), replacing `?key=...`, `&key=...`, `api_key=...`, `x-goog-api-key`, and `Authorization: Bearer ...` headers with `***` to guarantee credentials never leak.
+- **Dedicated Chat Timeout**: Flutter chat requests enforce a 60-second timeout (`AppConfig.chatApiTimeout`) to safely accommodate LLM generation latency, while standard endpoints maintain a 15-second timeout (`AppConfig.apiTimeout`).
+- **Dual-Model Gemini Fallback**: Backend attempts primary `gemini-3.7-flash` with 1 bounded retry (1.0s backoff). On persistent transient failure, it falls back to `gemini-3.6-flash` using identical grounded weather context. Clean, distinct error messages are surfaced to the user.
+- **API Deduplication & Query Normalization**: Coordinates are normalized to 4 decimal places, and cached forecast data (30s TTL) is reused across endpoints to fulfill current weather requests without extra API calls.
+- **Phase 5 & 10**: `GEMINI_API_KEY` is exclusively stored in backend `.env`. Flutter never sends or receives it.
 - The Flutter app only communicates with the FastAPI backend — never directly with Gemini or WeatherAPI.

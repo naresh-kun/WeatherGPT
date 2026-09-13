@@ -20,20 +20,25 @@ class SensitiveDataFilter(logging.Filter):
 
     def __init__(self, sensitive_tokens: Optional[List[str]] = None) -> None:
         super().__init__()
-        tokens = sensitive_tokens or [
-            settings.weather_api_key,
-            settings.gemini_api_key,
-            settings.llm_api_key,
-        ]
-        self.sensitive_tokens = [t for t in tokens if t]
+        self._custom_tokens = [t for t in (sensitive_tokens or []) if t]
+
+    def _get_tokens(self) -> List[str]:
+        tokens = set(self._custom_tokens)
+        for key in (settings.weather_api_key, settings.gemini_api_key, settings.llm_api_key):
+            if key and len(key.strip()) > 3:
+                tokens.add(key.strip())
+        return list(tokens)
 
     def _redact_string(self, text: str) -> str:
         if not isinstance(text, str):
             text = str(text)
-        # Redact query parameters like ?key=... or &key=...
-        redacted = re.sub(r"([?&]key=)[^&\s\'\"]+", r"\g<1>***", text)
+        # Redact query parameters like ?key=..., &key=..., ?api_key=..., &apiKey=...
+        redacted = re.sub(r"([?&](?:key|api_key|apiKey)=)[^&\s\'\"]+", r"\g<1>***", text)
+        # Redact header patterns like x-goog-api-key or Bearer tokens
+        redacted = re.sub(r"(x-goog-api-key:\s*)[^\s\'\",]+", r"\g<1>***", redacted, flags=re.IGNORECASE)
+        redacted = re.sub(r"(Bearer\s+)[A-Za-z0-9_\-\.]{10,}", r"\g<1>***", redacted)
         # Redact known secret tokens
-        for token in self.sensitive_tokens:
+        for token in self._get_tokens():
             if token and token in redacted:
                 redacted = redacted.replace(token, "***")
         return redacted

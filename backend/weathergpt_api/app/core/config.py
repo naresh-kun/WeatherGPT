@@ -26,9 +26,10 @@ class Settings(BaseSettings):
     weather_base_url: str = "https://api.weatherapi.com/v1"
     weather_api_timeout: int = 15
 
-    # ---- LLM / Gemini provider (Phase 5) --------------------
+    # ---- LLM / Gemini provider (Phase 5, Phase 10) ----------
     gemini_api_key: str = ""    # Mapped from GEMINI_API_KEY env var
-    gemini_model: str = "gemini-3.7-flash"  # Google Gemini 3.7 Flash (current)
+    gemini_model: str = "gemini-3.7-flash"           # Primary model (configurable via GEMINI_MODEL)
+    gemini_fallback_model: str = "gemini-3.6-flash"  # Fallback model (configurable via GEMINI_FALLBACK_MODEL)
     llm_api_key: str = ""       # Legacy alias — kept for backward compatibility
 
     # ---- Smart Alert Engine thresholds (Phase 6) -----------

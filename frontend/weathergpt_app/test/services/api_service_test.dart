@@ -566,5 +566,69 @@ void main() {
         throwsA(isA<ApiConnectionException>()),
       );
     });
+
+    test('sendChatMessage parses weather_summary and forecast_summary correctly', () async {
+      final richResponse = {
+        'message': 'Weather is sunny.',
+        'conversation_id': 'conv-101',
+        'language': 'en',
+        'weather_summary': {
+          'location': 'Madurai',
+          'temperature_c': 34.0,
+          'feels_like_c': 37.0,
+          'condition': 'Sunny',
+          'humidity_pct': 50,
+          'wind_kph': 12.0,
+          'icon': '//cdn.weatherapi.com/icon.png',
+        },
+        'forecast_summary': {
+          'headline': 'Next 3 hours',
+          'items': [
+            {
+              'time': '3 PM',
+              'temp_c': 35.0,
+              'condition': 'Sunny',
+              'icon': '//cdn.weatherapi.com/icon.png',
+              'rain_chance': 5,
+            }
+          ],
+        },
+      };
+
+      final client = MockClient((_) async {
+        return http.Response(
+          json.encode(richResponse),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+      final service = ApiService(baseUrl: baseUrl, client: client);
+
+      final response = await service.sendChatMessage(message: 'Test', lat: 9.93, lon: 78.12);
+      expect(response.message, equals('Weather is sunny.'));
+      expect(response.weatherSummary, isNotNull);
+      expect(response.weatherSummary!.location, equals('Madurai'));
+      expect(response.weatherSummary!.temperatureC, equals(34.0));
+      expect(response.forecastSummary, isNotNull);
+      expect(response.forecastSummary!.headline, equals('Next 3 hours'));
+      expect(response.forecastSummary!.items.length, equals(1));
+      expect(response.forecastSummary!.items.first.rainChance, equals(5));
+    });
+
+    test('throws ChatTimeoutException on 504 gateway timeout', () async {
+      final client = MockClient((_) async {
+        return http.Response(
+          json.encode({'detail': 'WeatherGPT is taking longer than expected. Please try again.'}),
+          504,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+      final service = ApiService(baseUrl: baseUrl, client: client);
+
+      expect(
+        () => service.sendChatMessage(message: 'Test', lat: 9.93, lon: 78.12),
+        throwsA(isA<ChatTimeoutException>()),
+      );
+    });
   });
 }

@@ -255,12 +255,18 @@ Searches for locations by name, returning coordinates.
 
 ## 6. POST /chat
 
-> **Implementation status**: **[REAL — Phase 5]** — powered by Google Gemini 3.7 Flash grounded in real-time WeatherAPI data. The Gemini API key is backend-only and never exposed to the client.
+> **Implementation status**: **[REAL — Phase 10]** — powered by Google Gemini 3.7 Flash with automatic fallback to Gemini 3.6 Flash, bounded retry/backoff, and rich weather card data payload. Grounded in real-time WeatherAPI data. The Gemini API key is backend-only and never exposed to the client.
 
 ### Purpose
-Submit a natural-language query to WeatherGPT. The backend grounds the response in real-time weather data for the specified location and generates an answer using Google Gemini 3.7 Flash.
+Submit a natural-language query to WeatherGPT. The backend grounds the response in real-time weather data for the specified location and generates an answer using Google Gemini (primary: `gemini-3.7-flash`, fallback: `gemini-3.6-flash`). Structured weather card data is returned alongside the answer for rich client-side presentation.
 
-> **Phase 9 Voice Integration**: The client integrates voice input (STT via `speech_to_text`) to populate the user message query, and voice playback (TTS via `flutter_tts`) on the assistant response. The request payload and backend API contract remain unchanged. For Tamil queries, `language: "ta"` is passed and Gemini generates factual Tamil responses, which are read aloud via Tamil TTS (`ta-IN`) on supported devices.
+> **Phase 9 Voice Integration**: The client integrates voice input (STT via `speech_to_text`) to populate the user message query, and voice playback (TTS via `flutter_tts`) on the assistant response. For Tamil queries, `language: "ta"` is passed and Gemini generates factual Tamil responses, which are read aloud via Tamil TTS (`ta-IN`) on supported devices.
+
+> **Phase 10 Interactive & Reliability Enhancements**:
+> - Contextual quick-action chips and active location indicator on client.
+> - Structured `weather_summary` and `forecast_summary` payloads returned when grounded weather data is available.
+> - Dual-model reliability: primary `gemini-3.7-flash` with 1 bounded retry (1.0s backoff); falls back to `gemini-3.6-flash` with identical grounded context on persistent 503, 429, or timeout.
+> - Client enforces dedicated 60-second timeout (`AppConfig.chatApiTimeout = Duration(seconds: 60)`).
 
 ### HTTP Method
 `POST`
@@ -297,7 +303,35 @@ None (body-only).
     "What should I carry?",
     "How long will the rain last?",
     "Any flood alerts in Mumbai?"
-  ]
+  ],
+  "weather_summary": {
+    "location": "Mumbai",
+    "temperature_c": 31.5,
+    "feels_like_c": 36.2,
+    "condition": "Moderate rain",
+    "humidity_pct": 82,
+    "wind_kph": 18.5,
+    "icon": "//cdn.weatherapi.com/weather/64x64/day/302.png"
+  },
+  "forecast_summary": {
+    "headline": "Next 6 hours",
+    "items": [
+      {
+        "time": "2 PM",
+        "temp_c": 31.0,
+        "condition": "Moderate rain",
+        "icon": "//cdn.weatherapi.com/weather/64x64/day/302.png",
+        "rain_chance": 70
+      },
+      {
+        "time": "3 PM",
+        "temp_c": 30.5,
+        "condition": "Heavy rain",
+        "icon": "//cdn.weatherapi.com/weather/64x64/day/308.png",
+        "rain_chance": 85
+      }
+    ]
+  }
 }
 ```
 
@@ -307,20 +341,27 @@ None (body-only).
 | `conversation_id` | string | Conversation identifier for threading |
 | `language` | string | Language of the response |
 | `suggestions` | array of string | Follow-up query suggestions |
+| `weather_summary` | object (optional) | Compact weather summary card data |
+| `forecast_summary` | object (optional) | Structured hourly forecast strip data |
 
 ### Timeout and Retry Behavior
-- **Client Timeout**: 60 seconds (`AppConfig.chatApiTimeout`). Standard non-chat endpoints retain a 15-second timeout (`AppConfig.apiTimeout`).
-- **Transient Gemini 503 Retry**: Backend automatically attempts 1 retry with a 1.5-second backoff for transient 503 (high demand) errors before failing.
-- **Deduplication**: Weather context retrieval reuses WeatherAPIClient's in-memory 30-second deduplication cache to prevent unnecessary external calls.
+- **Client Timeout**: Dedicated 60 seconds (`AppConfig.chatApiTimeout`). Standard non-chat endpoints retain a 15-second timeout (`AppConfig.apiTimeout`).
+- **Transient Gemini Retry & Fallback**:
+  1. Primary attempt uses `GEMINI_MODEL` (default: `gemini-3.7-flash`).
+  2. If transient failure (503, 429, timeout) occurs, 1 retry is attempted with a 1.0s backoff delay.
+  3. If primary model fails after retry, system falls back to `GEMINI_FALLBACK_MODEL` (default: `gemini-3.6-flash`) with the exact same weather context.
+  4. Authentication errors (401/403) fail immediately without retry or fallback.
+- **Deduplication & Cache Reuse**: `WeatherAPIClient` normalizes coordinates (4 decimal places) and cross-reuses cached forecast responses (TTL 30s) to satisfy current weather and shorter-day forecast requests without redundant external calls.
 
 ### Possible Errors
 | Status | Detail Message | Cause |
 |---|---|---|
 | `400 Bad Request` | `"Message cannot be empty."` / `"Invalid location coordinates."` | Empty message or invalid coordinates |
 | `422 Unprocessable Entity` | Field validation error | Missing `message` field |
-| `429 Too Many Requests` | `"WeatherGPT request limit reached. Please try again later."` | Gemini API rate limit / quota exceeded |
-| `503 Service Unavailable` | `"WeatherGPT is temporarily busy. Please try again."` | Gemini 503 high demand (after 1 retry) |
-| `503 Service Unavailable` | `"Weather service is temporarily unavailable."` | WeatherAPI provider unreachable |
+| `429 Too Many Requests` | `"WeatherGPT is temporarily rate-limited. Please try again later."` | Gemini API rate limit / quota exceeded |
+| `503 Service Unavailable` | `"WeatherGPT is temporarily busy. Please try again."` | Gemini temporary capacity overload (after retry + fallback) |
+| `503 Service Unavailable` | `"We're unable to retrieve current weather right now. Please try again."` | WeatherAPI provider failure or unreachable |
+| `504 Gateway Timeout` | `"WeatherGPT is taking longer than expected. Please try again."` | LLM generation timed out |
 | `500 Internal Server Error` | `"AI service configuration error."` | Missing/invalid Gemini credentials (no keys leaked) |
 
 ### Example Request

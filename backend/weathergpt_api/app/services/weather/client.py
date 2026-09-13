@@ -27,9 +27,23 @@ class WeatherAPIClient:
         if not self.api_key:
             logger.warning("WEATHER_API_KEY is not set. WeatherAPI calls will fail.")
 
+    @staticmethod
+    def _normalize_q(q: Any) -> str:
+        s = str(q).strip()
+        if "," in s:
+            parts = s.split(",")
+            if len(parts) == 2:
+                try:
+                    lat = round(float(parts[0].strip()), 4)
+                    lon = round(float(parts[1].strip()), 4)
+                    return f"{lat},{lon}"
+                except (ValueError, TypeError):
+                    pass
+        return s.lower()
+
     def _sanitize(self, text: str) -> str:
         s = str(text)
-        s = re.sub(r'([?&]key=)[^&\s\'"]+', r'\g<1>***', s)
+        s = re.sub(r'([?&](?:key|api_key|apiKey)=)[^&\s\'"]+', r'\g<1>***', s)
         if self.api_key and self.api_key in s:
             s = s.replace(self.api_key, "***")
         return s
@@ -45,14 +59,50 @@ class WeatherAPIClient:
 
         # Check in-memory deduplication cache for weather endpoints
         is_cacheable = endpoint in ("/current.json", "/forecast.json")
-        cache_key = f"{endpoint}?" + "&".join(f"{k}={v}" for k, v in sorted(params.items()) if k != "key")
+        norm_params = {k: (self._normalize_q(v) if k == "q" else v) for k, v in params.items() if k != "key"}
+        cache_key = f"{endpoint}?" + "&".join(f"{k}={v}" for k, v in sorted(norm_params.items()))
         now = time.monotonic()
 
-        if is_cacheable and cache_key in self._shared_cache:
-            cached_time, cached_data = self._shared_cache[cache_key]
-            if now - cached_time < self._cache_ttl:
-                logger.debug("WeatherAPI cache hit for %s", endpoint)
-                return cached_data
+        if is_cacheable:
+            # 1. Direct cache hit
+            if cache_key in self._shared_cache:
+                cached_time, cached_data = self._shared_cache[cache_key]
+                if now - cached_time < self._cache_ttl:
+                    logger.debug("WeatherAPI cache hit for %s", endpoint)
+                    return cached_data
+
+            norm_q = self._normalize_q(params.get("q", ""))
+
+            # 2. Reuse forecast cache to satisfy current weather request
+            if endpoint == "/current.json":
+                for k, (cached_time, cached_data) in list(self._shared_cache.items()):
+                    if (
+                        k.startswith("/forecast.json")
+                        and f"q={norm_q}" in k
+                        and now - cached_time < self._cache_ttl
+                        and isinstance(cached_data, dict)
+                        and "current" in cached_data
+                        and "location" in cached_data
+                    ):
+                        logger.debug("WeatherAPI reusing forecast cache for current.json (q=%s)", norm_q)
+                        return {"location": cached_data["location"], "current": cached_data["current"]}
+
+            # 3. Reuse longer forecast cache to satisfy shorter forecast request
+            if endpoint == "/forecast.json":
+                req_days = int(params.get("days", 1))
+                req_alerts = str(params.get("alerts", "no"))
+                for k, (cached_time, cached_data) in list(self._shared_cache.items()):
+                    if (
+                        k.startswith("/forecast.json")
+                        and f"q={norm_q}" in k
+                        and f"alerts={req_alerts}" in k
+                        and now - cached_time < self._cache_ttl
+                    ):
+                        match = re.search(r"days=(\d+)", k)
+                        cached_days = int(match.group(1)) if match else 0
+                        if cached_days >= req_days:
+                            logger.debug("WeatherAPI reusing forecast cache (%d days >= %d days)", cached_days, req_days)
+                            return cached_data
 
         params["key"] = self.api_key
         url = f"{self.base_url}{endpoint}"
@@ -78,7 +128,7 @@ class WeatherAPIClient:
                     self._shared_cache[cache_key] = (now, data)
                 return data
         except httpx.TimeoutException:
-            logger.error("WeatherAPI request timed out for %s", endpoint)
+            logger.error("WeatherAPI request timed out for %s", self._sanitize(endpoint))
             raise HTTPException(status_code=504, detail="Weather provider request timed out.")
         except httpx.RequestError as e:
             safe_error = self._sanitize(str(e))

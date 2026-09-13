@@ -9,6 +9,7 @@ import 'package:weathergpt_app/l10n/app_localizations.dart';
 import 'package:weathergpt_app/main.dart'
     show chatProvider, locationProvider, languageProvider, voiceProvider;
 import 'package:weathergpt_app/models/chat.dart';
+import 'package:weathergpt_app/screens/location/location_search_screen.dart';
 import 'package:weathergpt_app/widgets/chat/chat_widgets.dart';
 import 'package:weathergpt_app/widgets/common/common_widgets.dart';
 
@@ -34,6 +35,9 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
 
+    // Rebuild when input text changes to toggle send button state
+    _controller.addListener(_onTextChanged);
+
     // Set initial messages for warm UX start (Phase 2 mock messages)
     if (chatProvider.messages.isEmpty) {
       chatProvider.setInitialMessages(MockData.initialChatMessages);
@@ -53,8 +57,13 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  void _onTextChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
+    _controller.removeListener(_onTextChanged);
     voiceProvider.stopSpeaking();
     voiceProvider.cancelListening();
     chatProvider.removeListener(_onChatUpdate);
@@ -86,6 +95,9 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _sendMessage([String? text]) async {
+    // Spec: Disable duplicate sends while request is in progress
+    if (chatProvider.isLoading) return;
+
     // If voice is currently listening or speaking, stop them
     if (voiceProvider.isListening) {
       await voiceProvider.stopListening();
@@ -142,6 +154,17 @@ class _ChatScreenState extends State<ChatScreen> {
     await voiceProvider.cancelListening();
   }
 
+  List<String> _getQuickActions(AppLocalizations? l10n) {
+    return [
+      l10n?.quickActionTemperature ?? "What's the temperature?",
+      l10n?.quickActionRain ?? "Will it rain?",
+      l10n?.quickActionAlerts ?? "Any weather alerts?",
+      l10n?.quickActionOutdoor ?? "Is it good for outdoor activities?",
+      l10n?.quickActionForecast ?? "What is tomorrow's forecast?",
+      l10n?.quickActionUmbrella ?? "Do I need an umbrella?",
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -164,6 +187,47 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ],
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: InkWell(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => LocationSearchScreen(locationProvider: locationProvider),
+                  ),
+                );
+              },
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.location_on, size: 14, color: AppColors.primary),
+                    const SizedBox(width: 4),
+                    Text(
+                      (locationProvider.selectedLocation.city != null &&
+                              locationProvider.selectedLocation.city!.isNotEmpty)
+                          ? locationProvider.selectedLocation.city!
+                          : 'Madurai',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -189,19 +253,26 @@ class _ChatScreenState extends State<ChatScreen> {
               padding: const EdgeInsets.all(AppDimensions.paddingMedium),
               itemCount: messages.length + (isLoading ? 1 : 0),
               itemBuilder: (context, index) {
-                // Typing indicator
+                // Typing / thinking indicator
                 if (isLoading && index == messages.length) {
                   return Padding(
-                    padding: const EdgeInsets.only(left: 8, bottom: 8),
+                    padding: const EdgeInsets.only(left: 8, bottom: 12),
                     child: Row(
                       children: [
                         const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
                         ),
-                        const SizedBox(width: 8),
-                        Text(l10n?.weatherGptThinking ?? 'WeatherGPT is thinking...'),
+                        const SizedBox(width: 10),
+                        Text(
+                          l10n?.weatherGptCheckingWeather ?? 'WeatherGPT is checking the weather...',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontStyle: FontStyle.italic,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
                       ],
                     ),
                   );
@@ -225,13 +296,13 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
 
-          // Suggestion chips
+          // Suggestion chips (contextual quick actions)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMedium),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: MockData.chatSuggestions.map((suggestion) {
+                children: _getQuickActions(l10n).map((suggestion) {
                   return Padding(
                     padding: const EdgeInsets.only(right: 8, bottom: 8),
                     child: SuggestionChip(
@@ -306,7 +377,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                           ),
                           textInputAction: TextInputAction.send,
-                          onSubmitted: isLoading ? null : (_) => _sendMessage(),
+                          onSubmitted: (isLoading || _controller.text.trim().isEmpty) ? null : (_) => _sendMessage(),
                         ),
                       ),
                       IconButton(
@@ -321,12 +392,14 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                       Container(
                         decoration: BoxDecoration(
-                          color: isLoading ? AppColors.divider : AppColors.primary,
+                          color: (isLoading || _controller.text.trim().isEmpty)
+                              ? AppColors.divider
+                              : AppColors.primary,
                           shape: BoxShape.circle,
                         ),
                         child: IconButton(
                           icon: const Icon(Icons.send, color: Colors.white),
-                          onPressed: isLoading ? null : () => _sendMessage(),
+                          onPressed: (isLoading || _controller.text.trim().isEmpty) ? null : () => _sendMessage(),
                           tooltip: 'Send',
                         ),
                       ),

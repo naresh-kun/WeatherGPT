@@ -589,6 +589,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'SIH Prototype\nAI-powered conversational weather assistant'**
   String get aboutSubtitle;
+
+  /// No description provided for @weatherGptCheckingWeather.
+  ///
+  /// In en, this message translates to:
+  /// **'WeatherGPT is checking the weather...'**
+  String get weatherGptCheckingWeather;
+
+  /// No description provided for @quickActionTemperature.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s the temperature?'**
+  String get quickActionTemperature;
+
+  /// No description provided for @quickActionRain.
+  ///
+  /// In en, this message translates to:
+  /// **'Will it rain?'**
+  String get quickActionRain;
+
+  /// No description provided for @quickActionAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Any weather alerts?'**
+  String get quickActionAlerts;
+
+  /// No description provided for @quickActionOutdoor.
+  ///
+  /// In en, this message translates to:
+  /// **'Is it good for outdoor activities?'**
+  String get quickActionOutdoor;
+
+  /// No description provided for @quickActionForecast.
+  ///
+  /// In en, this message translates to:
+  /// **'What is tomorrow\'s forecast?'**
+  String get quickActionForecast;
+
+  /// No description provided for @quickActionUmbrella.
+  ///
+  /// In en, this message translates to:
+  /// **'Do I need an umbrella?'**
+  String get quickActionUmbrella;
+
+  /// No description provided for @changeLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Change location'**
+  String get changeLocation;
+
+  /// No description provided for @activeLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Location'**
+  String get activeLocation;
+
+  /// No description provided for @errorWeatherUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'re unable to retrieve current weather right now. Please try again.'**
+  String get errorWeatherUnavailable;
+
+  /// No description provided for @errorGeminiBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'WeatherGPT is temporarily busy. Please try again.'**
+  String get errorGeminiBusy;
+
+  /// No description provided for @errorRateLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'WeatherGPT is temporarily rate-limited. Please try again later.'**
+  String get errorRateLimit;
+
+  /// No description provided for @errorChatTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'WeatherGPT is taking longer than expected. Please try again.'**
+  String get errorChatTimeout;
+
+  /// No description provided for @errorConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to reach the WeatherGPT server. Check your connection.'**
+  String get errorConnection;
 }
 
 class _AppLocalizationsDelegate

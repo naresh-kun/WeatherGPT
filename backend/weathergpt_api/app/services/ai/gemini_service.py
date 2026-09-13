@@ -77,6 +77,7 @@ class GeminiChatService:
     def __init__(self) -> None:
         self._api_key = settings.gemini_api_key or settings.llm_api_key
         self._model = settings.gemini_model
+        self._fallback_model = settings.gemini_fallback_model
         self._client = None
 
         if not self._api_key:
@@ -98,6 +99,91 @@ class GeminiChatService:
                 )
         return self._client
 
+    def _classify_error(self, exc: Exception) -> tuple[str, str]:
+        """
+        Classify an exception from the Gemini API.
+        Returns (error_type, sanitized_message) where error_type is one of:
+        'auth_error', 'transient_503', 'transient_429', 'transient_timeout', 'other'
+        """
+        safe_msg = str(exc)
+        if self._api_key and self._api_key in safe_msg:
+            safe_msg = safe_msg.replace(self._api_key, "***")
+        if settings.weather_api_key and settings.weather_api_key in safe_msg:
+            safe_msg = safe_msg.replace(settings.weather_api_key, "***")
+
+        code = getattr(exc, "code", None)
+        status_str = str(getattr(exc, "status", "") or "")
+
+        # 1. Auth/Permission (Permanent — do not retry, do not fallback)
+        is_auth = (
+            code in (401, 403)
+            or "401" in safe_msg
+            or "403" in safe_msg
+            or "API_KEY_INVALID" in safe_msg
+            or "PERMISSION_DENIED" in safe_msg
+            or "unregistered" in safe_msg.lower()
+        )
+        if is_auth:
+            return "auth_error", safe_msg
+
+        # 2. Transient 503 (High demand / unavailable)
+        is_503 = (
+            code == 503
+            or "503" in safe_msg
+            or "UNAVAILABLE" in status_str
+            or "UNAVAILABLE" in safe_msg
+            or "high demand" in safe_msg.lower()
+        )
+        if is_503:
+            return "transient_503", safe_msg
+
+        # 3. Transient 429 (Resource exhausted / rate limit)
+        is_429 = (
+            code == 429
+            or "429" in safe_msg
+            or "RESOURCE_EXHAUSTED" in status_str
+            or "RESOURCE_EXHAUSTED" in safe_msg
+            or "quota" in safe_msg.lower()
+            or "rate limit" in safe_msg.lower()
+        )
+        if is_429:
+            return "transient_429", safe_msg
+
+        # 4. Transient timeout / network
+        is_timeout = (
+            code in (408, 504)
+            or "timeout" in safe_msg.lower()
+            or "timed out" in safe_msg.lower()
+            or "deadline_exceeded" in safe_msg.lower()
+            or "DEADLINE_EXCEEDED" in status_str
+        )
+        if is_timeout:
+            return "transient_timeout", safe_msg
+
+        return "other", safe_msg
+
+    async def _execute_generate_content(
+        self,
+        client: Any,
+        model_name: str,
+        full_prompt: str,
+        config: Any,
+    ) -> str:
+        """Run synchronous generate_content in a thread executor with AFC disabled."""
+        import asyncio
+        loop = asyncio.get_event_loop()
+        response = await loop.run_in_executor(
+            None,
+            lambda: client.models.generate_content(
+                model=model_name,
+                contents=full_prompt,
+                config=config,
+            ),
+        )
+        if response is None or not hasattr(response, "text") or not response.text:
+            raise Exception("503 Empty response returned from Gemini")
+        return response.text.strip()
+
     async def generate_response(
         self,
         user_message: str,
@@ -106,18 +192,8 @@ class GeminiChatService:
     ) -> str:
         """
         Generate a weather-grounded response from Gemini in the requested language.
-
-        Args:
-            user_message: The user's natural-language weather question.
-            weather_context: Dict of current weather fields for the user's location.
-            language: Requested response language ('en' or 'ta').
-
-        Returns:
-            AI-generated response text.
-
-        Raises:
-            HTTPException 503 — Gemini unavailable or API failure.
-            HTTPException 500 — Gemini key missing or SDK error.
+        Supports primary model (gemini-3.7-flash) with bounded retry and
+        fallback model (gemini-3.6-flash) using identical weather context.
         """
         if not self._api_key:
             raise HTTPException(
@@ -127,7 +203,7 @@ class GeminiChatService:
 
         client = self._get_client()
 
-        # Build the weather context section
+        # Build the verified weather context section (identical for both models)
         import json as _json
         location_name = weather_context.get("location", "the user's location")
         weather_json_str = _json.dumps(weather_context, indent=2)
@@ -147,106 +223,124 @@ class GeminiChatService:
         )
 
         # Build generate_content config to disable automatic function calling (AFC)
-        # and eliminate the warning: "Direct use of automatic function calling (AFC) in Models.generate_content is not recommended."
         from google.genai import types as genai_types
         config = genai_types.GenerateContentConfig(
             automatic_function_calling=genai_types.AutomaticFunctionCallingConfig(disable=True)
         )
 
-        max_attempts = 2
-        for attempt in range(1, max_attempts + 1):
+        import asyncio
+
+        # -------------------------------------------------------------------
+        # Phase 1: Primary Model (gemini-3.7-flash) with bounded retry
+        # -------------------------------------------------------------------
+        primary_model = self._model
+        primary_attempts = 2  # 1 initial + 1 bounded retry
+        last_primary_err_type = "other"
+        last_primary_err_msg = ""
+
+        for attempt in range(1, primary_attempts + 1):
             try:
-                # google-genai SDK: synchronous generate_content
-                # We run it in a thread executor to keep FastAPI's async loop unblocked.
-                import asyncio
-                loop = asyncio.get_event_loop()
-                response = await loop.run_in_executor(
-                    None,
-                    lambda: client.models.generate_content(
-                        model=self._model,
-                        contents=full_prompt,
-                        config=config,
-                    ),
+                text = await self._execute_generate_content(
+                    client=client,
+                    model_name=primary_model,
+                    full_prompt=full_prompt,
+                    config=config,
                 )
-
-                if response is None or not hasattr(response, "text") or not response.text:
-                    logger.error("Gemini returned an empty response")
-                    raise HTTPException(
-                        status_code=503,
-                        detail="WeatherGPT is temporarily busy. Please try again.",
-                    )
-
-                return response.text.strip()
-
-            except HTTPException:
-                raise
+                logger.info("Gemini primary model (%s) succeeded", primary_model)
+                return text
             except Exception as exc:
-                # Sanitise: never include API key in logs or responses
-                safe_msg = str(exc)
-                if self._api_key and self._api_key in safe_msg:
-                    safe_msg = safe_msg.replace(self._api_key, "***")
+                err_type, safe_msg = self._classify_error(exc)
+                last_primary_err_type = err_type
+                last_primary_err_msg = safe_msg
 
-                code = getattr(exc, "code", None)
-                status_str = str(getattr(exc, "status", "") or "")
-
-                is_503 = (
-                    code == 503
-                    or "503" in safe_msg
-                    or "UNAVAILABLE" in status_str
-                    or "UNAVAILABLE" in safe_msg
-                    or "high demand" in safe_msg.lower()
-                )
-
-                if is_503 and attempt < max_attempts:
-                    logger.warning(
-                        "Gemini 503 (high demand) on attempt %d/%d; retrying once in 1.5s...",
-                        attempt,
-                        max_attempts,
-                    )
-                    import asyncio
-                    await asyncio.sleep(1.5)
-                    continue
-
-                if is_503:
-                    logger.error("Gemini 503 error after retry: %s", safe_msg)
-                    raise HTTPException(
-                        status_code=503,
-                        detail="WeatherGPT is temporarily busy. Please try again.",
-                    )
-
-                # Check 429 Rate Limit
-                is_429 = (
-                    code == 429
-                    or "429" in safe_msg
-                    or "RESOURCE_EXHAUSTED" in status_str
-                    or "RESOURCE_EXHAUSTED" in safe_msg
-                    or "quota" in safe_msg.lower()
-                )
-                if is_429:
-                    logger.error("Gemini 429 rate limit error: %s", safe_msg)
-                    raise HTTPException(
-                        status_code=429,
-                        detail="WeatherGPT request limit reached. Please try again later.",
-                    )
-
-                # Check Auth / Configuration error
-                is_auth = (
-                    code in (401, 403)
-                    or "401" in safe_msg
-                    or "403" in safe_msg
-                    or "API_KEY_INVALID" in safe_msg
-                    or "PERMISSION_DENIED" in safe_msg
-                )
-                if is_auth:
-                    logger.error("Gemini auth error: %s", safe_msg)
+                # Permanent configuration/auth errors fail immediately
+                if err_type == "auth_error":
+                    logger.error("Gemini auth error on primary: %s", safe_msg)
                     raise HTTPException(
                         status_code=500,
                         detail="AI service configuration error.",
                     )
 
-                # Generic unexpected error
-                logger.error("Gemini API error: %s", safe_msg)
-                raise HTTPException(
-                    status_code=500,
-                    detail="Unexpected error from AI service. Please try again.",
+                # Bounded retry for transient errors
+                if err_type in ("transient_503", "transient_429", "transient_timeout") and attempt < primary_attempts:
+                    logger.warning(
+                        "Gemini primary (%s) transient %s on attempt %d/%d; retrying once in 1.0s...",
+                        primary_model,
+                        err_type,
+                        attempt,
+                        primary_attempts,
+                    )
+                    await asyncio.sleep(1.0)
+                    continue
+
+                logger.warning(
+                    "Gemini primary (%s) attempt %d failed: %s",
+                    primary_model,
+                    attempt,
+                    safe_msg,
                 )
+                break
+
+        # -------------------------------------------------------------------
+        # Phase 2: Fallback Model (gemini-3.6-flash) with identical context
+        # -------------------------------------------------------------------
+        fallback_model = self._fallback_model
+        if fallback_model and fallback_model != primary_model:
+            logger.warning(
+                "Gemini primary (%s) failed with %s; falling back to %s...",
+                primary_model,
+                last_primary_err_type,
+                fallback_model,
+            )
+            try:
+                text = await self._execute_generate_content(
+                    client=client,
+                    model_name=fallback_model,
+                    full_prompt=full_prompt,
+                    config=config,
+                )
+                logger.info("Gemini fallback model (%s) succeeded", fallback_model)
+                return text
+            except Exception as fallback_exc:
+                fb_err_type, fb_safe_msg = self._classify_error(fallback_exc)
+                logger.error(
+                    "Gemini fallback (%s) failed with %s: %s",
+                    fallback_model,
+                    fb_err_type,
+                    fb_safe_msg,
+                )
+                if fb_err_type == "auth_error":
+                    raise HTTPException(
+                        status_code=500,
+                        detail="AI service configuration error.",
+                    )
+                if fb_err_type == "transient_429" or last_primary_err_type == "transient_429":
+                    raise HTTPException(
+                        status_code=429,
+                        detail="WeatherGPT is temporarily rate-limited. Please try again later.",
+                    )
+                if fb_err_type == "transient_timeout" or last_primary_err_type == "transient_timeout":
+                    raise HTTPException(
+                        status_code=504,
+                        detail="WeatherGPT is taking longer than expected. Please try again.",
+                    )
+                raise HTTPException(
+                    status_code=503,
+                    detail="WeatherGPT is temporarily busy. Please try again.",
+                )
+
+        # If fallback model is not configured or same as primary, map primary error
+        if last_primary_err_type == "transient_429":
+            raise HTTPException(
+                status_code=429,
+                detail="WeatherGPT is temporarily rate-limited. Please try again later.",
+            )
+        if last_primary_err_type == "transient_timeout":
+            raise HTTPException(
+                status_code=504,
+                detail="WeatherGPT is taking longer than expected. Please try again.",
+            )
+        raise HTTPException(
+            status_code=503,
+            detail="WeatherGPT is temporarily busy. Please try again.",
+        )

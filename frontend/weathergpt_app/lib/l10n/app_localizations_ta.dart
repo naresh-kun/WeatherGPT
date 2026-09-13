@@ -267,4 +267,52 @@ class AppLocalizationsTa extends AppLocalizations {
   @override
   String get aboutSubtitle =>
       'SIH மாதிரி வடிவம்\nசெயற்கை நுண்ணறிவு வானிலை உதவியாளர்';
+
+  @override
+  String get weatherGptCheckingWeather =>
+      'WeatherGPT வானிலையை சரிபார்க்கிறது...';
+
+  @override
+  String get quickActionTemperature => 'வெப்பநிலை என்ன?';
+
+  @override
+  String get quickActionRain => 'மழை பெய்யுமா?';
+
+  @override
+  String get quickActionAlerts => 'வானிலை எச்சரிக்கைகள் உள்ளதா?';
+
+  @override
+  String get quickActionOutdoor => 'வெளிப்புற நடவடிக்கைகளுக்கு ஏற்றதா?';
+
+  @override
+  String get quickActionForecast => 'நாளை வானிலை முன்னறிவிப்பு என்ன?';
+
+  @override
+  String get quickActionUmbrella => 'எனக்கு குடை தேவையா?';
+
+  @override
+  String get changeLocation => 'இருப்பிடத்தை மாற்று';
+
+  @override
+  String get activeLocation => 'செயலில் உள்ள இருப்பிடம்';
+
+  @override
+  String get errorWeatherUnavailable =>
+      'தற்போது வானிலை தரவை பெற முடியவில்லை. மீண்டும் முயற்சிக்கவும்.';
+
+  @override
+  String get errorGeminiBusy =>
+      'WeatherGPT தற்போது பிஸியாக உள்ளது. மீண்டும் முயற்சிக்கவும்.';
+
+  @override
+  String get errorRateLimit =>
+      'WeatherGPT கோரிக்கை வரம்பை எட்டியுள்ளது. பின்னர் முயற்சிக்கவும்.';
+
+  @override
+  String get errorChatTimeout =>
+      'WeatherGPT பதிலளிக்க அதிக நேரம் எடுக்கிறது. மீண்டும் முயற்சிக்கவும்.';
+
+  @override
+  String get errorConnection =>
+      'WeatherGPT சேவையகத்தை தொடர்பு கொள்ள முடியவில்லை. உங்கள் இணைப்பை சரிபார்க்கவும்.';
 }

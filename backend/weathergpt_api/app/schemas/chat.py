@@ -32,12 +32,40 @@ class ChatRequest(BaseModel):
     voice: bool = Field(False, description="Whether the response should be optimised for TTS")
 
 
+class WeatherSummary(BaseModel):
+    """Structured current weather summary alongside assistant response (Phase 10)."""
+    location: str
+    temperature_c: float
+    feels_like_c: float
+    condition: str
+    humidity_pct: int
+    wind_kph: float
+    icon: Optional[str] = None
+
+
+class HourlyForecastItem(BaseModel):
+    """Single hourly forecast slot for chat forecast card (Phase 10)."""
+    time: str
+    temp_c: float
+    condition: str
+    icon: Optional[str] = None
+    rain_chance: int = 0
+
+
+class ForecastSummary(BaseModel):
+    """Structured forecast summary alongside assistant response (Phase 10)."""
+    headline: str
+    items: List[HourlyForecastItem] = []
+
+
 class ChatResponse(BaseModel):
     """Outgoing chat response to the Flutter frontend."""
     message: str = Field(..., description="AI-generated natural-language response")
     conversation_id: str = Field(..., description="Conversation identifier")
     language: str = Field("en", description="Language of the response")
     suggestions: List[str] = Field(default_factory=list, description="Follow-up query suggestions")
+    weather_summary: Optional[WeatherSummary] = Field(None, description="Structured current weather card data")
+    forecast_summary: Optional[ForecastSummary] = Field(None, description="Structured hourly forecast card data")
 
 
 class Conversation(BaseModel):

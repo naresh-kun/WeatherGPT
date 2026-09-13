@@ -19,7 +19,13 @@ from typing import Optional, Dict, Any
 
 from fastapi import HTTPException
 
-from app.schemas.chat import ChatRequest, ChatResponse
+from app.schemas.chat import (
+    ChatRequest,
+    ChatResponse,
+    WeatherSummary,
+    ForecastSummary,
+    HourlyForecastItem,
+)
 from app.services.weather.service import WeatherService
 from app.services.ai.gemini_service import GeminiChatService
 
@@ -30,6 +36,11 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 _DEFAULT_LAT = 9.9252
 _DEFAULT_LON = 78.1198
+
+_FORECAST_KEYWORDS = (
+    "forecast", "tomorrow", "hourly", "next hours", "rain tomorrow",
+    "later", "coming days", "week", "முன்னறிவிப்பு", "நாளை", "மழை வருமா", "மணிநேர"
+)
 
 
 class ChatService:
@@ -57,7 +68,8 @@ class ChatService:
           3. Fetch current weather from WeatherService
           4. Build weather context
           5. Generate Gemini response (in requested language: en or ta)
-          6. Return ChatResponse
+          6. Attach structured weather_summary / forecast_summary
+          7. Return ChatResponse
         """
         # Step 1 — validate message
         message = request.message.strip()
@@ -72,7 +84,7 @@ class ChatService:
         lat, lon = self._resolve_location(request)
 
         # Step 3 — fetch live weather (reuses existing WeatherService)
-        weather_context = await self._fetch_weather_context(lat, lon)
+        weather_context, current_weather = await self._fetch_weather_context(lat, lon)
 
         # Step 4 — generate Gemini response
         ai_reply = await self._gemini.generate_response(
@@ -81,13 +93,61 @@ class ChatService:
             language=language,
         )
 
-        # Step 5 — build and return response
+        # Step 5 — build structured cards (verified weather data only)
+        msg_lower = message.lower()
+        is_forecast_query = any(kw in msg_lower for kw in _FORECAST_KEYWORDS)
+
+        weather_summary: Optional[WeatherSummary] = None
+        forecast_summary: Optional[ForecastSummary] = None
+
+        if is_forecast_query:
+            try:
+                forecast_data = await self._weather.get_forecast(lat, lon, days=2)
+                items: list[HourlyForecastItem] = []
+                if forecast_data.hourly:
+                    # Sample 4 slots (e.g. Now, +2h, +4h, +6h)
+                    slots = forecast_data.hourly[:8:2] if len(forecast_data.hourly) >= 8 else forecast_data.hourly[:4]
+                    for idx, slot in enumerate(slots):
+                        time_label = "Now" if idx == 0 else f"+{idx * 2}h"
+                        rain_pct = int(round((slot.precipitation_probability or 0.0) * 100))
+                        items.append(
+                            HourlyForecastItem(
+                                time=time_label,
+                                temp_c=round(slot.temperature, 1),
+                                condition=slot.description,
+                                icon=slot.icon,
+                                rain_chance=rain_pct,
+                            )
+                        )
+                forecast_summary = ForecastSummary(
+                    headline="Hourly Forecast" if language == "en" else "மணிநேர முன்னறிவிப்பு",
+                    items=items,
+                )
+            except Exception as exc:
+                logger.warning("Failed to fetch forecast card data: %s", exc)
+
+        # Always attach current weather summary unless a forecast card was generated
+        if not forecast_summary and current_weather:
+            wind_kph = round(current_weather.wind_speed * 3.6, 1)  # m/s to kph
+            weather_summary = WeatherSummary(
+                location=current_weather.location.city or f"{lat},{lon}",
+                temperature_c=round(current_weather.temperature, 1),
+                feels_like_c=round(current_weather.feels_like, 1),
+                condition=current_weather.description,
+                humidity_pct=int(current_weather.humidity),
+                wind_kph=wind_kph,
+                icon=current_weather.icon,
+            )
+
+        # Step 6 — build and return response
         conversation_id = request.conversation_id or f"conv-{uuid.uuid4().hex[:12]}"
         return ChatResponse(
             message=ai_reply,
             conversation_id=conversation_id,
             language=language,
-            suggestions=[],  # Phase 6+: AI-generated follow-up suggestions
+            suggestions=[],
+            weather_summary=weather_summary,
+            forecast_summary=forecast_summary,
         )
 
     def _resolve_location(
@@ -131,7 +191,7 @@ class ChatService:
 
     async def _fetch_weather_context(
         self, lat: float, lon: float
-    ) -> Dict[str, Any]:
+    ) -> tuple[Dict[str, Any], Any]:
         """
         Fetch current weather via WeatherService and convert to a context dict.
 
@@ -144,14 +204,14 @@ class ChatService:
             if exc.status_code in (502, 503, 504):
                 raise HTTPException(
                     status_code=503,
-                    detail="Weather service is temporarily unavailable.",
+                    detail="We're unable to retrieve current weather right now. Please try again.",
                 )
             raise
         except Exception as exc:
             logger.error("Weather fetch failed for chat: %s", exc)
             raise HTTPException(
                 status_code=503,
-                detail="Weather service is temporarily unavailable.",
+                detail="We're unable to retrieve current weather right now. Please try again.",
             )
 
         # Build the context dict from WeatherCurrent fields
@@ -175,4 +235,4 @@ class ChatService:
         if current.location.timezone:
             context["timezone"] = current.location.timezone
 
-        return context
+        return context, current

@@ -106,5 +106,20 @@
   "enableTts": "Enable text-to-speech for WeatherGPT",
   "unitsSection": "Units",
   "aboutSection": "About",
-  "aboutSubtitle": "SIH Prototype\nAI-powered conversational weather assistant"
+  "aboutSubtitle": "SIH Prototype\nAI-powered conversational weather assistant",
+
+  "weatherGptCheckingWeather": "WeatherGPT is checking the weather...",
+  "quickActionTemperature": "What's the temperature?",
+  "quickActionRain": "Will it rain?",
+  "quickActionAlerts": "Any weather alerts?",
+  "quickActionOutdoor": "Is it good for outdoor activities?",
+  "quickActionForecast": "What is tomorrow's forecast?",
+  "quickActionUmbrella": "Do I need an umbrella?",
+  "changeLocation": "Change location",
+  "activeLocation": "Active Location",
+  "errorWeatherUnavailable": "We're unable to retrieve current weather right now. Please try again.",
+  "errorGeminiBusy": "WeatherGPT is temporarily busy. Please try again.",
+  "errorRateLimit": "WeatherGPT is temporarily rate-limited. Please try again later.",
+  "errorChatTimeout": "WeatherGPT is taking longer than expected. Please try again.",
+  "errorConnection": "Unable to reach the WeatherGPT server. Check your connection."
 }

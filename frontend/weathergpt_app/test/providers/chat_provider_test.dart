@@ -346,4 +346,113 @@ void main() {
       expect(provider.messages.first.content, 'Hello!');
     });
   });
+
+  group('ChatProvider (Phase 10 — Reliability & Cards)', () {
+    test('duplicate-send guard: does not send another request while loading', () async {
+      int callCount = 0;
+      final client = MockClient((req) async {
+        callCount++;
+        // Simulate delay
+        await Future.delayed(const Duration(milliseconds: 50));
+        return http.Response(
+          json.encode(_chatResponseJson),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+
+      final provider = ChatProvider(
+        api: ApiService(baseUrl: 'http://test.local/api/v1', client: client),
+      );
+
+      // Start first send
+      final future1 = provider.sendMessage('First query', _testLocation);
+      expect(provider.isLoading, isTrue);
+
+      // Immediately attempt second send while still loading
+      final future2 = provider.sendMessage('Second query', _testLocation);
+
+      await Future.wait([future1, future2]);
+
+      // Only one network call must have occurred
+      expect(callCount, equals(1));
+      expect(provider.messages.length, equals(2)); // 1 user + 1 assistant
+      expect(provider.messages.first.content, equals('First query'));
+    });
+
+    test('stores weatherSummary and forecastSummary on assistant ChatMessage', () async {
+      final richResponseJson = {
+        'message': 'Here is your forecast and summary.',
+        'conversation_id': 'conv-rich-001',
+        'language': 'en',
+        'weather_summary': {
+          'location': 'Madurai',
+          'temperature_c': 32.0,
+          'feels_like_c': 35.5,
+          'condition': 'Clear',
+          'humidity_pct': 60,
+          'wind_kph': 10.0,
+        },
+        'forecast_summary': {
+          'headline': 'Next 3 hours',
+          'items': [
+            {
+              'time': '2 PM',
+              'temp_c': 33.0,
+              'condition': 'Sunny',
+              'rain_chance': 0,
+            }
+          ],
+        },
+      };
+
+      final provider = ChatProvider(
+        api: ApiService(
+          baseUrl: 'http://test.local/api/v1',
+          client: _successClient(richResponseJson),
+        ),
+      );
+
+      await provider.sendMessage('Show weather and forecast', _testLocation);
+
+      expect(provider.state, equals(ChatState.idle));
+      final lastMsg = provider.messages.last;
+      expect(lastMsg.role, equals(ChatRole.assistant));
+      expect(lastMsg.weatherSummary, isNotNull);
+      expect(lastMsg.weatherSummary!.location, equals('Madurai'));
+      expect(lastMsg.weatherSummary!.temperatureC, equals(32.0));
+      expect(lastMsg.forecastSummary, isNotNull);
+      expect(lastMsg.forecastSummary!.headline, equals('Next 3 hours'));
+      expect(lastMsg.forecastSummary!.items.length, equals(1));
+      expect(lastMsg.forecastSummary!.items.first.time, equals('2 PM'));
+    });
+
+    test('maps WeatherServiceUnavailableException to user-friendly message', () async {
+      final provider = ChatProvider(
+        api: ApiService(
+          baseUrl: 'http://test.local/api/v1',
+          client: _errorClient(503, "We're unable to retrieve current weather right now. Please try again."),
+        ),
+      );
+
+      await provider.sendMessage('What is the weather?', _testLocation);
+
+      expect(provider.state, equals(ChatState.error));
+      expect(provider.errorMessage, equals("We're unable to retrieve current weather right now. Please try again."));
+    });
+
+    test('maps 504 ChatTimeoutException to user-friendly message', () async {
+      final provider = ChatProvider(
+        api: ApiService(
+          baseUrl: 'http://test.local/api/v1',
+          client: _errorClient(504, 'WeatherGPT is taking longer than expected. Please try again.'),
+        ),
+      );
+
+      await provider.sendMessage('Check rainfall', _testLocation);
+
+      expect(provider.state, equals(ChatState.error));
+      expect(provider.errorMessage, equals('WeatherGPT is taking longer than expected. Please try again.'));
+    });
+  });
 }

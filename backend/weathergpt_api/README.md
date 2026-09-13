@@ -48,7 +48,8 @@ The backend requires the following environment variables (defined in `.env`):
 - `WEATHER_BASE_URL`: Base URL for WeatherAPI (defaults to `https://api.weatherapi.com/v1`).
 - `WEATHER_API_TIMEOUT`: HTTP request timeout in seconds (default `15`).
 - `GEMINI_API_KEY`: Your Google Gemini API key (obtain at https://aistudio.google.com/). **[Phase 5]**
-- `GEMINI_MODEL`: Gemini model name (defaults to `gemini-3.7-flash`).
+- `GEMINI_MODEL`: Primary Gemini model name (defaults to `gemini-3.7-flash`). **[Phase 10]**
+- `GEMINI_FALLBACK_MODEL`: Fallback Gemini model name (defaults to `gemini-3.6-flash`). **[Phase 10]**
 
 ### Smart Alert Engine Thresholds (Phase 6 — Configurable via environment)
 - `ALERT_HEAT_WARNING_C`: Temperature threshold for Heat Advisory (default: `38.0` °C)
@@ -65,19 +66,25 @@ The `GEMINI_API_KEY` is exclusively used by the backend — it is never sent to 
 
 ---
 
----
-
 ## Reliability, Security & Error Handling
 
-- **Log Sanitization**: `SensitiveDataFilter` (in `app/core/logging.py`) redacts all sensitive query parameters (`?key=***`, `&key=***`) and secret tokens from all logs (including internal `httpx` HTTP request logs) to guarantee no credentials leak.
-- **Gemini 503 Retry Strategy**: Automatically executes up to 1 retry with a 1.5-second backoff for transient 503 ("high demand") errors from Google Gemini before returning an error.
+- **Log Sanitization**: `SensitiveDataFilter` (in `app/core/logging.py`) dynamically retrieves configured secrets and redacts query parameters (`?key=***`, `&key=***`, `api_key=***`), `x-goog-api-key`, Bearer headers, and configured secret tokens across all logging handlers.
+- **Dual-Model Gemini Fallback & Bounded Retry**:
+  - Primary model: `gemini-3.7-flash` (configurable via `GEMINI_MODEL`).
+  - Fallback model: `gemini-3.6-flash` (configurable via `GEMINI_FALLBACK_MODEL`).
+  - Automatically executes 1 retry with a 1.0-second backoff on transient errors (503 high demand, 429 rate limit, timeout).
+  - If the primary model fails after retry, automatically invokes the fallback model with the exact same grounded weather context.
+  - Permanent authentication errors (401/403) fail immediately without retrying or falling back.
 - **Differentiated Error Statuses**:
   - Gemini 503: Returns 503 with `"WeatherGPT is temporarily busy. Please try again."`
-  - Gemini 429: Returns 429 with `"WeatherGPT request limit reached. Please try again later."`
-  - WeatherAPI 503: Returns 503 with `"Weather service is temporarily unavailable."`
+  - Gemini 429: Returns 429 with `"WeatherGPT is temporarily rate-limited. Please try again later."`
+  - WeatherAPI 503: Returns 503 with `"We're unable to retrieve current weather right now. Please try again."`
+  - Gateway Timeout: Returns 504 with `"WeatherGPT is taking longer than expected. Please try again."`
   - Auth/Config errors: Returns 500 without leaking keys or raw stack traces.
-- **AFC Elimination**: Automatic function calling (AFC) is explicitly disabled in the `google-genai` SDK configuration (`automatic_function_calling.disable = True`), eliminating unnecessary AFC deprecation warnings while maintaining the current Gemini 3.7 Flash architecture.
-- **WeatherAPI Deduplication Cache**: An in-memory 30-second TTL cache in `WeatherAPIClient` prevents duplicate HTTP requests to WeatherAPI.com during concurrent screen loads (e.g. current, alerts, advisory, and chat grounding).
+- **AFC Elimination**: Automatic function calling (AFC) is explicitly disabled in the `google-genai` SDK configuration (`automatic_function_calling.disable = True`), eliminating unnecessary AFC deprecation warnings.
+- **WeatherAPI Deduplication & Cache Reuse**:
+  - Coordinate normalization: Latitude and longitude are rounded to 4 decimal places (~11m precision).
+  - Cross-endpoint reuse: In-memory 30-second TTL cache reuses forecast responses to satisfy current weather and shorter-day forecast requests without duplicate external calls.
 
 ---
 

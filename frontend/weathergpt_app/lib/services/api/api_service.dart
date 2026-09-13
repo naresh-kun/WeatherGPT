@@ -20,28 +20,46 @@ class ApiException implements Exception {
 }
 
 class ApiTimeoutException extends ApiException {
-  const ApiTimeoutException() : super('Request timed out. Please try again.');
+  const ApiTimeoutException([
+    super.message = 'Request timed out. Please try again.',
+  ]);
+}
+
+class ChatTimeoutException extends ApiTimeoutException {
+  const ChatTimeoutException([
+    super.message = 'WeatherGPT is taking longer than expected. Please try again.',
+  ]);
 }
 
 class ApiConnectionException extends ApiException {
-  const ApiConnectionException()
-      : super('Unable to reach server. Check your connection.');
+  const ApiConnectionException([
+    super.message = 'Unable to reach the WeatherGPT server. Check your connection.',
+  ]);
 }
 
 class LocationNotFoundException extends ApiException {
   const LocationNotFoundException() : super('Location not found.');
 }
 
-class ServiceUnavailableException extends ApiException {
-  const ServiceUnavailableException([super.message = 'Weather service is temporarily unavailable.']);
+class WeatherServiceUnavailableException extends ApiException {
+  const WeatherServiceUnavailableException([
+    super.message = "We're unable to retrieve current weather right now. Please try again.",
+  ]);
 }
 
+// Retain ServiceUnavailableException as alias for backward compatibility with previous phases
+typedef ServiceUnavailableException = WeatherServiceUnavailableException;
+
 class GeminiBusyException extends ApiException {
-  const GeminiBusyException([super.message = 'WeatherGPT is temporarily busy. Please try again.']);
+  const GeminiBusyException([
+    super.message = 'WeatherGPT is temporarily busy. Please try again.',
+  ]);
 }
 
 class RateLimitException extends ApiException {
-  const RateLimitException([super.message = 'WeatherGPT request limit reached. Please try again later.']);
+  const RateLimitException([
+    super.message = 'WeatherGPT is temporarily rate-limited. Please try again later.',
+  ]);
 }
 
 // ---------------------------------------------------------------------------
@@ -108,13 +126,18 @@ class ApiService {
         throw ApiException(detail ?? 'Invalid request.');
       } else if (response.statusCode == 429) {
         final detail = _extractDetail(utf8.decode(response.bodyBytes));
-        throw RateLimitException(detail ?? 'WeatherGPT request limit reached. Please try again later.');
+        throw RateLimitException(detail ?? 'WeatherGPT is temporarily rate-limited. Please try again later.');
       } else if (response.statusCode == 503) {
         final detail = _extractDetail(utf8.decode(response.bodyBytes));
-        if (detail != null && detail.contains('busy')) {
+        if (detail != null && (detail.contains('busy') || detail.contains('WeatherGPT'))) {
           throw GeminiBusyException(detail);
         }
-        throw ServiceUnavailableException(detail ?? 'Weather service is temporarily unavailable.');
+        throw WeatherServiceUnavailableException(
+          detail ?? "We're unable to retrieve current weather right now. Please try again.",
+        );
+      } else if (response.statusCode == 504) {
+        final detail = _extractDetail(utf8.decode(response.bodyBytes));
+        throw ChatTimeoutException(detail ?? 'WeatherGPT is taking longer than expected. Please try again.');
       } else if (response.statusCode >= 500) {
         final detail = _extractDetail(utf8.decode(response.bodyBytes));
         throw ApiException(detail ?? 'Unexpected error (${response.statusCode}). Please try again.');
@@ -228,8 +251,12 @@ class ApiService {
       language: language,
     ).toJson();
 
-    final data = await _post('/chat', body, timeout: AppConfig.chatApiTimeout);
-    return ChatApiResponse.fromJson(data as Map<String, dynamic>);
+    try {
+      final data = await _post('/chat', body, timeout: AppConfig.chatApiTimeout);
+      return ChatApiResponse.fromJson(data as Map<String, dynamic>);
+    } on TimeoutException {
+      throw const ChatTimeoutException();
+    }
   }
 
   // --- Climate (Phase 7, Phase 8) ---
