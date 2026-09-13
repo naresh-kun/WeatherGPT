@@ -11,13 +11,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY backend/weathergpt_api/requirements.txt .
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend source and data (includes data/climate/historical_weather.csv)
-COPY backend/weathergpt_api /app
+# Copy backend application source and data (data/climate/historical_weather.csv is included)
+COPY . .
 
-# Create non-root user for production security
+# Create a non-root user for production security
 RUN adduser --disabled-password --gecos "" appuser \
     && chown -R appuser:appuser /app
 USER appuser

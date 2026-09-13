@@ -48,6 +48,7 @@ class Settings(BaseSettings):
     # ---- Server ----------------------------------------------
     host: str = "0.0.0.0"
     port: int = 8000
+    cors_origins: str = ""  # Comma-separated allowed CORS origins, e.g. "https://myapp.web.app"
 
 
 settings = Settings()

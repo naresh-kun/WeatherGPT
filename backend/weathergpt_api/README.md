@@ -40,6 +40,36 @@ The API will be available at:
 
 ---
 
+## Production Deployment (Railway) [Phase 11]
+
+The backend is deployed to production on **Railway**:
+- **Live Base URL**: `https://weathergpt-production-84b3.up.railway.app`
+- **Live API Base**: `https://weathergpt-production-84b3.up.railway.app/api/v1`
+- **Health Endpoint**: `https://weathergpt-production-84b3.up.railway.app/api/v1/health`
+- **API Documentation**: `https://weathergpt-production-84b3.up.railway.app/docs`
+
+### Production Architecture & Docker Setup
+- **Base Image**: `python:3.11-slim`
+- **Port Binding**: Dynamically binds to `0.0.0.0:${PORT}` provided by Railway (default `8080`).
+- **Command**: `uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} --workers 2` (no `--reload`).
+- **Packaged Data**: `data/climate/historical_weather.csv` (528 records) is copied into the image and verified at startup.
+
+### Deploying via Railway CLI
+```bash
+# 1. Login to Railway
+npx -y @railway/cli login
+
+# 2. Link or create project
+npx -y @railway/cli link e456a073-4f36-429d-b32d-afba91fd56ee
+
+# 3. Configure environment variables (see below)
+npx -y @railway/cli variable set WEATHER_API_KEY="..." GEMINI_API_KEY="..."
+
+# 4. Deploy service
+npx -y @railway/cli up -y
+```
+
+
 ## Configuration
 
 The backend requires the following environment variables (defined in `.env`):

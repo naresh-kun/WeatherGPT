@@ -1,9 +1,8 @@
 # WeatherGPT — System Architecture
-
-**Version**: 0.10.0  
+**Version**: 0.11.0  
 **Project Type**: SIH (Smart India Hackathon) Prototype  
 **Developers**: 2 (Frontend, Backend)  
-**Current Phase**: Phase 10 — Interactive Chat, AI Fallback & Reliability
+**Current Phase**: Phase 11 — Backend Deployment (Railway HTTPS)
 
 ---
 
@@ -15,15 +14,15 @@
 │         (frontend/weathergpt_app/)       │
 │                                          │
 │  Screens → Providers → Repositories     │
-│       → Services → API Client           │
+│       → Services → AppConfig            │
 └──────────────────┼──────────────────────┘
                    │
-              REST / JSON
-           (HTTP over HTTPS)
+              HTTPS / JSON
+     (https://weathergpt-production-84b3.up.railway.app)
                    │
 ┌──────────────────▼──────────────────────┐
 │            FastAPI Backend               │
-│         (backend/weathergpt_api/)        │
+│       (Railway Production Cloud)         │
 │                                          │
 │  Routes → Services → Repositories       │
 │  ├── Weather Service   [REAL — Phase 3]  │
@@ -33,6 +32,27 @@
 │  ├── Climate Service   [REAL — Phase 7]  │
 │  └── Localization      [REAL — Phase 8]  │
 └──────────────────┬──────────────────────┘
+          │        │
+          ▼        ▼
+  External Weather ├── Primary: Gemini 3.7 Flash  [REAL — Phase 10]
+     Provider      └── Fallback: Gemini 3.6 Flash [REAL — Phase 10]
+  [REAL — Phase 3]
+          │
+          ▼
+    Historical
+      Dataset
+  [REAL — Reference CSV]
+```
+
+**Critical Rule**: The Flutter frontend must **never** call the External Weather Provider or LLM Provider directly. All external API calls go through the FastAPI backend.
+
+**Phase 11 Note**: Production Cloud Deployment on Railway:
+- Containerized using Dockerfile (Python 3.11-slim) binding dynamically to `0.0.0.0:$PORT`.
+- Live HTTPS public endpoint: `https://weathergpt-production-84b3.up.railway.app/api/v1`.
+- Historical climate dataset (`data/climate/historical_weather.csv`, 528 records) packaged into container.
+- All secrets (`WEATHER_API_KEY`, `GEMINI_API_KEY`, etc.) stored strictly in Railway environment variables.
+- Dual-model Gemini AI (`gemini-3.7-flash` with `gemini-3.6-flash` fallback) running live in production.
+- Client centralized config `AppConfig.apiBaseUrl` automatically switches between local dev in debug mode and the live Railway HTTPS endpoint in release mode.��─┘
           │        │
           ▼        ▼
   External Weather ├── Primary: Gemini 3.7 Flash  [REAL — Phase 10]

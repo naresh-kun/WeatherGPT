@@ -1,0 +1,31 @@
+# WeatherGPT API — Docker Build Exclusions
+# Keep the build context lean and avoid leaking secrets.
+
+# Python virtual environment (never needed in Docker)
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Test artefacts
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Local secrets — env vars must be set via Railway dashboard
+.env
+*.env
+
+# Git / IDE metadata
+.git/
+.gitignore
+.idea/
+.vscode/
+
+# Docs / non-runtime files
+README.md

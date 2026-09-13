@@ -5,6 +5,7 @@ WeatherGPT FastAPI — Application Entry Point
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.router import api_router
+from app.core.config import settings
 from app.core.logging import configure_logging
 
 configure_logging()
@@ -20,9 +21,17 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
+# Custom origins configured via CORS_ORIGINS environment variable
+custom_origins = [
+    o.strip()
+    for o in settings.cors_origins.split(",")
+    if o.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1|10\.0\.2\.2)(:\d+)?$",
+    allow_origins=custom_origins,
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1|10\.0\.2\.2|.*\.railway\.app|.*\.web\.app|.*\.firebaseapp\.com|.*\.vercel\.app)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

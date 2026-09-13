@@ -18,8 +18,37 @@ A conversational weather intelligence prototype providing real-time weather data
 | Phase 8 | **Complete** | Multilingual Support (English & Tamil across UI, Backend, Alerts, Advisories, Climate, Gemini Chat) |
 | Phase 9 | **Complete** | Voice Interaction (Speech-to-Text via `speech_to_text`, Text-to-Speech via `flutter_tts`, English & Tamil) |
 | Phase 10 | **Complete** | Interactive Chat, AI Fallback & Reliability (Weather cards, Quick Actions, Dual-Model Gemini Fallback, 60s Timeout) |
+| Phase 11 | **Complete** | Backend Deployment (Railway HTTPS deployment, containerized Docker, live public API, AppConfig connection) |
 
-### Phase 10 — Interactive Chat, AI Fallback & Reliability Status
+### Phase 11 — Backend Deployment (Railway Live Status)
+
+WeatherGPT backend is deployed and live in production on **Railway**:
+- **Live Production Base URL**: `https://weathergpt-production-84b3.up.railway.app/api/v1`
+- **Liveness / Health Probe**: `https://weathergpt-production-84b3.up.railway.app/api/v1/health`
+- **Interactive Documentation**: `https://weathergpt-production-84b3.up.railway.app/docs`
+
+#### Deployment Highlights [REAL — Phase 11]:
+- **Containerized Execution**: Packaged via Python 3.11-slim `Dockerfile`, executing production Uvicorn without `--reload`, dynamically binding to `0.0.0.0:$PORT`.
+- **Packaged Climate Reference Dataset**: Historical climatological dataset (`historical_weather.csv`, 528 records) bundled directly into the container image and verified at startup.
+- **Strict Server-Side Secret Isolation**: WeatherAPI key and Gemini API key reside exclusively in Railway environment variables—never packaged into client binaries or exposed in headers.
+- **Dual-Model Gemini AI in Production**: Primary model `gemini-3.7-flash` with automatic fallback to `gemini-3.6-flash`, operating behind the live HTTPS proxy with bounded retry.
+- **CORS & Environment Configurations**: Configured regex allowing local Flutter Web development, Android emulator (`10.0.2.2`), and production web/mobile origins.
+- **Centralized Flutter Configuration**: Flutter client uses `AppConfig` (`String.fromEnvironment('API_BASE_URL')`) which points to local development in debug mode and the live Railway HTTPS endpoint in release mode.
+
+#### Feature Implementation Status Matrix:
+- **Live Backend HTTPS Deployment**: **[REAL — Phase 11]** (`https://weathergpt-production-84b3.up.railway.app`)
+- **Real-time Weather & Forecast**: **[REAL — Phase 3 & 4]** (Live WeatherAPI.com)
+- **Location Search & GPS**: **[REAL — Phase 4]** (Single source of truth via LocationProvider)
+- **AI Conversational Chat**: **[REAL — Phase 5, 8, 10 & 11]** (Google Gemini 3.7 Flash + 3.6 Flash fallback, Bilingual)
+- **Smart Alert Engine**: **[REAL — Phase 6 & 8]** (Deterministic rules, English & Tamil)
+- **Weather Advisory System**: **[REAL — Phase 6 & 8]** (Rule-based templates, English & Tamil)
+- **Climate Historical Trends**: **[REAL — Phase 7 & 8]** (Deterministic analysis from bundled dataset)
+- **Tamil Localization**: **[REAL — Phase 8]** (Full UI and backend support)
+- **Speech-to-Text / Voice (STT & TTS)**: **[REAL — Phase 9]** (English & Tamil voice interaction)
+- **Interactive Chat & Reliability**: **[REAL — Phase 10]** (Cards, Quick Actions, Dual-Model Fallback, Deduplication)
+- **User Authentication / Accounts**: **[PLANNED / FUTURE]**
+- **Production APK / App Store Build**: **[PLANNED — Phase 12]**
+
 
 WeatherGPT Phase 10 delivers rich interactive chat components, dual-model AI reliability, and enterprise-grade resilience:
 
