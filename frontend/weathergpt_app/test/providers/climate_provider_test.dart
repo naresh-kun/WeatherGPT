@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:weathergpt_app/models/location.dart';
 import 'package:weathergpt_app/providers/climate_provider.dart';
 import 'package:weathergpt_app/services/api/api_service.dart';
 
@@ -227,6 +228,57 @@ void main() {
       // Explicit refresh forces fetch
       await provider.refresh(language: 'ta');
       expect(callCount, 3);
+    });
+
+    group('Location Mapping & Consistency', () {
+      test('maps arbitrary coordinates 9.57, 77.96 to nearest supported station Madurai', () {
+        final station = ClimateProvider.findNearestStationName(9.57, 77.96);
+        expect(station, equals('Madurai'));
+      });
+
+      test('maps southern Tamil Nadu coordinates to Tirunelveli', () {
+        final station = ClimateProvider.findNearestStationName(8.71, 77.75);
+        expect(station, equals('Tirunelveli'));
+      });
+
+      test('maps northern/eastern Tamil Nadu coordinates to Chennai', () {
+        final station = ClimateProvider.findNearestStationName(13.08, 80.27);
+        expect(station, equals('Chennai'));
+      });
+
+      test('maps western Tamil Nadu coordinates to Coimbatore', () {
+        final station = ClimateProvider.findNearestStationName(11.01, 76.95);
+        expect(station, equals('Coimbatore'));
+      });
+
+      test('isStationExactMatch accurately detects exact city vs nearest reference', () {
+        const exactLoc = Location(lat: 9.9252, lon: 78.1198, city: 'Madurai');
+        expect(ClimateProvider.isStationExactMatch(exactLoc, 'Madurai'), isTrue);
+
+        const gpsLoc = Location(lat: 9.57, lon: 77.96);
+        expect(ClimateProvider.isStationExactMatch(gpsLoc, 'Madurai'), isFalse);
+      });
+
+      test('syncWithLocation maps live location and loads climate data', () async {
+        final client = MockClient((request) async {
+          return http.Response(
+            jsonEncode(_sampleClimateJson),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        });
+
+        final api = ApiService(baseUrl: 'http://localhost:8000/api/v1', client: client);
+        final provider = ClimateProvider(api: api);
+
+        const liveLoc = Location(lat: 9.57, lon: 77.96);
+        await provider.syncWithLocation(liveLoc);
+
+        expect(provider.activeLocation, equals(liveLoc));
+        expect(provider.selectedLocation, equals('Madurai'));
+        expect(provider.isExactMatch, isFalse);
+        expect(provider.state, equals(ClimateState.success));
+      });
     });
   });
 }

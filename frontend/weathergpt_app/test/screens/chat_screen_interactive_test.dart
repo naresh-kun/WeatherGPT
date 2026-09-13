@@ -14,6 +14,7 @@ import 'package:weathergpt_app/l10n/app_localizations.dart';
 import 'package:weathergpt_app/main.dart';
 import 'package:weathergpt_app/models/chat.dart';
 import 'package:weathergpt_app/models/location.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:weathergpt_app/screens/chat/chat_screen.dart';
 import 'package:weathergpt_app/widgets/chat/forecast_chat_card.dart';
 import 'package:weathergpt_app/widgets/chat/weather_chat_card.dart';
@@ -28,9 +29,17 @@ Widget _createTestApp({Locale locale = const Locale('en')}) {
 }
 
 void main() {
-  setUp(() {
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({});
     chatProvider.setInitialMessages([]);
     chatProvider.dismissError();
+    await locationProvider.setLocation(const Location(
+      lat: 9.9252,
+      lon: 78.1198,
+      city: 'Madurai',
+      country: 'Tamil Nadu',
+      timezone: 'Asia/Kolkata',
+    ));
   });
 
   group('Phase 10 & Cleanup — ChatScreen Startup & Interactive Features', () {
