@@ -434,6 +434,72 @@ abstract class AppLocalizations {
   /// **'Voice input will be available in a future phase.'**
   String get voiceNotAvailable;
 
+  /// No description provided for @voiceListening.
+  ///
+  /// In en, this message translates to:
+  /// **'Listening...'**
+  String get voiceListening;
+
+  /// No description provided for @voiceTapToSpeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to speak'**
+  String get voiceTapToSpeak;
+
+  /// No description provided for @voiceStopListening.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop listening'**
+  String get voiceStopListening;
+
+  /// No description provided for @voiceCancelListening.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get voiceCancelListening;
+
+  /// No description provided for @voiceSpeakResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'Speak response'**
+  String get voiceSpeakResponse;
+
+  /// No description provided for @voiceStopSpeaking.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop speaking'**
+  String get voiceStopSpeaking;
+
+  /// No description provided for @voiceMicPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone permission is required for voice input.'**
+  String get voiceMicPermissionDenied;
+
+  /// No description provided for @voiceUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice input is not available on this device.'**
+  String get voiceUnavailable;
+
+  /// No description provided for @voiceTamilUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Tamil voice input is not supported on this device. You can continue using text chat.'**
+  String get voiceTamilUnavailable;
+
+  /// No description provided for @voiceTtsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice playback is unavailable.'**
+  String get voiceTtsUnavailable;
+
+  /// No description provided for @voiceTtsTamilUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Tamil voice playback is not supported on this device.'**
+  String get voiceTtsTamilUnavailable;
+
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:

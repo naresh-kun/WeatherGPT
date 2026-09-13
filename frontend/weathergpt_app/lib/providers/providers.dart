@@ -6,4 +6,5 @@ export 'weather_provider.dart';
 export 'location_provider.dart';
 export 'chat_provider.dart';
 export 'climate_provider.dart';
+export 'voice_provider.dart';
 

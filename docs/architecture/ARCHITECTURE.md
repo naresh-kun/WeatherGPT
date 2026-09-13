@@ -49,9 +49,11 @@
 
 **Phase 8 Note**: Full bilingual capability (English & Tamil) is implemented across the Flutter frontend and FastAPI backend. The Flutter app uses `LanguageProvider` with `SharedPreferences` persistence and `flutter_localizations` / ARB dictionaries. The backend evaluates Smart Alerts, Advisories, Climate Insights, and Gemini AI Chat in the requested language while strictly preserving meteorological facts and numeric precision.
 
+**Phase 9 Note**: Voice Interaction (STT & TTS) is integrated directly into the chat flow using `speech_to_text: ^7.4.0` and `flutter_tts: ^4.2.5`. Spoken input populates the chat input for user verification, and assistant responses can be spoken aloud in English (`en-US`) or Tamil (`ta-IN`) with graceful fallback.
+
 ---
 
-## 1.1 Phase 8 Architecture (Current)
+## 1.1 Phase 9 Architecture (Current)
 
 ```
 SplashScreen
@@ -59,6 +61,7 @@ SplashScreen
 MainShell (Bottom Navigation — IndexedStack)
      ├── HomeScreen          → WeatherProvider & LocationProvider (Real API Data, Localized)
      ├── ChatScreen          → ChatProvider → POST /api/v1/chat (Bilingual Gemini AI) [REAL — Phase 5 & 8]
+     │                       → VoiceProvider (SpeechService STT & TtsService TTS) [REAL — Phase 9]
      ├── AlertsScreen        → WeatherProvider.alerts (Bilingual Smart Alerts) [REAL — Phase 6 & 8]
      ├── AdvisoryScreen      → WeatherProvider.advisories (Bilingual Advisory Data) [REAL — Phase 6 & 8]
      └── ClimateScreen       → ClimateProvider → GET /api/v1/climate (Bilingual Reference Data) [REAL — Phase 7 & 8]
@@ -68,8 +71,17 @@ Secondary routes (Navigator.push):
      ├── LocationSearchScreen→ LocationProvider (Real API Data)
      └── SettingsScreen      → LanguageProvider (Persistent English/Tamil toggle)
 
-Widget layers:
-     Screens → Reusable Widgets (widgets/) → Providers (providers/) → API Service
+Voice Flow (Phase 9):
+     User speaks ──► SpeechService (STT) ──► VoiceProvider ──► ChatScreen TextField
+                                                                       │
+                                                                       ▼ user taps Send
+                                                                  ChatProvider
+                                                                       │
+                                                                       ▼ POST /api/v1/chat
+                                                                  Gemini 3.7 Flash
+                                                                       │
+                                                                       ▼ assistant response
+     Speaker ◄── TtsService (TTS) ◄── VoiceProvider ◄── ChatBubble [Speak]
 ```
 
 | Component | Status |
@@ -77,13 +89,14 @@ Widget layers:
 | Screens & navigation | **Implemented** |
 | Reusable widgets | **Implemented** |
 | Dart data models | **Implemented** (aligned with API contract) |
-| API service / providers | **Implemented** (wired to backend; ChatProvider, WeatherProvider, ClimateProvider, LanguageProvider) |
+| API service / providers | **Implemented** (wired to backend; ChatProvider, WeatherProvider, ClimateProvider, LanguageProvider, VoiceProvider) |
 | Backend HTTP calls | **Implemented** (Weather/Alerts/Advisory/Location/Chat/Climate) |
 | Real AI chat (Gemini) | **Implemented [Phase 5 & 8]** (Bilingual, weather-grounded) |
 | Real Smart Alert Engine | **Implemented [Phase 6 & 8]** (Deterministic, English & Tamil) |
 | Real Advisory Service | **Implemented [Phase 6 & 8]** (Deterministic templates, English & Tamil) |
 | Real Climate Intelligence | **Implemented [Phase 7 & 8]** (Deterministic calculations, English & Tamil) |
 | Multilingual (Tamil) | **Implemented [Phase 8]** (Full UI + Backend + AI) |
+| Voice Interaction (STT / TTS) | **Implemented [Phase 9]** (`speech_to_text: 7.4.0`, `flutter_tts: 4.2.5`, English & Tamil) |
 
 ---
 

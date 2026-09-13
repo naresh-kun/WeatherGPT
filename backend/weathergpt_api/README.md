@@ -169,7 +169,7 @@ backend/weathergpt_api/
 | GET | `/api/v1/health` | Liveness probe | REAL |
 | GET | `/api/v1/weather/current` | Current weather | REAL |
 | GET | `/api/v1/weather/forecast` | Multi-day forecast | REAL |
-| POST | `/api/v1/chat` | Conversational weather query | REAL |
+| POST | `/api/v1/chat` | Conversational weather query (text & Phase 9 voice pipeline) | REAL |
 | GET | `/api/v1/alerts` | Active weather alerts | REAL |
 | GET | `/api/v1/advisory` | Weather-based advisories | REAL |
 | GET | `/api/v1/climate` | Historical climate intelligence & analysis | REAL (Reference Data) |

@@ -16,7 +16,28 @@ A conversational weather intelligence prototype providing real-time weather data
 | Phase 6 | **Complete** | Smart Alerts & Advisories Engine (Deterministic, rule-based) |
 | Phase 7 | **Complete** | Climate Intelligence (Deterministic trends, baselines, anomalies, reference data) |
 | Phase 8 | **Complete** | Multilingual Support (English & Tamil across UI, Backend, Alerts, Advisories, Climate, Gemini Chat) |
-| Phase 9 | Planned | Voice (STT/TTS) |
+| Phase 9 | **Complete** | Voice Interaction (Speech-to-Text via `speech_to_text`, Text-to-Speech via `flutter_tts`, English & Tamil) |
+
+### Phase 9 — Voice Interaction (English & Tamil STT / TTS) Status
+
+WeatherGPT features full voice interaction integrated directly into the conversational chat pipeline without changing prior phase behavior:
+
+- **Speech-to-Text (STT) [REAL — Phase 9]**:
+  - Powered by `speech_to_text: ^7.4.0`.
+  - Mic button in chat input bar activates listening mode with live text population in the input field.
+  - User can review/edit recognized text before sending (no forced auto-send).
+  - Explicit stop and cancel controls.
+- **Text-to-Speech (TTS) [REAL — Phase 9]**:
+  - Powered by `flutter_tts: ^4.2.5`.
+  - Each assistant chat bubble provides a clean `[🔊 Speak]` / `[Stop]` toggle button.
+  - Automatically cleans Markdown syntax (asterisks, headings, links) for conversational audio clarity.
+  - Automatically stops TTS when navigating away or initiating new voice input.
+- **English & Tamil Voice Support [REAL — Phase 9]**:
+  - Automatically aligns with the Phase 8 active language state (`en` → `en-US`, `ta` → `ta-IN`).
+  - Fallback handling: If a device lacks Tamil voice recognition or synthesis, a clear banner/SnackBar is displayed while Tamil text chat remains 100% operational.
+- **Android Permissions [REAL — Phase 9]**:
+  - Added `android.permission.RECORD_AUDIO` and `RecognitionService` queries in `AndroidManifest.xml`.
+  - Permission is requested only when the user explicitly taps the microphone button.
 
 ### Phase 8 — Multilingual (English & Tamil) Support Status
 
@@ -46,7 +67,7 @@ The Flutter application (`frontend/weathergpt_app/`) and FastAPI backend (`backe
 - **Weather Advisory System**: **[REAL — Phase 6 & 8]** (Rule-based templates, English & Tamil)
 - **Climate Historical Trends**: **[REAL — Phase 7 & 8]** (Deterministic calculations, English & Tamil)
 - **Tamil Localization**: **[REAL — Phase 8]**
-- **Speech-to-Text / Voice**: **[PLANNED — Phase 9]**
+- **Speech-to-Text / Voice (STT & TTS)**: **[REAL — Phase 9]** (English & Tamil with graceful fallback)
 
 ---
 
@@ -182,9 +203,9 @@ See [`docs/architecture/ARCHITECTURE.md`](docs/architecture/ARCHITECTURE.md) for
 | Weather Advisories Engine | ✅ **REAL** — Phase 6 Complete (Bilingual in Phase 8) |
 | Climate Intelligence & Reference Data | ✅ **REAL** — Phase 7 Complete (Bilingual in Phase 8) |
 | Localization (Tamil) | ✅ **REAL** — Phase 8 Complete |
-| Voice Interaction | 🚧 Planned — Phase 9 |
+| Voice Interaction (STT & TTS) | ✅ **REAL** — Phase 9 Complete (`speech_to_text: 7.4.0`, `flutter_tts: 4.2.5`) |
 
-**Important Note**: Weather, Forecast, Alerts, Advisories, AI Chat, Climate Intelligence, and Multilingual Support (English/Tamil) are fully integrated with live backend and reference data. Future phase will introduce voice interaction (Phase 9).
+**Important Note**: Weather, Forecast, Alerts, Advisories, AI Chat, Climate Intelligence, Multilingual Support (English/Tamil), and Voice Interaction (STT & TTS) are fully implemented and verified.
 
 ---
 

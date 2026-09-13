@@ -6,7 +6,7 @@
 
 This document is the single source of truth for the integration boundary between the Flutter frontend and the FastAPI backend. Both developers must agree before making any changes.
 
-> **Frontend integration status (Phase 4+5)**: Weather endpoints fully integrated. Chat endpoint integrated as of Phase 5.
+> **Frontend integration status (Phase 4+5+9)**: Weather endpoints fully integrated. Chat endpoint integrated as of Phase 5. Phase 9 adds Speech-to-Text (STT) and Text-to-Speech (TTS) on the client, reusing the existing `POST /chat` pipeline for both English and Tamil.
 > **Backend implementation status (Phase 3+5)**: Weather endpoints (`/current`, `/forecast`, `/hourly`, `/search`, `/alerts`) are fully implemented. **`POST /chat` is real as of Phase 5** — powered by Google Gemini 3.7 Flash with real weather grounding.
 
 ---
@@ -258,7 +258,9 @@ Searches for locations by name, returning coordinates.
 > **Implementation status**: **[REAL — Phase 5]** — powered by Google Gemini 3.7 Flash grounded in real-time WeatherAPI data. The Gemini API key is backend-only and never exposed to the client.
 
 ### Purpose
-Accepts a natural-language weather query from the user, fetches real-time weather for the provided location via WeatherService, and generates a conversational AI response via Google Gemini.
+Submit a natural-language query to WeatherGPT. The backend grounds the response in real-time weather data for the specified location and generates an answer using Google Gemini 3.7 Flash.
+
+> **Phase 9 Voice Integration**: The client integrates voice input (STT via `speech_to_text`) to populate the user message query, and voice playback (TTS via `flutter_tts`) on the assistant response. The request payload and backend API contract remain unchanged. For Tamil queries, `language: "ta"` is passed and Gemini generates factual Tamil responses, which are read aloud via Tamil TTS (`ta-IN`) on supported devices.
 
 ### HTTP Method
 `POST`

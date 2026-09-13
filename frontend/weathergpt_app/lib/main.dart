@@ -9,6 +9,7 @@ import 'package:weathergpt_app/providers/location_provider.dart';
 import 'package:weathergpt_app/providers/chat_provider.dart';
 import 'package:weathergpt_app/providers/climate_provider.dart';
 import 'package:weathergpt_app/providers/language_provider.dart';
+import 'package:weathergpt_app/providers/voice_provider.dart';
 
 /// Global providers — lightweight approach without a DI framework.
 /// Shared across all screens via InheritedWidget-style accessor.
@@ -17,6 +18,7 @@ final locationProvider = LocationProvider();
 final chatProvider = ChatProvider(); // Phase 5: real Gemini-backed chat
 final climateProvider = ClimateProvider(); // Phase 7: deterministic climate intelligence
 final languageProvider = LanguageProvider(); // Phase 8: multilingual support
+final voiceProvider = VoiceProvider(); // Phase 9: speech-to-text & text-to-speech
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

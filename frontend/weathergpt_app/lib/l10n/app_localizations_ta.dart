@@ -186,6 +186,42 @@ class AppLocalizationsTa extends AppLocalizations {
       'குரல் உள்ளீடு எதிர்கால கட்டத்தில் கிடைக்கும்.';
 
   @override
+  String get voiceListening => 'கேட்கிறது...';
+
+  @override
+  String get voiceTapToSpeak => 'பேச தட்டவும்';
+
+  @override
+  String get voiceStopListening => 'கேட்பதை நிறுத்து';
+
+  @override
+  String get voiceCancelListening => 'ரத்துசெய்';
+
+  @override
+  String get voiceSpeakResponse => 'பதிலை வாசி';
+
+  @override
+  String get voiceStopSpeaking => 'பேசுவதை நிறுத்து';
+
+  @override
+  String get voiceMicPermissionDenied =>
+      'குரல் உள்ளீட்டிற்கு மைக்ரோஃபோன் அனுமதி தேவை.';
+
+  @override
+  String get voiceUnavailable => 'இந்த சாதனத்தில் குரல் உள்ளீடு கிடைக்கவில்லை.';
+
+  @override
+  String get voiceTamilUnavailable =>
+      'இந்த சாதனத்தில் தமிழ் குரல் உள்ளீடு ஆதரிக்கப்படவில்லை. நீங்கள் உரை அரட்டையைப் பயன்படுத்தலாம்.';
+
+  @override
+  String get voiceTtsUnavailable => 'குரல் பின்னணி கிடைக்கவில்லை.';
+
+  @override
+  String get voiceTtsTamilUnavailable =>
+      'இந்த சாதனத்தில் தமிழ் குரல் பின்னணி ஆதரிக்கப்படவில்லை.';
+
+  @override
   String get settingsTitle => 'அமைப்புகள்';
 
   @override

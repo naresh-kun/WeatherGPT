@@ -3,9 +3,16 @@ import 'package:weathergpt_app/core/theme/app_theme.dart';
 import 'package:weathergpt_app/models/chat.dart';
 
 class ChatBubble extends StatelessWidget {
-  const ChatBubble({super.key, required this.message});
+  const ChatBubble({
+    super.key,
+    required this.message,
+    this.onSpeak,
+    this.isSpeaking = false,
+  });
 
   final ChatMessage message;
+  final VoidCallback? onSpeak;
+  final bool isSpeaking;
 
   bool get isUser => message.role == ChatRole.user;
 
@@ -50,7 +57,7 @@ class ChatBubble extends StatelessWidget {
           children: [
             if (!isUser)
               Padding(
-                padding: const EdgeInsets.only(bottom: 4),
+                padding: const EdgeInsets.only(bottom: 6),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -68,6 +75,35 @@ class ChatBubble extends StatelessWidget {
                         color: AppColors.primary.withValues(alpha: 0.8),
                       ),
                     ),
+                    if (onSpeak != null) ...[
+                      const SizedBox(width: 10),
+                      InkWell(
+                        onTap: onSpeak,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                isSpeaking ? Icons.volume_up : Icons.volume_up_outlined,
+                                size: 14,
+                                color: isSpeaking ? AppColors.primary : AppColors.textSecondary,
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                isSpeaking ? 'Stop' : 'Speak',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: isSpeaking ? AppColors.primary : AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

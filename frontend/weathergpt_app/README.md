@@ -2,7 +2,7 @@
 
 Conversational weather intelligence UI for the WeatherGPT SIH prototype.
 
-**Phase 4 status**: UI integrated with FastAPI backend. Real weather data is fetched for Home, Forecast, Alerts, and Location Search. Advanced AI features (Chat, Climate, Advisory) remain mocked pending later phases.
+**Phase 9 status**: UI integrated with FastAPI backend (Weather, Forecast, Alerts, Location Search, Gemini 3.7 Flash Chat, Advisories, Climate Intelligence, and English/Tamil Multilingual). **Phase 9 adds Voice Interaction**: Speech-to-Text (STT) and Text-to-Speech (TTS) supporting English and Tamil.
 
 ---
 
@@ -12,12 +12,12 @@ Conversational weather intelligence UI for the WeatherGPT SIH prototype.
 |---|---|---|
 | Splash | `/` (initial) | Branding screen with 2-second transition to main app |
 | Home | Bottom nav tab | Dashboard with real current weather, metrics, hourly/daily preview, suggestions, active alerts preview |
-| WeatherGPT Chat | Bottom nav tab | Conversational UI with mock AI responses (Phase 5) |
+| WeatherGPT Chat | Bottom nav tab | Conversational UI with Gemini 3.7 Flash AI, Tamil/English support, and voice input/output (Phase 9) |
 | Forecast | `/forecast` (from Home) | Full real hourly forecast, 7-day forecast, temperature chart |
 | Alerts | Bottom nav tab | Real weather alerts dashboard with severity indicators |
-| Advisory | Bottom nav tab | Category cards (Farming, Travel, Outdoor, Driving) with detail views (Mocked) |
-| Climate | Bottom nav tab | Historical temperature/rainfall charts with time range selector (Mocked) |
-| Settings | `/settings` (from Home app bar) | Location, language, notifications, voice, units, about |
+| Advisory | Bottom nav tab | Category cards with detail views (Deterministic, bilingual) |
+| Climate | Bottom nav tab | Historical temperature/rainfall charts with deterministic insight analysis |
+| Settings | `/settings` (from Home app bar) | Location, language (EN/TA), notifications, voice, units, about |
 | Location Search | `/location-search` (from Home) | Real backend-powered city search & GPS |
 
 ---
@@ -41,33 +41,31 @@ Conversational weather intelligence UI for the WeatherGPT SIH prototype.
 | `WeatherMetricCard` / `WeatherMetricGrid` | `widgets/weather/` | Quick metric cards (humidity, wind, rain, UV) |
 | `HourlyForecastItem` / `DailyForecastCard` | `widgets/weather/` | Forecast list items |
 | `TemperatureChart` | `widgets/weather/` | Hourly temperature line chart |
-| `ChatBubble` | `widgets/chat/` | User/AI message bubbles |
+| `ChatBubble` | `widgets/chat/` | User/AI message bubbles with Speak/Stop audio action (Phase 9) |
 | `AlertCard` | `widgets/alerts/` | Alert card with severity styling |
 | `AdvisoryCategoryCard` / `AdvisoryDetailCard` | `widgets/advisory/` | Advisory category and detail views |
 | `ClimateLineChart` / `RainfallChart` | `widgets/climate/` | Climate trend charts |
 | `CommonCard` | `widgets/common/` | Shared card container |
 | `SectionHeader` | `widgets/common/` | Section title with optional action |
 | `SuggestionChip` | `widgets/common/` | Tappable suggestion chips |
-| `LoadingWidget` | `widgets/common/` | Loading state (demo on Alerts screen) |
+| `LoadingWidget` | `widgets/common/` | Loading state |
 | `ErrorDisplayWidget` | `widgets/common/` | Error state with optional retry |
 | `EmptyStateWidget` | `widgets/common/` | Empty data state |
 
 ---
 
-## Data Approach (Phase 4)
+## Voice Interaction (Phase 9)
 
-- **Real Data (Weather, Forecast, Alerts, Location)**: Providers (`WeatherProvider`, `LocationProvider`) communicate with `ApiService` to fetch live data from the FastAPI backend.
-- **Mock Data (Chat, Advisory, Climate)**: Remaining features read from `lib/data/mock_data.dart` until their respective backend services are built.
-
----
-
-## Current Limitations
-
-- **No LLM** — chat responses are keyword-matched mock replies
-- **No real advisory logic** — advisories are pre-written examples
-- **No real climate processing** — charts use static historical mock data
-- **No Tamil localization** — language selector is UI-only
-- **No STT/TTS** — microphone button shows a placeholder snackbar
+- **Speech-to-Text (STT)**: `speech_to_text: ^7.4.0`
+  - Input field mic button activates listening state.
+  - Partial recognized speech streams into the chat TextField for review/edit before sending.
+  - Cancel & stop controls.
+- **Text-to-Speech (TTS)**: `flutter_tts: ^4.2.5`
+  - Assistant bubbles feature a Speak/Stop toggle.
+  - Cleans Markdown formatting before passing text to the TTS engine.
+- **Languages**: English (`en-US`) and Tamil (`ta-IN`).
+  - Graceful fallback with user-friendly error banners if a device lacks Tamil voice capabilities.
+- **Android Permissions**: `android.permission.RECORD_AUDIO`. Requested only on user interaction.
 
 ---
 
@@ -79,7 +77,9 @@ Conversational weather intelligence UI for the WeatherGPT SIH prototype.
 | `cupertino_icons` | iOS-style icons |
 | `http` | Backend API communication |
 | `geolocator` | GPS coordinates |
-| `shared_preferences` | Local storage (selected city) |
+| `shared_preferences` | Local storage (selected city, language preference) |
+| `speech_to_text` | Speech recognition for voice input (Phase 9) |
+| `flutter_tts` | Text-to-speech for assistant response playback (Phase 9) |
 
 ---
 

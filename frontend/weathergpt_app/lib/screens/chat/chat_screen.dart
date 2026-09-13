@@ -6,7 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:weathergpt_app/core/theme/app_theme.dart';
 import 'package:weathergpt_app/data/mock_data.dart';
 import 'package:weathergpt_app/l10n/app_localizations.dart';
-import 'package:weathergpt_app/main.dart' show chatProvider, locationProvider, languageProvider;
+import 'package:weathergpt_app/main.dart'
+    show chatProvider, locationProvider, languageProvider, voiceProvider;
+import 'package:weathergpt_app/models/chat.dart';
 import 'package:weathergpt_app/widgets/chat/chat_widgets.dart';
 import 'package:weathergpt_app/widgets/common/common_widgets.dart';
 
@@ -41,6 +43,7 @@ class _ChatScreenState extends State<ChatScreen> {
     chatProvider.addListener(_onChatUpdate);
     locationProvider.addListener(_onChatUpdate);
     languageProvider.addListener(_onChatUpdate);
+    voiceProvider.addListener(_onChatUpdate);
 
     if (widget.initialMessage != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -52,9 +55,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
+    voiceProvider.stopSpeaking();
+    voiceProvider.cancelListening();
     chatProvider.removeListener(_onChatUpdate);
     locationProvider.removeListener(_onChatUpdate);
     languageProvider.removeListener(_onChatUpdate);
+    voiceProvider.removeListener(_onChatUpdate);
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -80,6 +86,14 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _sendMessage([String? text]) async {
+    // If voice is currently listening or speaking, stop them
+    if (voiceProvider.isListening) {
+      await voiceProvider.stopListening();
+    }
+    if (voiceProvider.isSpeaking) {
+      await voiceProvider.stopSpeaking();
+    }
+
     final message = (text ?? _controller.text).trim();
     if (message.isEmpty) return; // spec: do not send empty messages
 
@@ -91,14 +105,41 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  void _onVoiceTap() {
+  Future<void> _onVoiceTap() async {
     final l10n = AppLocalizations.of(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(l10n?.voiceNotAvailable ?? 'Voice input will be available in a future phase.'),
-        duration: const Duration(seconds: 2),
-      ),
+    if (voiceProvider.isListening) {
+      await voiceProvider.stopListening();
+      return;
+    }
+
+    final ok = await voiceProvider.startListening(
+      languageCode: languageProvider.languageCode,
+      onWordsUpdated: (words) {
+        if (mounted) {
+          _controller.text = words;
+          _controller.selection = TextSelection.fromPosition(
+            TextPosition(offset: _controller.text.length),
+          );
+        }
+      },
     );
+
+    if (!ok && mounted && voiceProvider.voiceError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(voiceProvider.voiceError!),
+          duration: const Duration(seconds: 4),
+          action: SnackBarAction(
+            label: l10n?.dismiss ?? 'Dismiss',
+            onPressed: () => voiceProvider.dismissError(),
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _cancelListening() async {
+    await voiceProvider.cancelListening();
   }
 
   @override
@@ -134,6 +175,13 @@ class _ChatScreenState extends State<ChatScreen> {
               onDismiss: () => chatProvider.dismissError(),
             ),
 
+          // Voice error banner
+          if (voiceProvider.voiceError != null)
+            _VoiceErrorBanner(
+              message: voiceProvider.voiceError!,
+              onDismiss: () => voiceProvider.dismissError(),
+            ),
+
           // Message list
           Expanded(
             child: ListView.builder(
@@ -158,7 +206,21 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   );
                 }
-                return ChatBubble(message: messages[index]);
+                final message = messages[index];
+                final messageId = 'msg_${message.timestamp}_$index';
+                return ChatBubble(
+                  message: message,
+                  isSpeaking: voiceProvider.isSpeaking && voiceProvider.activeSpeakingId == messageId,
+                  onSpeak: message.role == ChatRole.assistant
+                      ? () {
+                          voiceProvider.speak(
+                            message.content,
+                            languageCode: languageProvider.languageCode,
+                            messageId: messageId,
+                          );
+                        }
+                      : null,
+                );
               },
             ),
           ),
@@ -190,41 +252,85 @@ class _ChatScreenState extends State<ChatScreen> {
               AppDimensions.paddingMedium,
               AppDimensions.paddingMedium,
             ),
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
-              border: Border(top: BorderSide(color: AppColors.divider)),
+            decoration: BoxDecoration(
+              color: voiceProvider.isListening
+                  ? AppColors.primary.withValues(alpha: 0.05)
+                  : AppColors.surface,
+              border: const Border(top: BorderSide(color: AppColors.divider)),
             ),
             child: SafeArea(
               top: false,
-              child: Row(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      decoration: InputDecoration(
-                        hintText: l10n?.askWeatherHint ?? 'Ask about the weather...',
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                  if (voiceProvider.isListening)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.graphic_eq, size: 16, color: AppColors.primary),
+                          const SizedBox(width: 6),
+                          Text(
+                            l10n?.voiceListening ?? 'Listening...',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          const Spacer(),
+                          TextButton(
+                            onPressed: _cancelListening,
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            child: Text(
+                              l10n?.voiceCancelListening ?? 'Cancel',
+                              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            ),
+                          ),
+                        ],
                       ),
-                      textInputAction: TextInputAction.send,
-                      onSubmitted: isLoading ? null : (_) => _sendMessage(),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.mic, color: AppColors.primary),
-                    onPressed: _onVoiceTap,
-                    tooltip: 'Voice input',
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: isLoading ? AppColors.divider : AppColors.primary,
-                      shape: BoxShape.circle,
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.send, color: Colors.white),
-                      onPressed: isLoading ? null : () => _sendMessage(),
-                      tooltip: 'Send',
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _controller,
+                          decoration: InputDecoration(
+                            hintText: voiceProvider.isListening
+                                ? (l10n?.voiceListening ?? 'Listening...')
+                                : (l10n?.askWeatherHint ?? 'Ask about the weather...'),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                          ),
+                          textInputAction: TextInputAction.send,
+                          onSubmitted: isLoading ? null : (_) => _sendMessage(),
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          voiceProvider.isListening ? Icons.stop_circle : Icons.mic,
+                          color: voiceProvider.isListening ? Colors.red : AppColors.primary,
+                        ),
+                        onPressed: _onVoiceTap,
+                        tooltip: voiceProvider.isListening
+                            ? (l10n?.voiceStopListening ?? 'Stop listening')
+                            : (l10n?.voiceTapToSpeak ?? 'Voice input'),
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: isLoading ? AppColors.divider : AppColors.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.send, color: Colors.white),
+                          onPressed: isLoading ? null : () => _sendMessage(),
+                          tooltip: 'Send',
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -274,6 +380,49 @@ class _ErrorBanner extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.close, size: 18, color: Colors.red),
+            onPressed: onDismiss,
+            tooltip: l10n?.dismiss ?? 'Dismiss',
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Voice Error Banner Widget
+// ---------------------------------------------------------------------------
+
+class _VoiceErrorBanner extends StatelessWidget {
+  const _VoiceErrorBanner({
+    required this.message,
+    required this.onDismiss,
+  });
+
+  final String message;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: Colors.amber.shade50,
+      child: Row(
+        children: [
+          const Icon(Icons.mic_off_outlined, color: Colors.amber, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(color: Colors.amber.shade900, fontSize: 13),
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.close, size: 18, color: Colors.amber.shade900),
             onPressed: onDismiss,
             tooltip: l10n?.dismiss ?? 'Dismiss',
             padding: EdgeInsets.zero,

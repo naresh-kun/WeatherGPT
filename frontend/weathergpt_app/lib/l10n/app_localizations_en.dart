@@ -192,6 +192,42 @@ class AppLocalizationsEn extends AppLocalizations {
       'Voice input will be available in a future phase.';
 
   @override
+  String get voiceListening => 'Listening...';
+
+  @override
+  String get voiceTapToSpeak => 'Tap to speak';
+
+  @override
+  String get voiceStopListening => 'Stop listening';
+
+  @override
+  String get voiceCancelListening => 'Cancel';
+
+  @override
+  String get voiceSpeakResponse => 'Speak response';
+
+  @override
+  String get voiceStopSpeaking => 'Stop speaking';
+
+  @override
+  String get voiceMicPermissionDenied =>
+      'Microphone permission is required for voice input.';
+
+  @override
+  String get voiceUnavailable => 'Voice input is not available on this device.';
+
+  @override
+  String get voiceTamilUnavailable =>
+      'Tamil voice input is not supported on this device. You can continue using text chat.';
+
+  @override
+  String get voiceTtsUnavailable => 'Voice playback is unavailable.';
+
+  @override
+  String get voiceTtsTamilUnavailable =>
+      'Tamil voice playback is not supported on this device.';
+
+  @override
   String get settingsTitle => 'Settings';
 
   @override
