@@ -5,11 +5,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install system dependencies (curl used for HEALTHCHECK)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
 # Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
@@ -27,9 +22,9 @@ ENV PORT=8000
 
 EXPOSE 8000
 
-# Container liveness probe — hits /api/v1/health every 30 s
+# Container liveness probe — hits /api/v1/health using Python stdlib (no external dependencies needed)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-    CMD curl -f http://localhost:${PORT}/api/v1/health || exit 1
+    CMD python -c "import urllib.request, os; urllib.request.urlopen('http://localhost:' + os.environ.get('PORT', '8000') + '/api/v1/health')" || exit 1
 
 # Bind to 0.0.0.0:$PORT using shell expansion for Railway dynamic PORT
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]
