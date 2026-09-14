@@ -179,9 +179,9 @@ class _ClimateScreenState extends State<ClimateScreen> {
                     children: [
                       const Icon(Icons.my_location, color: AppColors.primary, size: 18),
                       const SizedBox(width: 8),
-                      const Text(
-                        'Active Location: ',
-                        style: TextStyle(
+                      Text(
+                        '${l10n?.activeLocation ?? 'Active Location'}: ',
+                        style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textSecondary,

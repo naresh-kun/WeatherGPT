@@ -53,7 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _refresh() async {
     final loc = locationProvider.selectedLocation;
-    await weatherProvider.loadWeather(loc.lat, loc.lon, language: languageProvider.languageCode);
+    await weatherProvider.refresh(loc.lat, loc.lon, language: languageProvider.languageCode);
   }
 
   Future<void> _openLocationSearch() async {

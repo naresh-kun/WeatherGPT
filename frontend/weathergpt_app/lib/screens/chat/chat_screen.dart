@@ -46,8 +46,24 @@ class _ChatScreenState extends State<ChatScreen> {
     if (widget.initialMessage != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _controller.text = widget.initialMessage!;
+        _controller.selection = TextSelection.fromPosition(
+          TextPosition(offset: _controller.text.length),
+        );
         widget.onInitialMessageConsumed?.call();
       });
+    }
+  }
+
+  @override
+  void didUpdateWidget(ChatScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialMessage != null &&
+        widget.initialMessage != oldWidget.initialMessage) {
+      _controller.text = widget.initialMessage!;
+      _controller.selection = TextSelection.fromPosition(
+        TextPosition(offset: _controller.text.length),
+      );
+      widget.onInitialMessageConsumed?.call();
     }
   }
 

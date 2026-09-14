@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:weathergpt_app/core/theme/app_theme.dart';
-import 'package:weathergpt_app/data/mock_data.dart';
 import 'package:weathergpt_app/l10n/app_localizations.dart';
 import 'package:weathergpt_app/models/advisory.dart';
 import 'package:weathergpt_app/widgets/common/common_card.dart';
@@ -15,7 +14,7 @@ class AdvisoryCard extends StatelessWidget {
   final WeatherAdvisory advisory;
   final VoidCallback? onTap;
 
-  Color _colorForCategory(AdvisoryCategory cat) {
+  static Color _colorForCategory(AdvisoryCategory cat) {
     switch (cat) {
       case AdvisoryCategory.health:
         return Colors.orange.shade700;
@@ -23,13 +22,16 @@ class AdvisoryCard extends StatelessWidget {
         return Colors.blue.shade600;
       case AdvisoryCategory.travel:
         return Colors.purple.shade600;
+      case AdvisoryCategory.farming:
+        return Colors.green.shade700;
+      case AdvisoryCategory.driving:
+        return Colors.indigo.shade600;
       case AdvisoryCategory.general:
-      default:
         return AppColors.primary;
     }
   }
 
-  IconData _iconForCategory(AdvisoryCategory cat) {
+  static IconData _iconForCategory(AdvisoryCategory cat) {
     switch (cat) {
       case AdvisoryCategory.health:
         return Icons.health_and_safety_outlined;
@@ -37,13 +39,16 @@ class AdvisoryCard extends StatelessWidget {
         return Icons.directions_run;
       case AdvisoryCategory.travel:
         return Icons.flight_takeoff;
+      case AdvisoryCategory.farming:
+        return Icons.agriculture;
+      case AdvisoryCategory.driving:
+        return Icons.directions_car;
       case AdvisoryCategory.general:
-      default:
         return Icons.info_outline;
     }
   }
 
-  String _labelForCategory(BuildContext context, AdvisoryCategory cat) {
+  static String _labelForCategory(BuildContext context, AdvisoryCategory cat) {
     final l10n = AppLocalizations.of(context);
     switch (cat) {
       case AdvisoryCategory.health:
@@ -174,10 +179,19 @@ class AdvisoryCategoryCard extends StatelessWidget {
   final AdvisoryCategory category;
   final VoidCallback onTap;
 
+  static const Map<AdvisoryCategory, String> _categoryEmojis = {
+    AdvisoryCategory.farming: '🌾',
+    AdvisoryCategory.travel: '🚗',
+    AdvisoryCategory.health: '🩺',
+    AdvisoryCategory.outdoor: '🏃',
+    AdvisoryCategory.driving: '🚙',
+    AdvisoryCategory.general: '📋',
+  };
+
   @override
   Widget build(BuildContext context) {
-    final emoji = MockData.advisoryCategoryEmojis[category] ?? '📋';
-    final label = MockData.advisoryCategoryLabels[category] ?? category.name;
+    final emoji = _categoryEmojis[category] ?? '📋';
+    final label = AdvisoryCard._labelForCategory(context, category);
 
     return CommonCard(
       onTap: onTap,

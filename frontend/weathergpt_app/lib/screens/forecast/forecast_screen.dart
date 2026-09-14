@@ -43,7 +43,7 @@ class _ForecastScreenState extends State<ForecastScreen> {
 
   Future<void> _refresh() async {
     final loc = locationProvider.selectedLocation;
-    await weatherProvider.loadWeather(
+    await weatherProvider.refresh(
       loc.lat,
       loc.lon,
       language: languageProvider.languageCode,

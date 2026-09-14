@@ -4,6 +4,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:weathergpt_app/core/theme/app_theme.dart';
+import 'package:weathergpt_app/l10n/app_localizations.dart';
 import 'package:weathergpt_app/models/location.dart';
 import 'package:weathergpt_app/providers/location_provider.dart';
 
@@ -63,9 +64,10 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Search Location'),
+        title: Text(l10n?.changeLocation ?? 'Search Location'),
         actions: [
           IconButton(
             icon: _loc.gpsLoading
@@ -75,7 +77,7 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.my_location),
-            tooltip: 'Use current location',
+            tooltip: l10n?.useCurrentLocation ?? 'Use current location',
             onPressed: _loc.gpsLoading ? null : _useCurrentLocation,
           ),
         ],
@@ -123,10 +125,10 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
                                 child: CircularProgressIndicator(strokeWidth: 2),
                               )
                             : const Icon(Icons.my_location, color: AppColors.primary),
-                        title: const Text('Use current location'),
+                        title: Text(l10n?.useCurrentLocation ?? 'Use current location'),
                         subtitle: Text(
                           _loc.selectedLocation.displayName.isNotEmpty
-                              ? 'Active: ${_loc.selectedLocation.displayName}'
+                              ? '${l10n?.activeLocation ?? 'Active'}: ${_loc.selectedLocation.displayName}'
                               : 'Fetch current GPS position',
                         ),
                         onTap: _loc.gpsLoading ? null : _useCurrentLocation,

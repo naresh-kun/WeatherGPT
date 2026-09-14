@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:weathergpt_app/core/theme/app_theme.dart';
+import 'package:weathergpt_app/l10n/app_localizations.dart';
 import 'package:weathergpt_app/models/chat.dart';
 import 'package:weathergpt_app/widgets/chat/weather_chat_card.dart';
 import 'package:weathergpt_app/widgets/chat/forecast_chat_card.dart';
@@ -20,6 +21,7 @@ class ChatBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -94,7 +96,9 @@ class ChatBubble extends StatelessWidget {
                               ),
                               const SizedBox(width: 3),
                               Text(
-                                isSpeaking ? 'Stop' : 'Speak',
+                                isSpeaking
+                                    ? (l10n?.voiceStopSpeaking ?? 'Stop')
+                                    : (l10n?.voiceSpeakResponse ?? 'Speak'),
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,

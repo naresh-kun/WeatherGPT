@@ -47,7 +47,7 @@ class _AdvisoryScreenState extends State<AdvisoryScreen> {
 
   Future<void> _refresh() async {
     final loc = locationProvider.selectedLocation;
-    await weatherProvider.loadWeather(
+    await weatherProvider.refresh(
       loc.lat,
       loc.lon,
       language: languageProvider.languageCode,
@@ -196,6 +196,7 @@ class _AdvisoryScreenState extends State<AdvisoryScreen> {
   Widget _buildCategoryFilters(AppLocalizations? l10n) {
     const filterCategories = [
       null,
+      AdvisoryCategory.farming,
       AdvisoryCategory.health,
       AdvisoryCategory.outdoor,
       AdvisoryCategory.travel,
