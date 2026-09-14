@@ -83,22 +83,38 @@ Conversational weather intelligence UI for the WeatherGPT SIH prototype.
 
 ---
 
-## How to Run
+## How to Run & Build
 
+### Local Development (Debug Mode)
 ```bash
 cd frontend/weathergpt_app
 flutter pub get
 flutter run
 ```
+*Note*: Connects to local FastAPI backend (`http://127.0.0.1:8000/api/v1` or `10.0.2.2:8000` on Android emulator). Cleartext traffic is enabled exclusively in debug builds.
 
-**Note**: To see real weather data, you must have the FastAPI backend running (`cd backend/weathergpt_api && uvicorn app.main:app --reload`). The app defaults to connecting to `10.0.2.2:8000` (for Android emulators) or `localhost:8000` (for web/desktop).
+### Production Release APK Build (Phase 12)
+```bash
+cd frontend/weathergpt_app
+flutter build apk --release --dart-define=API_BASE_URL=https://weathergpt-production-84b3.up.railway.app/api/v1
+```
+*Output*: `build/app/outputs/flutter-apk/app-release.apk` (~51.8 MB).  
+*Security*: Enforces HTTPS traffic to Railway backend, zero API keys bundled, keystore passwords protected via local `key.properties`.
+
+### Testing APK on Device / Emulator
+```bash
+# Install to running emulator / device
+adb install -r build/app/outputs/flutter-apk/app-release.apk
+
+# Launch
+adb shell am start -n com.weathergpt.weathergpt_app/com.weathergpt.weathergpt_app.MainActivity
+```
 
 ### Verification commands
 
 ```bash
-flutter analyze    # Static analysis
-flutter test       # Unit and Widget tests
-flutter build apk  # Build Android APK
+flutter analyze    # Static analysis (clean)
+flutter test       # Unit and Widget tests (171 tests passed)
 ```
 
 ---

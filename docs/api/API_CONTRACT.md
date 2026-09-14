@@ -1,6 +1,6 @@
 # WeatherGPT — REST API Contract
 
-**Version**: 0.11.0  
+**Version**: 0.12.0  
 **Development Base URL**: `http://localhost:8000/api/v1`  
 **Production Base URL**: `https://weathergpt-production-84b3.up.railway.app/api/v1`  
 **Production Health**: `https://weathergpt-production-84b3.up.railway.app/api/v1/health`  
@@ -8,8 +8,9 @@
 
 This document is the single source of truth for the integration boundary between the Flutter frontend and the FastAPI backend. Both developers must agree before making any changes.
 
+> **Android Production Release (Phase 12)**: Release APK connects directly to Railway HTTPS endpoint `https://weathergpt-production-84b3.up.railway.app/api/v1` with zero cleartext traffic in release mode. Verified across all core features (Home, Chat, Alerts, Advisory, Climate, Settings, Voice, and Tamil).
 > **Production Deployment Status (Phase 11)**: Backend is live on Railway at `https://weathergpt-production-84b3.up.railway.app`. All endpoints are operational over HTTPS. Flutter `AppConfig` connects directly to this production endpoint in release mode.
-> **Frontend integration status (Phase 4+5+9+10+11)**: Weather, Alerts, Advisory, Climate, and Chat endpoints fully integrated. Speech-to-Text (STT) and Text-to-Speech (TTS) enabled on client, supporting both English and Tamil.
+> **Frontend integration status (Phase 4+5+9+10+11+12)**: Weather, Alerts, Advisory, Climate, and Chat endpoints fully integrated. Speech-to-Text (STT) and Text-to-Speech (TTS) enabled on client, supporting both English and Tamil.
 > **Backend implementation status (Phase 3+5+6+7+8+10+11)**: All endpoints are REAL. Chat is powered by Google Gemini 3.7 Flash with Gemini 3.6 Flash fallback and real weather grounding. Smart Alert and Advisory engines are deterministic. Climate data is analyzed from bundled dataset.
 
 ---

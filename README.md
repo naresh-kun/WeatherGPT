@@ -19,6 +19,40 @@ A conversational weather intelligence prototype providing real-time weather data
 | Phase 9 | **Complete** | Voice Interaction (Speech-to-Text via `speech_to_text`, Text-to-Speech via `flutter_tts`, English & Tamil) |
 | Phase 10 | **Complete** | Interactive Chat, AI Fallback & Reliability (Weather cards, Quick Actions, Dual-Model Gemini Fallback, 60s Timeout) |
 | Phase 11 | **Complete** | Backend Deployment (Railway HTTPS deployment, containerized Docker, live public API, AppConfig connection) |
+| Phase 12 | **Complete** | Android APK & Production Mobile Release (Release APK build, Railway HTTPS backend integration, clean security) |
+
+### Phase 12 — Android APK & Production Mobile Release [REAL — Phase 12]
+
+WeatherGPT is packaged and verified as a standalone Android production release APK connected to the live Railway HTTPS FastAPI backend:
+- **Application ID**: `com.weathergpt.weathergpt_app`
+- **Application Label**: `WeatherGPT`
+- **Release APK Output**: `frontend/weathergpt_app/build/app/outputs/flutter-apk/app-release.apk`
+- **APK Size**: ~51.8 MB (54,287,554 bytes)
+- **SHA-256 Checksum**: `609656555B7EF1DAEEF3F3837262A045B156D01E49534E2F2F5DA260DBF0CCA4`
+- **Production Backend Endpoint**: `https://weathergpt-production-84b3.up.railway.app/api/v1`
+
+#### Build Command
+```bash
+cd frontend/weathergpt_app
+flutter build apk --release --dart-define=API_BASE_URL=https://weathergpt-production-84b3.up.railway.app/api/v1
+```
+
+#### Android Permissions Verified
+- `android.permission.INTERNET`: Backend API connectivity over HTTPS.
+- `android.permission.ACCESS_FINE_LOCATION` & `android.permission.ACCESS_COARSE_LOCATION`: GPS-based weather positioning.
+- `android.permission.RECORD_AUDIO`: Voice speech-to-text input (Phase 9), requested on demand.
+- Cleartext traffic is disabled globally in production (`main/AndroidManifest.xml`) and strictly segregated to `debug/AndroidManifest.xml` for local development.
+
+#### Verified Features on Android Emulator / Physical Device
+- **Live Home Dashboard**: Current weather conditions, feels-like temperature, humidity, wind, and UV index fetched from Railway API.
+- **Hourly & 7-Day Forecast**: Visual forecasting cards powered by live WeatherAPI via backend proxy.
+- **AI Chat with Gemini**: Real-time Gemini 3.7 Flash responses with 3.6 Flash fallback, rendering interactive weather cards and quick action chips.
+- **Smart Weather Alerts**: Deterministic rule-based alerts evaluated from live weather observations.
+- **Weather Advisories**: Contextual guidance across health, outdoor, travel, and general categories.
+- **Climate Intelligence**: Historical temperature/rainfall baselines and anomaly calculations from the bundled dataset.
+- **Multilingual UI (Tamil)**: Full dynamic switching to Tamil (`ta-IN`) across UI labels, weather descriptions, advisories, and chat.
+- **Voice Capabilities**: Speech-to-text recognition and text-to-speech engine binding with graceful fallback.
+- **Zero Startup/Navigation Crashes**: Verified in Android release mode.
 
 ### Phase 11 — Backend Deployment (Railway Live Status)
 
@@ -36,6 +70,7 @@ WeatherGPT backend is deployed and live in production on **Railway**:
 - **Centralized Flutter Configuration**: Flutter client uses `AppConfig` (`String.fromEnvironment('API_BASE_URL')`) which points to local development in debug mode and the live Railway HTTPS endpoint in release mode.
 
 #### Feature Implementation Status Matrix:
+- **Android Production Release APK**: **[REAL — Phase 12]** (`app-release.apk`, HTTPS Railway backend)
 - **Live Backend HTTPS Deployment**: **[REAL — Phase 11]** (`https://weathergpt-production-84b3.up.railway.app`)
 - **Real-time Weather & Forecast**: **[REAL — Phase 3 & 4]** (Live WeatherAPI.com)
 - **Location Search & GPS**: **[REAL — Phase 4]** (Single source of truth via LocationProvider)

@@ -1,8 +1,8 @@
 # WeatherGPT — System Architecture
-**Version**: 0.11.0  
+**Version**: 0.12.0  
 **Project Type**: SIH (Smart India Hackathon) Prototype  
 **Developers**: 2 (Frontend, Backend)  
-**Current Phase**: Phase 11 — Backend Deployment (Railway HTTPS)
+**Current Phase**: Phase 12 — Android APK & Production Mobile Release
 
 ---
 
@@ -52,7 +52,7 @@
 - Historical climate dataset (`data/climate/historical_weather.csv`, 528 records) packaged into container.
 - All secrets (`WEATHER_API_KEY`, `GEMINI_API_KEY`, etc.) stored strictly in Railway environment variables.
 - Dual-model Gemini AI (`gemini-3.7-flash` with `gemini-3.6-flash` fallback) running live in production.
-- Client centralized config `AppConfig.apiBaseUrl` automatically switches between local dev in debug mode and the live Railway HTTPS endpoint in release mode.��─┘
+- Client centralized config `AppConfig.apiBaseUrl` automatically switches between local dev in debug mode and the live Railway HTTPS endpoint in release mode.��─┘
           │        │
           ▼        ▼
   External Weather ├── Primary: Gemini 3.7 Flash  [REAL — Phase 10]
@@ -79,6 +79,11 @@
 - Duplicate-send prevention: inputs, buttons, and chips disabled while request is pending.
 - Backend Dual-Model AI Fallback: `gemini-3.7-flash` (primary) with bounded 1-retry backoff (1.0s); automatically falls back to `gemini-3.6-flash` on persistent 503, 429, or timeout using identical grounded context.
 - API Deduplication: Coordinate normalization (4 decimals) and forecast cache reuse across endpoints.
+
+**Phase 12 Note**: Android Production Mobile Release:
+- Standalone release APK built via `flutter build apk --release --dart-define=API_BASE_URL=https://weathergpt-production-84b3.up.railway.app/api/v1`.
+- Clean security boundaries: zero API keys or server-side credentials in client source/bundle; release traffic strictly enforced via HTTPS with `android:usesCleartextTraffic` disabled in release manifest.
+- Verified on Android device/emulator (`Medium_Phone_API_36.1`) with full support for GPS location, live weather and forecasts, Gemini 3.7 AI chat, rule-based alerts and advisories, historical climate analytics, English/Tamil language switching, and voice controls.
 
 ---
 

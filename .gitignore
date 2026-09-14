@@ -6,6 +6,9 @@
 .env
 *.env
 !.env.example
+key.properties
+*.keystore
+*.jks
 
 # ---- Python -----------------------------------------------
 .venv/
